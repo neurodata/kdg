@@ -1,1 +1,1 @@
-# kdg
+`kdg` (Kernel Density Graph) is a package for exploring and using kernel density algorithms developed by the [neurodata group](https://neurodata.io).
