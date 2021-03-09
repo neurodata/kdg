@@ -18,11 +18,23 @@ class KernelDensityGraph(ABC):
             Output (i.e. response) data matrix.
         """
         pass
+    
+    @abstractmethod
+    def predict_proba(self, X):
+        """
+        Calculate posteriors using the kernel density graph.
+
+        Parameters
+        ----------
+        X : ndarray
+            Input data matrix.
+        """
+        pass
 
     @abstractmethod
     def predict(self, X):
         """
-        Perform inference using the voter.
+        Perform inference using the kernel density graph.
 
         Parameters
         ----------
