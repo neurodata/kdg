@@ -2,6 +2,7 @@ from .base KernelDensityGraph
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
+from scipy.stats import multivariate_normal
 
 class kdf(KernelDensityGraph):
 
@@ -9,6 +10,7 @@ class kdf(KernelDensityGraph):
         super().__init__()
         self.polytope_means = {}
         self.polytope_vars = {}
+        self.polytope_cardinality = {}
         self.kwargs = kwargs
 
     def fit(self, X, y):
@@ -18,6 +20,8 @@ class kdf(KernelDensityGraph):
 
         for label in self.labels:
             self.polytope_means[label] = []
+            self.polytope_vars[label] = []
+            self.polytope_cardinality[label] = []
 
         predicted_leaf_ids_across_trees = [tree.apply(X) for tree in self.rf_model.estimators_]
 
@@ -37,4 +41,41 @@ class kdf(KernelDensityGraph):
                             axis=0
                         )
                     )
+                    self.polytope_cardinality[label].append(
+                        len(polytope_label_idx)
+                    )
 
+    def _compute_pdf(self, X, label, polytope_idx):
+        polytope_mean = self.polytope_means[label][polytope_idx]
+        polytope_cov = np.eye(
+            len(self.polytope_vars[label]),
+            dtype=float
+        )*self.polytope_vars[label]
+        polytope_cardinality = self.polytope_cardinality[label]
+
+        var = multivariate_normal(
+            mean=polytope_mean, 
+            cov=polytope_cov, 
+            allow_singular=True
+            )
+
+        likelihood = var.pdf(X)*polytope_cardinality[polytope_idx]/np.sum(polytope_cardinality)
+        return likelihood
+
+    def predict_proba(self, X):
+        X = check_array(X)
+
+        likelihoods = np.zeros(
+            (np.size(X,0), len(self.labels)),
+            dtype=float
+        )
+
+        for ii,label in enumerate(self.labels):
+            for polytope_idx,_ in enumerate(self.polytope_cardinality[label]):
+                likelihoods[:,ii] += self._compute_pdf(X, label, polytope_idx)
+
+        proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
+        return proba
+
+    def predict(self, X):
+        return np.argmax(self.predict_proba(X), axis = 1)
