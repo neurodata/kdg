@@ -7,8 +7,8 @@ class KernelDensityGraph(ABC):
 
     @abstractmethod
     def fit(self, X=None, y=None):
-        """
-        Fits the transformer.
+        r"""
+        Fits the kernel density graph.
 
         Parameters
         ----------
@@ -21,7 +21,7 @@ class KernelDensityGraph(ABC):
     
     @abstractmethod
     def predict_proba(self, X):
-        """
+        r"""
         Calculate posteriors using the kernel density graph.
 
         Parameters
@@ -33,7 +33,7 @@ class KernelDensityGraph(ABC):
 
     @abstractmethod
     def predict(self, X):
-        """
+        r"""
         Perform inference using the kernel density graph.
 
         Parameters

@@ -16,6 +16,16 @@ class kdf(KernelDensityGraph):
 
     @jit(nopython=True)
     def fit(self, X, y):
+        r"""
+        Fits the kernel density forest.
+
+        Parameters
+        ----------
+        X : ndarray
+            Input data matrix.
+        y : ndarray
+            Output (i.e. response) data matrix.
+        """
         X, y = check_X_y(X, y)
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
@@ -67,6 +77,14 @@ class kdf(KernelDensityGraph):
 
     @jit(nopython=True)
     def predict_proba(self, X):
+        r"""
+        Calculate posteriors using the kernel density forest.
+
+        Parameters
+        ----------
+        X : ndarray
+            Input data matrix.
+        """
         X = check_array(X)
 
         likelihoods = np.zeros(
@@ -82,4 +100,12 @@ class kdf(KernelDensityGraph):
         return proba
 
     def predict(self, X):
+        r"""
+        Perform inference using the kernel density forest.
+
+        Parameters
+        ----------
+        X : ndarray
+            Input data matrix.
+        """
         return np.argmax(self.predict_proba(X), axis = 1)
