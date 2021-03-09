@@ -1,4 +1,4 @@
-from .base KernelDensityGraph
+from .base import KernelDensityGraph
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
@@ -26,9 +26,13 @@ class kdf(KernelDensityGraph):
         predicted_leaf_ids_across_trees = [tree.apply(X) for tree in self.rf_model.estimators_]
 
         for polytopes_in_a_tree in predicted_leaf_ids_across_trees:
-            for label in self.labels:
-                for polytope in np.unique(polytopes_in_a_tree):
+            for polytope in np.unique(polytopes_in_a_tree):
+                for label in self.labels:
                     polytope_label_idx = np.where((y==label) & (polytopes_in_a_tree==polytope))
+                    
+                    if polytope_label_idx[0].size == 0:
+                        continue
+                    
                     self.polytope_means[label].append(
                         np.mean(
                             X[polytope_label_idx],
@@ -47,10 +51,7 @@ class kdf(KernelDensityGraph):
 
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
-        polytope_cov = np.eye(
-            len(self.polytope_vars[label]),
-            dtype=float
-        )*self.polytope_vars[label]
+        polytope_cov = np.eye(len(self.polytope_vars[label][polytope_idx]), dtype=float)*self.polytope_vars[label][polytope_idx]
         polytope_cardinality = self.polytope_cardinality[label]
 
         var = multivariate_normal(

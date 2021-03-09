@@ -1,1 +1,3 @@
-from kdf import *
+from .kdf import *
+
+__version__ = "0.0.1"
