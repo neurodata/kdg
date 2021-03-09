@@ -3,6 +3,7 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
 from scipy.stats import multivariate_normal
+from numba import jit
 
 class kdf(KernelDensityGraph):
 
@@ -13,6 +14,7 @@ class kdf(KernelDensityGraph):
         self.polytope_cardinality = {}
         self.kwargs = kwargs
 
+    @jit(nopython=True)
     def fit(self, X, y):
         X, y = check_X_y(X, y)
         self.labels = np.unique(y)
@@ -63,6 +65,7 @@ class kdf(KernelDensityGraph):
         likelihood = var.pdf(X)*polytope_cardinality[polytope_idx]/np.sum(polytope_cardinality)
         return likelihood
 
+    @jit(nopython=True)
     def predict_proba(self, X):
         X = check_array(X)
 
@@ -70,7 +73,7 @@ class kdf(KernelDensityGraph):
             (np.size(X,0), len(self.labels)),
             dtype=float
         )
-
+        
         for ii,label in enumerate(self.labels):
             for polytope_idx,_ in enumerate(self.polytope_cardinality[label]):
                 likelihoods[:,ii] += self._compute_pdf(X, label, polytope_idx)
