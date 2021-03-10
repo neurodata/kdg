@@ -12,9 +12,9 @@ class kdf(KernelDensityGraph):
         self.polytope_means = {}
         self.polytope_vars = {}
         self.polytope_cardinality = {}
+        self.polytope_mean_cov = {}
         self.kwargs = kwargs
 
-    @jit(nopython=True)
     def fit(self, X, y):
         r"""
         Fits the kernel density forest.
@@ -34,15 +34,16 @@ class kdf(KernelDensityGraph):
             self.polytope_means[label] = []
             self.polytope_vars[label] = []
             self.polytope_cardinality[label] = []
+            self.polytope_mean_cov[label] = []
 
         predicted_leaf_ids_across_trees = [tree.apply(X) for tree in self.rf_model.estimators_]
 
         for polytopes_in_a_tree in predicted_leaf_ids_across_trees:
             for polytope in np.unique(polytopes_in_a_tree):
                 for label in self.labels:
-                    polytope_label_idx = np.where((y==label) & (polytopes_in_a_tree==polytope))
+                    polytope_label_idx = np.where((y==label) & (polytopes_in_a_tree==polytope))[0]
                     
-                    if polytope_label_idx[0].size == 0:
+                    if polytope_label_idx.size == 0:
                         continue
                     
                     self.polytope_means[label].append(
@@ -61,9 +62,16 @@ class kdf(KernelDensityGraph):
                         len(polytope_label_idx)
                     )
 
+        for label in self.labels:
+            self.polytope_mean_cov[label] = np.average(
+                self.polytope_vars[label],
+                weights = self.polytope_cardinality[label],
+                axis = 0
+                )
+
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
-        polytope_cov = np.eye(len(self.polytope_vars[label][polytope_idx]), dtype=float)*self.polytope_vars[label][polytope_idx]
+        polytope_cov = np.eye(len(self.polytope_mean_cov[label]), dtype=float)*self.polytope_mean_cov[label]
         polytope_cardinality = self.polytope_cardinality[label]
 
         var = multivariate_normal(
@@ -75,7 +83,6 @@ class kdf(KernelDensityGraph):
         likelihood = var.pdf(X)*polytope_cardinality[polytope_idx]/np.sum(polytope_cardinality)
         return likelihood
 
-    @jit(nopython=True)
     def predict_proba(self, X):
         r"""
         Calculate posteriors using the kernel density forest.
