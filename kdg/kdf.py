@@ -3,7 +3,6 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
 from scipy.stats import multivariate_normal
-from numba import jit
 
 class kdf(KernelDensityGraph):
 

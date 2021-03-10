@@ -40,7 +40,6 @@ Python package dependencies
 - scikit-learn>=0.22.0
 - scipy==1.4.1
 - numpy==1.19.2
-- numba>=0.52
 
 Hardware requirements
 ---------------------
