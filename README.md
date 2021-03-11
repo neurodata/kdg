@@ -49,8 +49,7 @@ tensorflow's backend.
 
 OS Requirements
 ---------------
-This package is supported for all major operating systems. The following
-versions of operating systems was tested on CircleCI:
+This package is supported for all major operating systems. 
 
 - **Linux**: Ubuntu 16.04
 - **macOS**: Mojave (10.14.1)
