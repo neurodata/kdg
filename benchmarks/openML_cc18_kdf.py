@@ -13,12 +13,14 @@ ids = []
 fold = []
 error_kdf = []
 error_rf = []
+sample_size = []
 
 for task_id in benchmark_suite.tasks:
-    print('Doing task %d'%task_id)
     task = openml.tasks.get_task(task_id)
     X, y = task.get_X_and_y()
     X = np.nan_to_num(X)
+
+    print('Doing task %d sample size %d'%(task_id,X.shape[0]))
 
     skf = StratifiedKFold(n_splits=cv)
     
@@ -32,21 +34,23 @@ for task_id in benchmark_suite.tasks:
         error_rf.append(
             1 - np.mean(y_test==predicted_label)
         )
-        print('rf %f'%error_rf[-1])
+        print('rf %f task %d'%(error_rf[-1],task_id))
         model_kdf = kdf({'n_estimators':n_estimators})
         model_kdf.fit(X_train, y_train)
         predicted_label = model_kdf.predict(X_test)
         error_kdf.append(
             1 - np.mean(y_test==predicted_label)
         )
-        print('kdf %f\n\n'%error_kdf[-1])
+        print('kdf %f task %d\n\n'%(error_kdf[-1],task_id))
         ids.append(task_id)
         fold.append(ii)
+        sample_size.append(X.shape[0])
 
 df['task_id'] = ids
 df['data_fold'] = fold
 df['error_rf'] = error_rf
 df['error_kdf'] = error_kdf
+df['sample_size'] = sample_size
 
 df.to_csv('openML_cc18.csv')
 
