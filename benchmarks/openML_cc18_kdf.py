@@ -6,7 +6,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier as rf
 #%%
 cv = 5
-n_estimators = 10
+n_estimators = 2
 df = pd.DataFrame() 
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 ids = []
