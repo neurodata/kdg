@@ -46,11 +46,3 @@ Hardware requirements
 ``kdg`` package requires only a standard computer with enough RAM to support
 the in-memory operations. GPU's can speed up the networks which are powered by 
 tensorflow's backend. 
-
-OS Requirements
----------------
-This package is supported for all major operating systems. 
-
-- **Linux**: Ubuntu 16.04
-- **macOS**: Mojave (10.14.1)
-- **Windows**: 10
