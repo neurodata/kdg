@@ -1,3 +1,4 @@
+#%%
 from kdg import kdf
 import openml
 import numpy as np
@@ -15,6 +16,7 @@ error_kdf = []
 error_rf = []
 sample_size = []
 
+i=0
 for task_id in benchmark_suite.tasks:
     task = openml.tasks.get_task(task_id)
     X, y = task.get_X_and_y()
@@ -45,6 +47,11 @@ for task_id in benchmark_suite.tasks:
         ids.append(task_id)
         fold.append(ii)
         sample_size.append(X.shape[0])
+        ii +=1
+    i += 1
+
+    if i==5:
+        break
 
 df['task_id'] = ids
 df['data_fold'] = fold
@@ -55,4 +62,31 @@ df['sample_size'] = sample_size
 df.to_csv('openML_cc18.csv')
 
 
-    
+#%%
+import matplotlib.pyplot as plt 
+import seaborn as sns
+df = pd.read_csv('openML_cc18.csv')
+# %%
+task_ids = np.unique(
+    np.array(
+        df['task_id']
+    )
+)
+
+diff_err = {}
+for task in task_ids:
+    diff_err[str(task)] = np.array(df['error_rf'][df['task_id']==task]) - np.array(df['error_kdf'][df['task_id']==task])
+
+diff_err = pd.DataFrame.from_dict(diff_err)
+diff_err = pd.melt(diff_err,var_name='task', value_name='Error_Difference')
+# %%
+fig, ax = plt.subplots(1,1, figsize=(8,10))
+ax.tick_params(labelsize=22)
+ax = sns.boxplot(
+    x="task", y="Error_Difference", data=diff_err, whis=np.inf,
+    ax=ax, showfliers=False, notch=1
+    )
+ax.set_xlabel('Task ids', fontsize=20)
+ax.set_ylabel('error_rf - error_kdf', fontsize=20)
+plt.savefig('openMLcc18.pdf')
+# %%
