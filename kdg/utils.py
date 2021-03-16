@@ -10,7 +10,7 @@ def get_ece(predicted_posterior, predicted_label, true_label, num_bins=40):
     score = 0
     for bin in range(num_bins):
         indx = np.where(
-            (posteriors>bin*1./num_bins) & (posteriors<=(bin+1)*1./num_bins)
+            (posteriors>bin*bin_size) & (posteriors<=(bin+1)*bin_size)
         )[0]
         
         acc = np.nan_to_num(
