@@ -3,6 +3,7 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
 from scipy.stats import multivariate_normal
+import multiprocessing
 
 class kdf(KernelDensityGraph):
 
@@ -12,6 +13,7 @@ class kdf(KernelDensityGraph):
         self.polytope_vars = {}
         self.polytope_cardinality = {}
         self.polytope_mean_cov = {}
+        self.gaussian_dist = {}
         self.kwargs = kwargs
 
     def fit(self, X, y):
@@ -62,24 +64,26 @@ class kdf(KernelDensityGraph):
                     )
 
         for label in self.labels:
-            self.polytope_mean_cov[label] = np.average(
+            self.polytope_mean_cov = np.average(
                 self.polytope_vars[label],
                 weights = self.polytope_cardinality[label],
                 axis = 0
                 )
+        
+            self.gaussian_dist[label] = multivariate_normal(
+                                mean=np.zeros(X.shape[1], dtype=float), 
+                                cov=polytope_mean_cov, 
+                                allow_singular=True
+                                )
 
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
-        polytope_cov = np.eye(len(self.polytope_mean_cov[label]), dtype=float)*self.polytope_mean_cov[label]
         polytope_cardinality = self.polytope_cardinality[label]
+        likelihood = 0
 
-        var = multivariate_normal(
-            mean=polytope_mean, 
-            cov=polytope_cov, 
-            allow_singular=True
-            )
+        for idx in polytope_idx:
+            likelihood += self.gaussian_dist[label].pdf(X)*polytope_cardinality[polytope_idx]/np.sum(polytope_cardinality)
 
-        likelihood = var.pdf(X)*polytope_cardinality[polytope_idx]/np.sum(polytope_cardinality)
         return likelihood
 
     def predict_proba(self, X):
