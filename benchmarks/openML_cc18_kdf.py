@@ -1,6 +1,6 @@
 #%%
 from kdg import kdf
-from kdg.utils get_ece
+from kdg.utils import get_ece
 import openml
 import numpy as np
 import pandas as pd
@@ -14,26 +14,6 @@ n_estimators = 10
 df = pd.DataFrame() 
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 
-#%%
-def get_ece(predicted_posterior, y):
-    hists = []
-    hists_hat = []
-    amts = []
-    num_bins = 40
-    eces_across_y_vals = []
-    for y_val in np.unique(y):
-        for i in range(num_bins):
-            prop = i*1./num_bins
-            inds = np.where((predicted_posterior[:, y_val] >= prop) & (predicted_posterior[:, y_val] <= prop+1./num_bins))[0]
-            amts.append(len(inds))
-            if len(inds) > 0:
-                hists.append(len(np.where(y[inds] == y_val)[0])*1./len(inds))
-                hists_hat.append(np.mean(predicted_posterior[inds, y_val]))
-            else:
-                hists.append(prop)
-                hists_hat.append(prop + 0.5/num_bins)
-        eces_across_y_vals.append(np.dot(np.abs(np.array(hists) - np.array(hists_hat)), amts) / np.sum(amts))
-    return np.mean(eces_across_y_vals)
 #%%
 ids = []
 fold = []
@@ -124,11 +104,15 @@ mean_rf = np.zeros(len(sample_size), dtype=float)
 mean_kdf = np.zeros(len(sample_size), dtype=float)
 var_rf = np.zeros(len(sample_size), dtype=float)
 var_kdf = np.zeros(len(sample_size), dtype=float)
+mean_ece_rf = np.zeros(len(sample_size), dtype=float)
+mean_ece_kdf = np.zeros(len(sample_size), dtype=float)
+var_ece_rf = np.zeros(len(sample_size), dtype=float)
+var_ece_kdf = np.zeros(len(sample_size), dtype=float)
 
 error_rf = np.zeros((len(sample_size),reps), dtype=float)
 error_kdf = np.zeros((len(sample_size),reps), dtype=float)
-proba_rf = np.zeros((len(sample_size),reps), dtype=float)
-proba_kdf = np.zeros((len(sample_size),reps), dtype=float)
+ece_rf = np.zeros((len(sample_size),reps), dtype=float)
+ece_kdf = np.zeros((len(sample_size),reps), dtype=float)
 for jj,sample in enumerate(sample_size):
 
     print('sample numer'+str(sample))
@@ -142,44 +126,73 @@ for jj,sample in enumerate(sample_size):
 
         model_rf = rf(n_estimators=n_estimators).fit(X[train_idx], y[train_idx])
         predicted_label = model_rf.predict(X[test_idx])
-        proba_rf[jj][ii] = model_rf.predict_proba(X[test_idx])
+        proba_rf = model_rf.predict_proba(X[test_idx])
+        ece_rf[jj][ii] = get_ece(proba_rf, predicted_label, y[test_idx])
         error_rf[jj][ii] = 1 - np.mean(y[test_idx]==predicted_label)
 
         model_kdf = kdf({'n_estimators':n_estimators})
         model_kdf.fit(X[train_idx], y[train_idx])
         predicted_label = model_kdf.predict(X[test_idx])
-        proba_kdf[jj][ii] = model_kdf.predict_proba(X[test_idx])
+        proba_kdf = model_kdf.predict_proba(X[test_idx])
+        ece_kdf[jj][ii] = get_ece(proba_kdf, predicted_label, y[test_idx])
         error_kdf[jj][ii] = 1 - np.mean(y[test_idx]==predicted_label)    
 
     mean_rf[jj] = np.mean(error_rf[jj])   
     var_rf[jj] = np.var(error_rf[jj], ddof=1)
     mean_kdf[jj] = np.mean(error_kdf[jj])   
     var_kdf[jj] = np.var(error_kdf[jj], ddof=1)
+
+    mean_ece_rf[jj] = np.mean(ece_rf[jj])   
+    var_ece_rf[jj] = np.var(ece_rf[jj], ddof=1)
+    mean_ece_kdf[jj] = np.mean(ece_kdf[jj])   
+    var_ece_kdf[jj] = np.var(ece_kdf[jj], ddof=1)
 # %%
 import matplotlib.pyplot as plt 
 import seaborn as sns
 
 sns.set_context('talk')
-fig, ax = plt.subplots(1,1, figsize=(8,8))
+fig, ax = plt.subplots(1,2, figsize=(16,8))
 
 for ii in range(reps):
-    ax.plot(sample_size, error_kdf[:,ii], c='r', ls='-.', lw=1)
-    ax.plot(sample_size, error_rf[:,ii], c='k', ls='-.', lw=1)
+    ax[0].plot(sample_size, error_kdf[:,ii], c='r', alpha=0.5, lw=1)
+    ax[0].plot(sample_size, error_rf[:,ii], c='k', alpha=0.5, lw=1)
 
-ax.plot(sample_size, mean_kdf, label='KDF', c='r', lw=2)
-ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
-ax.plot(sample_size, mean_rf, label='RF', c='k', lw=2)
-ax.fill_between(sample_size, mean_rf-1.96*var_kdf, mean_rf+1.96*var_kdf, facecolor='k', alpha=0.5)
+ax[0].plot(sample_size, mean_kdf, label='KDF', c='r', lw=3)
+#ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
+ax[0].plot(sample_size, mean_rf, label='RF', c='k', lw=3)
+#ax.fill_between(sample_size, mean_rf-1.96*var_kdf, mean_rf+1.96*var_kdf, facecolor='k', alpha=0.5)
 
-ax.set_xlabel('Sample size')
-ax.set_ylabel('Generalization Error')
-ax.set_xscale('log')
-ax.legend(frameon=False)
-right_side = ax.spines["right"]
+ax[0].set_xlabel('Sample size')
+ax[0].set_ylabel('Generalization Error')
+ax[0].set_xscale('log')
+ax[0].legend(frameon=False)
+ax[0].set_title('Generalization Error', fontsize=24)
+ax[0].set_yticks([0,.2,.4,.6,.8,1])
+right_side = ax[0].spines["right"]
 right_side.set_visible(False)
-top_side = ax.spines["top"]
+top_side = ax[0].spines["top"]
 top_side.set_visible(False)
 
-plt.savefig('openML_cc18_2.pdf')
+for ii in range(reps):
+    ax[1].plot(sample_size, ece_kdf[:,ii], c='r', alpha=0.5, lw=1)
+    ax[1].plot(sample_size, ece_rf[:,ii], c='k', alpha=0.5, lw=1)
+
+ax[1].plot(sample_size, mean_ece_kdf, label='KDF', c='r', lw=3)
+#ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
+ax[1].plot(sample_size, mean_ece_rf, label='RF', c='k', lw=3)
+#ax.fill_between(sample_size, mean_rf-1.96*var_kdf, mean_rf+1.96*var_kdf, facecolor='k', alpha=0.5)
+
+ax[1].set_xlabel('Sample size')
+ax[1].set_ylabel('ECE')
+ax[1].set_xscale('log')
+ax[1].legend(frameon=False)
+ax[1].set_title('Expected Callibration Error',fontsize=24)
+ax[1].set_yticks([0,.2,.4,.6,.8,1])
+right_side = ax[1].spines["right"]
+right_side.set_visible(False)
+top_side = ax[1].spines["top"]
+top_side.set_visible(False)
+
+#plt.savefig('openML_cc18_3.pdf')
 plt.show()
 # %%
