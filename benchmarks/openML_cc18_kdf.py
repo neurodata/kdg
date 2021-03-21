@@ -95,68 +95,80 @@ ax.set_xlabel('Task ids', fontsize=20)
 ax.set_ylabel('error_rf - error_kdf', fontsize=20)
 plt.savefig('openMLcc18.pdf')'''
 # %%
-df = pd.DataFrame() 
-task_id = 14
-task = openml.tasks.get_task(task_id)
-X, y = task.get_X_and_y()
-sample_size = [10,100,500,1000]
-#total_sample = X.shape[0]
-mean_rf = np.zeros((len(sample_size),cv), dtype=float)
-mean_kdf = np.zeros((len(sample_size),cv), dtype=float)
-#var_rf = np.zeros(len(sample_size), dtype=float)
-#var_kdf = np.zeros(len(sample_size), dtype=float)
-mean_ece_rf = np.zeros((len(sample_size),cv), dtype=float)
-mean_ece_kdf = np.zeros((len(sample_size),cv), dtype=float)
-#var_ece_rf = np.zeros(len(sample_size), dtype=float)
-#var_ece_kdf = np.zeros(len(sample_size), dtype=float)
+for task_id in benchmark_suite.tasks:
+    df = pd.DataFrame() 
+    #task_id = 14
+    task = openml.tasks.get_task(task_id)
+    X, y = task.get_X_and_y()
 
-error_rf = np.zeros((len(sample_size),reps), dtype=float)
-error_kdf = np.zeros((len(sample_size),reps), dtype=float)
-ece_rf = np.zeros((len(sample_size),reps), dtype=float)
-ece_kdf = np.zeros((len(sample_size),reps), dtype=float)
+    if np.isnan(np.sum(y)):
+        continue
 
-skf = StratifiedKFold(n_splits=cv)
+    if np.isnan(np.sum(X)):
+        continue
+    
+    sample_size = [10,100,500,1000]
+    #total_sample = X.shape[0]
+    mean_rf = np.zeros((len(sample_size),cv), dtype=float)
+    mean_kdf = np.zeros((len(sample_size),cv), dtype=float)
+    #var_rf = np.zeros(len(sample_size), dtype=float)
+    #var_kdf = np.zeros(len(sample_size), dtype=float)
+    mean_ece_rf = np.zeros((len(sample_size),cv), dtype=float)
+    mean_ece_kdf = np.zeros((len(sample_size),cv), dtype=float)
+    #var_ece_rf = np.zeros(len(sample_size), dtype=float)
+    #var_ece_kdf = np.zeros(len(sample_size), dtype=float)
 
-fold = 0
-for train_index, test_index in skf.split(X, y):
-    X_train, X_test = X[train_index], X[test_index]
-    y_train, y_test = y[train_index], y[test_index]
-    total_sample = X_train.shape[0]
+    error_rf = np.zeros((len(sample_size),reps), dtype=float)
+    error_kdf = np.zeros((len(sample_size),reps), dtype=float)
+    ece_rf = np.zeros((len(sample_size),reps), dtype=float)
+    ece_kdf = np.zeros((len(sample_size),reps), dtype=float)
 
-    for jj,sample in enumerate(sample_size):
-        print('sample numer'+str(sample))
-        for ii in range(reps):
-            train_idx =  np.random.choice(range(total_sample), sample, replace=False)
+    skf = StratifiedKFold(n_splits=cv)
 
-            model_rf = rf(n_estimators=n_estimators, max_features=0.33).fit(X_train[train_idx], y_train[train_idx])
-            predicted_label = model_rf.predict(X_test)
-            proba_rf = model_rf.predict_proba(X_test)
-            ece_rf[jj][ii] = get_ece(proba_rf, predicted_label, y_test)
-            error_rf[jj][ii] = 1 - np.mean(y_test==predicted_label)
+    fold = 0
+    for train_index, test_index in skf.split(X, y):
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        total_sample = X_train.shape[0]
 
-            model_kdf = kdf({'n_estimators':n_estimators,'max_features':0.33})
-            model_kdf.fit(X_train[train_idx], y_train[train_idx])
-            predicted_label = model_kdf.predict(X_test)
-            proba_kdf = model_kdf.predict_proba(X_test)
-            ece_kdf[jj][ii] = get_ece(proba_kdf, predicted_label, y_test)
-            error_kdf[jj][ii] = 1 - np.mean(y_test==predicted_label)    
+        for jj,sample in enumerate(sample_size):
+            print('sample numer'+str(sample))
 
-        mean_rf[jj][fold] = np.mean(error_rf[jj])   
-        #var_rf[jj] = np.var(error_rf[jj], ddof=1)
-        mean_kdf[jj][fold] = np.mean(error_kdf[jj])   
-        #var_kdf[jj] = np.var(error_kdf[jj], ddof=1)
+            if total_sample<sample:
+                continue
 
-        mean_ece_rf[jj][fold] = np.mean(ece_rf[jj])   
-        #var_ece_rf[jj] = np.var(ece_rf[jj], ddof=1)
-        mean_ece_kdf[jj][fold] = np.mean(ece_kdf[jj])   
-        #var_ece_kdf[jj] = np.var(ece_kdf[jj], ddof=1)
-    fold += 1
+            for ii in range(reps):
+                train_idx =  np.random.choice(range(total_sample), sample, replace=False)
 
-df['error_rf'] = mean_rf
-df['error_kdf'] = mean_kdf
-df['ece_rf'] = mean_ece_rf
-df['ece_kdf'] = mean_ece_kdf
-df.to_csv('benchmarks/openML_cc18_task_'+str(task_id)+'.csv')
+                model_rf = rf(n_estimators=n_estimators, max_features=0.33).fit(X_train[train_idx], y_train[train_idx])
+                predicted_label = model_rf.predict(X_test)
+                proba_rf = model_rf.predict_proba(X_test)
+                ece_rf[jj][ii] = get_ece(proba_rf, predicted_label, y_test)
+                error_rf[jj][ii] = 1 - np.mean(y_test==predicted_label)
+
+                model_kdf = kdf({'n_estimators':n_estimators,'max_features':0.33})
+                model_kdf.fit(X_train[train_idx], y_train[train_idx])
+                predicted_label = model_kdf.predict(X_test)
+                proba_kdf = model_kdf.predict_proba(X_test)
+                ece_kdf[jj][ii] = get_ece(proba_kdf, predicted_label, y_test)
+                error_kdf[jj][ii] = 1 - np.mean(y_test==predicted_label)    
+
+            mean_rf[jj][fold] = np.mean(error_rf[jj])   
+            #var_rf[jj] = np.var(error_rf[jj], ddof=1)
+            mean_kdf[jj][fold] = np.mean(error_kdf[jj])   
+            #var_kdf[jj] = np.var(error_kdf[jj], ddof=1)
+
+            mean_ece_rf[jj][fold] = np.mean(ece_rf[jj])   
+            #var_ece_rf[jj] = np.var(ece_rf[jj], ddof=1)
+            mean_ece_kdf[jj][fold] = np.mean(ece_kdf[jj])   
+            #var_ece_kdf[jj] = np.var(ece_kdf[jj], ddof=1)
+        fold += 1
+
+    df['error_rf'] = mean_rf
+    df['error_kdf'] = mean_kdf
+    df['ece_rf'] = mean_ece_rf
+    df['ece_kdf'] = mean_ece_kdf
+    df.to_csv('benchmarks/openML_cc18_task_'+str(task_id)+'.csv')
 # %%
 '''import matplotlib.pyplot as plt 
 import seaborn as sns
