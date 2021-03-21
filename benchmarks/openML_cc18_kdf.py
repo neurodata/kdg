@@ -156,7 +156,7 @@ df['error_rf'] = mean_rf
 df['error_kdf'] = mean_kdf
 df['ece_rf'] = mean_ece_rf
 df['ece_kdf'] = mean_ece_kdf
-df.to_csv('openML_cc18_task_'+str(task_id)+'.csv')
+df.to_csv('benchmarks/openML_cc18_task_'+str(task_id)+'.csv')
 # %%
 '''import matplotlib.pyplot as plt 
 import seaborn as sns
