@@ -118,6 +118,7 @@ for task_id in benchmark_suite.tasks:
     #var_ece_rf = np.zeros(len(sample_size), dtype=float)
     #var_ece_kdf = np.zeros(len(sample_size), dtype=float)
     folds = []
+    samples = []
 
     error_rf = np.zeros((len(sample_size),reps), dtype=float)
     error_kdf = np.zeros((len(sample_size),reps), dtype=float)
@@ -164,6 +165,7 @@ for task_id in benchmark_suite.tasks:
             mean_ece_kdf[jj][fold] = np.mean(ece_kdf[jj])   
             #var_ece_kdf[jj] = np.var(ece_kdf[jj], ddof=1)
             folds.append(fold)
+            samples.append(sample)
         fold += 1
 
     df['error_rf'] = np.ravel(mean_rf)
@@ -171,8 +173,9 @@ for task_id in benchmark_suite.tasks:
     df['ece_rf'] = np.ravel(mean_ece_rf)
     df['ece_kdf'] = np.ravel(mean_ece_kdf)
     df['fold'] = folds
+    df['sample'] = samples
 
-    df.to_csv('benchmarks/openML_cc18_task_'+str(task_id)+'.csv')
+    df.to_csv('openML_cc18_task_'+str(task_id)+'.csv')
 # %%
 '''import matplotlib.pyplot as plt 
 import seaborn as sns
