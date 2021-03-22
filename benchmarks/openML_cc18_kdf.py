@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier as rf
 #%%
 np.random.seed(12345)
 cv = 5
-reps = 5
+reps = 10
 n_estimators = 500
 df = pd.DataFrame() 
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
@@ -117,6 +117,7 @@ for task_id in benchmark_suite.tasks:
     mean_ece_kdf = np.zeros((len(sample_size),cv), dtype=float)
     #var_ece_rf = np.zeros(len(sample_size), dtype=float)
     #var_ece_kdf = np.zeros(len(sample_size), dtype=float)
+    folds = []
 
     error_rf = np.zeros((len(sample_size),reps), dtype=float)
     error_kdf = np.zeros((len(sample_size),reps), dtype=float)
@@ -162,12 +163,15 @@ for task_id in benchmark_suite.tasks:
             #var_ece_rf[jj] = np.var(ece_rf[jj], ddof=1)
             mean_ece_kdf[jj][fold] = np.mean(ece_kdf[jj])   
             #var_ece_kdf[jj] = np.var(ece_kdf[jj], ddof=1)
+            folds.append(fold)
         fold += 1
 
-    df['error_rf'] = mean_rf
-    df['error_kdf'] = mean_kdf
-    df['ece_rf'] = mean_ece_rf
-    df['ece_kdf'] = mean_ece_kdf
+    df['error_rf'] = np.ravel(mean_rf)
+    df['error_kdf'] = np.ravel(mean_kdf)
+    df['ece_rf'] = np.ravel(mean_ece_rf)
+    df['ece_kdf'] = np.ravel(mean_ece_kdf)
+    df['fold'] = folds
+
     df.to_csv('benchmarks/openML_cc18_task_'+str(task_id)+'.csv')
 # %%
 '''import matplotlib.pyplot as plt 
