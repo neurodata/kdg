@@ -95,7 +95,7 @@ ax.set_xlabel('Task ids', fontsize=20)
 ax.set_ylabel('error_rf - error_kdf', fontsize=20)
 plt.savefig('openMLcc18.pdf')'''
 # %%
-for task_id in benchmark_suite.tasks:
+for task_id in benchmark_suite.tasks[0:10]:
     df = pd.DataFrame() 
     #task_id = 14
     task = openml.tasks.get_task(task_id)
