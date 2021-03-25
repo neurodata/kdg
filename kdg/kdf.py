@@ -123,17 +123,21 @@ class kdf(KernelDensityGraph):
                      for worker_id in range(worker_in_action)
                     )
                 )'''
-            likelihood_ = 0.0
-            for worker_id in range(worker_in_action):
-                likelihood_ += self._compute_pdf(
+            #likelihood_ = 0.0
+            
+            likelihood_ = np.array(
+                Parallel(n_jobs=worker_in_action)(
+                    self._compute_pdf(
                         X,
                         label,
                         worker_id,
                         polytopes_per_worker
-                        )
+                        ) for worker_id in range(worker_in_action)
+                    )
+                )
             
-            likelihoods[:,ii] += likelihood_#np.mean(likelihood_)
-
+            likelihoods[:,ii] += np.mean(likelihood_) #likelihood_
+            
         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         return proba
 
