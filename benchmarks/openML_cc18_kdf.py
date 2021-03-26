@@ -15,13 +15,13 @@ df = pd.DataFrame()
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 
 #%%
-ids = []
+'''ids = []
 fold = []
 error_kdf = []
 error_rf = []
 sample_size = []
 
-'''i=0
+i=0
 for task_id in benchmark_suite.tasks:
     task = openml.tasks.get_task(task_id)
     X, y = task.get_X_and_y()
@@ -94,6 +94,33 @@ ax = sns.stripplot(
 ax.set_xlabel('Task ids', fontsize=20)
 ax.set_ylabel('error_rf - error_kdf', fontsize=20)
 plt.savefig('openMLcc18.pdf')'''
+
+#%%
+def get_stratified_samples(y, samples_to_take):
+    labels = np.unique(y)
+    sample_per_class = int(np.floor(samples_to_take/len(labels)))
+    stratified_indices = np.random.choice(
+        (
+        np.where(y==labels[0])[0]
+        ), 
+        sample_per_class,
+        replace = False
+    )
+
+    for lbl in labels[1:]:
+        _stratified_indices = np.random.choice(
+            (
+            np.where(y==lbl)[0]
+            ), 
+            sample_per_class,
+            replace = False
+        )
+        stratified_indices = np.concatenate(
+            (stratified_indices, _stratified_indices),
+            axis=0
+        )
+    return stratified_indices
+
 # %%
 for task_id in benchmark_suite.tasks[2:10]:
     df = pd.DataFrame() 
@@ -140,7 +167,7 @@ for task_id in benchmark_suite.tasks[2:10]:
                 continue
 
             for ii in range(reps):
-                train_idx =  np.random.choice(range(total_sample), sample, replace=False)
+                train_idx =  get_stratified_samples(y_train, sample)
 
                 model_rf = rf(n_estimators=n_estimators, max_features=0.33).fit(X_train[train_idx], y_train[train_idx])
                 predicted_label = model_rf.predict(X_test)

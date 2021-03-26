@@ -127,7 +127,7 @@ class kdf(KernelDensityGraph):
             
             likelihood_ = np.array(
                 Parallel(n_jobs=worker_in_action)(
-                    self._compute_pdf(
+                    delayed(self._compute_pdf)(
                         X,
                         label,
                         worker_id,
