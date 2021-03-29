@@ -90,7 +90,7 @@ class kdf(KernelDensityGraph):
         
         return likelihood
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, n_jobs=-1):
         r"""
         Calculate posteriors using the kernel density forest.
 
@@ -98,9 +98,13 @@ class kdf(KernelDensityGraph):
         ----------
         X : ndarray
             Input data matrix.
+        n_jobs : int, default=-1 (all cores)
+            The number of jobs to run in parallel.
         """
         X = check_array(X)
-        total_worker = multiprocessing.cpu_count()
+
+        if n_jobs == -1:
+            n_jobs = multiprocessing.cpu_count()
 
         likelihoods = np.zeros(
             (np.size(X,0), len(self.labels)),
@@ -109,24 +113,11 @@ class kdf(KernelDensityGraph):
         
         for ii,label in enumerate(self.labels):
             total_polytopes = len(self.polytope_cardinality[label])
-            polytopes_per_worker = np.ceil(total_polytopes/total_worker)
+            polytopes_per_worker = np.ceil(total_polytopes/n_jobs)
             worker_in_action = int(total_polytopes/polytopes_per_worker)
-
-            '''likelihood_ = np.array(
-                    Parallel(n_jobs=-1)(
-                    delayed(self._compute_pdf)(
-                        X,
-                        label,
-                        worker_id,
-                        polytopes_per_worker
-                        )
-                     for worker_id in range(worker_in_action)
-                    )
-                )'''
-            #likelihood_ = 0.0
             
             likelihood_ = np.array(
-                Parallel(n_jobs=worker_in_action, verbose=1)(
+                Parallel(n_jobs=worker_in_action)(
                     delayed(self._compute_pdf)(
                         X,
                         label,
@@ -136,7 +127,7 @@ class kdf(KernelDensityGraph):
                     )
                 )
             
-            likelihoods[:,ii] += np.mean(likelihood_) #likelihood_
+            likelihoods[:,ii] += np.mean(likelihood_)
             
         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         return proba

@@ -2,119 +2,53 @@
 from kdg import kdf
 from kdg.utils import get_ece
 import openml
+import multiprocessing
+from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier as rf
-#%%
-np.random.seed(12345)
-cv = 5
-reps = 10
-n_estimators = 500
-df = pd.DataFrame() 
-benchmark_suite = openml.study.get_suite('OpenML-CC18')
-
-#%%
-'''ids = []
-fold = []
-error_kdf = []
-error_rf = []
-sample_size = []
-
-i=0
-for task_id in benchmark_suite.tasks:
-    task = openml.tasks.get_task(task_id)
-    X, y = task.get_X_and_y()
-    X = np.nan_to_num(X)
-
-    print('Doing task %d sample size %d'%(task_id,X.shape[0]))
-
-    skf = StratifiedKFold(n_splits=cv)
-    
-    ii = 1
-    for train_index, test_index in skf.split(X, y):
-        X_train, X_test = X[train_index], X[test_index]
-        y_train, y_test = y[train_index], y[test_index]
-
-        model_rf = rf(n_estimators=n_estimators).fit(X_train, y_train)
-        predicted_label = model_rf.predict(X_test)
-        error_rf.append(
-            1 - np.mean(y_test==predicted_label)
-        )
-        print('rf %f task %d'%(error_rf[-1],task_id))
-        model_kdf = kdf({'n_estimators':n_estimators})
-        model_kdf.fit(X_train, y_train)
-        predicted_label = model_kdf.predict(X_test)
-        error_kdf.append(
-            1 - np.mean(y_test==predicted_label)
-        )
-        print('kdf %f task %d\n\n'%(error_kdf[-1],task_id))
-        ids.append(task_id)
-        fold.append(ii)
-        sample_size.append(X.shape[0])
-        ii +=1
-    i += 1
-
-    if i==5:
-        break
-
-df['task_id'] = ids
-df['data_fold'] = fold
-df['error_rf'] = error_rf
-df['error_kdf'] = error_kdf
-df['sample_size'] = sample_size
-
-df.to_csv('openML_cc18.csv')
-
-
-#%%
-import matplotlib.pyplot as plt 
-import seaborn as sns
-df = pd.read_csv('openML_cc18.csv')
-# %%
-task_ids = np.unique(
-    np.array(
-        df['task_id']
-    )
-)
-
-diff_err = {}
-for task in task_ids:
-    diff_err[str(task)] = np.array(df['error_rf'][df['task_id']==task]) - np.array(df['error_kdf'][df['task_id']==task])
-
-diff_err = pd.DataFrame.from_dict(diff_err)
-diff_err = pd.melt(diff_err,var_name='task', value_name='Error_Difference')
-# %%
-fig, ax = plt.subplots(1,1, figsize=(8,10))
-ax.tick_params(labelsize=22)
-ax = sns.stripplot(
-    x="task", y="Error_Difference", data=diff_err,
-    ax=ax
-    )
-ax.set_xlabel('Task ids', fontsize=20)
-ax.set_ylabel('error_rf - error_kdf', fontsize=20)
-plt.savefig('openMLcc18.pdf')'''
 
 #%%
 def get_stratified_samples(y, samples_to_take):
     labels = np.unique(y)
     sample_per_class = int(np.floor(samples_to_take/len(labels)))
-    stratified_indices = np.random.choice(
-        (
-        np.where(y==labels[0])[0]
-        ), 
-        sample_per_class,
-        replace = False
-    )
 
-    for lbl in labels[1:]:
-        _stratified_indices = np.random.choice(
+    if sample_per_class < len(np.where(y==labels[0])[0]):
+        stratified_indices = np.random.choice(
             (
-            np.where(y==lbl)[0]
+            np.where(y==labels[0])[0]
             ), 
             sample_per_class,
             replace = False
         )
+    else:
+        stratified_indices = np.random.choice(
+            (
+            np.where(y==labels[0])[0]
+            ), 
+            sample_per_class,
+            replace = True
+        )
+
+    for lbl in labels[1:]:
+        if sample_per_class < len(np.where(y==lbl)[0]):
+            _stratified_indices = np.random.choice(
+                (
+                np.where(y==lbl)[0]
+                ), 
+                sample_per_class,
+                replace = False
+            )
+        else:
+            _stratified_indices = np.random.choice(
+                (
+                np.where(y==lbl)[0]
+                ), 
+                sample_per_class,
+                replace = True
+            )
+
         stratified_indices = np.concatenate(
             (stratified_indices, _stratified_indices),
             axis=0
@@ -122,28 +56,24 @@ def get_stratified_samples(y, samples_to_take):
     return stratified_indices
 
 # %%
-for task_id in benchmark_suite.tasks[2:10]:
+def experiment(task_id):
     df = pd.DataFrame() 
     #task_id = 14
     task = openml.tasks.get_task(task_id)
     X, y = task.get_X_and_y()
 
     if np.isnan(np.sum(y)):
-        continue
+        return
 
     if np.isnan(np.sum(X)):
-        continue
+        return
     
     sample_size = [10,100,500,1000]
-    #total_sample = X.shape[0]
+
     mean_rf = np.zeros((len(sample_size),cv), dtype=float)
     mean_kdf = np.zeros((len(sample_size),cv), dtype=float)
-    #var_rf = np.zeros(len(sample_size), dtype=float)
-    #var_kdf = np.zeros(len(sample_size), dtype=float)
     mean_ece_rf = np.zeros((len(sample_size),cv), dtype=float)
     mean_ece_kdf = np.zeros((len(sample_size),cv), dtype=float)
-    #var_ece_rf = np.zeros(len(sample_size), dtype=float)
-    #var_ece_kdf = np.zeros(len(sample_size), dtype=float)
     folds = []
     samples = []
 
@@ -161,7 +91,7 @@ for task_id in benchmark_suite.tasks[2:10]:
         total_sample = X_train.shape[0]
 
         for jj,sample in enumerate(sample_size):
-            print('sample numer'+str(sample))
+            #print('sample numer'+str(sample))
 
             if total_sample<sample:
                 continue
@@ -203,6 +133,25 @@ for task_id in benchmark_suite.tasks[2:10]:
     df['sample'] = samples
 
     df.to_csv('openML_cc18_task_'+str(task_id)+'.csv')
+
+#%%
+np.random.seed(12345)
+cv = 5
+reps = 10
+n_estimators = 500
+n_cores = 3
+df = pd.DataFrame() 
+benchmark_suite = openml.study.get_suite('OpenML-CC18')
+
+#%%
+total_cores = multiprocessing.cpu_count()
+assigned_workers = total_cores//n_cores
+
+Parallel(n_jobs=assigned_workers,verbose=1)(
+        delayed(experiment)(
+                task_id
+                ) for task_id in benchmark_suite.tasks
+            )
 # %%
 '''import matplotlib.pyplot as plt 
 import seaborn as sns
@@ -252,4 +201,5 @@ top_side.set_visible(False)
 
 plt.savefig('openML_cc18_14.pdf')
 plt.show()'''
+
 # %%
