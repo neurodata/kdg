@@ -56,7 +56,7 @@ def get_stratified_samples(y, samples_to_take):
     return stratified_indices
 
 # %%
-def experiment(task_id):
+def experiment(task_id, n_estimators=500, cv=5, reps=10, n_jobs=3):
     df = pd.DataFrame() 
     #task_id = 14
     task = openml.tasks.get_task(task_id)
@@ -99,16 +99,19 @@ def experiment(task_id):
             for ii in range(reps):
                 train_idx =  get_stratified_samples(y_train, sample)
 
-                model_rf = rf(n_estimators=n_estimators, max_features=0.33).fit(X_train[train_idx], y_train[train_idx])
-                predicted_label = model_rf.predict(X_test)
+                if len(train_idx) < 10:
+                    return
+                    
+                model_rf = rf(n_estimators=n_estimators).fit(X_train[train_idx], y_train[train_idx])
                 proba_rf = model_rf.predict_proba(X_test)
+                predicted_label = np.argmax(proba_rf, axis = 1)
                 ece_rf[jj][ii] = get_ece(proba_rf, predicted_label, y_test)
                 error_rf[jj][ii] = 1 - np.mean(y_test==predicted_label)
 
-                model_kdf = kdf({'n_estimators':n_estimators,'max_features':0.33})
+                model_kdf = kdf({'n_estimators':n_estimators})
                 model_kdf.fit(X_train[train_idx], y_train[train_idx])
-                predicted_label = model_kdf.predict(X_test)
-                proba_kdf = model_kdf.predict_proba(X_test)
+                proba_kdf = model_kdf.predict_proba(X_test, n_jobs=n_jobs)
+                predicted_label = np.argmax(proba_kdf, axis = 1)
                 ece_kdf[jj][ii] = get_ece(proba_kdf, predicted_label, y_test)
                 error_kdf[jj][ii] = 1 - np.mean(y_test==predicted_label)    
 

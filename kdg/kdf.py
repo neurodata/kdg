@@ -3,8 +3,6 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
 from scipy.stats import multivariate_normal
-import multiprocessing
-from joblib import Parallel, delayed
 
 class kdf(KernelDensityGraph):
 
@@ -14,13 +12,11 @@ class kdf(KernelDensityGraph):
         self.polytope_vars = {}
         self.polytope_cardinality = {}
         self.polytope_mean_cov = {}
-        self.gaussian_dist = {}
         self.kwargs = kwargs
 
     def fit(self, X, y):
         r"""
         Fits the kernel density forest.
-
         Parameters
         ----------
         X : ndarray
@@ -65,46 +61,35 @@ class kdf(KernelDensityGraph):
                     )
 
         for label in self.labels:
-            self.polytope_mean_cov = np.average(
+            self.polytope_mean_cov[label] = np.average(
                 self.polytope_vars[label],
                 weights = self.polytope_cardinality[label],
                 axis = 0
                 )
-        
-            self.gaussian_dist[label] = multivariate_normal(
-                                mean=np.zeros(X.shape[1], dtype=float), 
-                                cov=self.polytope_mean_cov, 
-                                allow_singular=True
-                                )
 
-    def _compute_pdf(self, X, label, worker_id, total_polytopes):
-        last_idx = len(self.polytope_cardinality[label])
-        last_polytope_to_operate = int((worker_id+1)*total_polytopes)
-        polytope_ids = range(int(worker_id*total_polytopes), last_polytope_to_operate) if last_idx>last_polytope_to_operate else range(int(worker_id*total_polytopes), last_idx) 
+    def _compute_pdf(self, X, label, polytope_idx):
+        polytope_mean = self.polytope_means[label][polytope_idx]
+        polytope_cov = np.eye(len(self.polytope_mean_cov[label]), dtype=float)*self.polytope_mean_cov[label]
         polytope_cardinality = self.polytope_cardinality[label]
 
-        likelihood = 0.0
-        for idx in polytope_ids:
-            X_ = X - self.polytope_means[label][idx]
-            likelihood += self.gaussian_dist[label].pdf(X_)*polytope_cardinality[idx]/np.sum(polytope_cardinality)
-        
+        var = multivariate_normal(
+            mean=polytope_mean, 
+            cov=polytope_cov, 
+            allow_singular=True
+            )
+
+        likelihood = var.pdf(X)*polytope_cardinality[polytope_idx]/np.sum(polytope_cardinality)
         return likelihood
 
-    def predict_proba(self, X, n_jobs=-1):
+    def predict_proba(self, X):
         r"""
         Calculate posteriors using the kernel density forest.
-
         Parameters
         ----------
         X : ndarray
             Input data matrix.
-        n_jobs : int, default=-1 (all cores)
-            The number of jobs to run in parallel.
         """
         X = check_array(X)
-
-        if n_jobs == -1:
-            n_jobs = multiprocessing.cpu_count()
 
         likelihoods = np.zeros(
             (np.size(X,0), len(self.labels)),
@@ -112,30 +97,15 @@ class kdf(KernelDensityGraph):
         )
         
         for ii,label in enumerate(self.labels):
-            total_polytopes = len(self.polytope_cardinality[label])
-            polytopes_per_worker = np.ceil(total_polytopes/n_jobs)
-            worker_in_action = int(total_polytopes/polytopes_per_worker)
-            
-            likelihood_ = np.array(
-                Parallel(n_jobs=worker_in_action)(
-                    delayed(self._compute_pdf)(
-                        X,
-                        label,
-                        worker_id,
-                        polytopes_per_worker
-                        ) for worker_id in range(worker_in_action)
-                    )
-                )
-            
-            likelihoods[:,ii] += np.mean(likelihood_)
-            
+            for polytope_idx,_ in enumerate(self.polytope_cardinality[label]):
+                likelihoods[:,ii] += self._compute_pdf(X, label, polytope_idx)
+
         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         return proba
 
     def predict(self, X):
         r"""
         Perform inference using the kernel density forest.
-
         Parameters
         ----------
         X : ndarray
