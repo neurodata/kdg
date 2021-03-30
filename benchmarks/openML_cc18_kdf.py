@@ -56,7 +56,7 @@ def get_stratified_samples(y, samples_to_take):
     return stratified_indices
 
 # %%
-def experiment(task_id, n_estimators=500, cv=5, reps=10, n_jobs=3):
+def experiment(task_id, n_estimators=500, cv=5, reps=10):
     df = pd.DataFrame() 
     #task_id = 14
     task = openml.tasks.get_task(task_id)
@@ -110,7 +110,7 @@ def experiment(task_id, n_estimators=500, cv=5, reps=10, n_jobs=3):
 
                 model_kdf = kdf({'n_estimators':n_estimators})
                 model_kdf.fit(X_train[train_idx], y_train[train_idx])
-                proba_kdf = model_kdf.predict_proba(X_test, n_jobs=n_jobs)
+                proba_kdf = model_kdf.predict_proba(X_test)
                 predicted_label = np.argmax(proba_kdf, axis = 1)
                 ece_kdf[jj][ii] = get_ece(proba_kdf, predicted_label, y_test)
                 error_kdf[jj][ii] = 1 - np.mean(y_test==predicted_label)    
@@ -142,7 +142,7 @@ np.random.seed(12345)
 cv = 5
 reps = 10
 n_estimators = 500
-n_cores = 3
+n_cores = 1
 df = pd.DataFrame() 
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 
