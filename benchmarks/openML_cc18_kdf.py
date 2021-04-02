@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier as rf
+from sklearn.metrics import cohen_kappa_score
 
 #%%
 def get_stratified_samples(y, samples_to_take):
@@ -74,6 +75,8 @@ def experiment(task_id, n_estimators=500, cv=5, reps=10):
     mean_kdf = np.zeros((len(sample_size),cv), dtype=float)
     mean_ece_rf = np.zeros((len(sample_size),cv), dtype=float)
     mean_ece_kdf = np.zeros((len(sample_size),cv), dtype=float)
+    mean_kappa_rf = np.zeros((len(sample_size),cv), dtype=float)
+    mean_kappa_kdf = np.zeros((len(sample_size),cv), dtype=float)
     folds = []
     samples = []
 
@@ -81,6 +84,8 @@ def experiment(task_id, n_estimators=500, cv=5, reps=10):
     error_kdf = np.zeros((len(sample_size),reps), dtype=float)
     ece_rf = np.zeros((len(sample_size),reps), dtype=float)
     ece_kdf = np.zeros((len(sample_size),reps), dtype=float)
+    kappa_rf = np.zeros((len(sample_size),reps), dtype=float)
+    kappa_kdf = np.zeros((len(sample_size),reps), dtype=float)
 
     skf = StratifiedKFold(n_splits=cv)
 
@@ -107,6 +112,7 @@ def experiment(task_id, n_estimators=500, cv=5, reps=10):
                 predicted_label = np.argmax(proba_rf, axis = 1)
                 ece_rf[jj][ii] = get_ece(proba_rf, predicted_label, y_test)
                 error_rf[jj][ii] = 1 - np.mean(y_test==predicted_label)
+                kappa_rf[jj][ii] = cohen_kappa_score(predicted_label, y_test)
 
                 model_kdf = kdf({'n_estimators':n_estimators})
                 model_kdf.fit(X_train[train_idx], y_train[train_idx])
@@ -114,11 +120,14 @@ def experiment(task_id, n_estimators=500, cv=5, reps=10):
                 predicted_label = np.argmax(proba_kdf, axis = 1)
                 ece_kdf[jj][ii] = get_ece(proba_kdf, predicted_label, y_test)
                 error_kdf[jj][ii] = 1 - np.mean(y_test==predicted_label)    
+                kappa_kdf[jj][ii] = cohen_kappa_score(predicted_label, y_test)
 
             mean_rf[jj][fold] = np.mean(error_rf[jj])   
             #var_rf[jj] = np.var(error_rf[jj], ddof=1)
             mean_kdf[jj][fold] = np.mean(error_kdf[jj])   
             #var_kdf[jj] = np.var(error_kdf[jj], ddof=1)
+            mean_kappa_rf[jj][fold] = np.mean(kappa_rf[jj])
+            mean_kappa_kdf[jj][fold] = np.mean(kappa_kdf[jj])
 
             mean_ece_rf[jj][fold] = np.mean(ece_rf[jj])   
             #var_ece_rf[jj] = np.var(ece_rf[jj], ddof=1)
@@ -130,6 +139,8 @@ def experiment(task_id, n_estimators=500, cv=5, reps=10):
 
     df['error_rf'] = np.ravel(mean_rf)
     df['error_kdf'] = np.ravel(mean_kdf)
+    df['kappa_rf'] = np.ravel(kappa_rf)
+    df['kappa_kdf'] = np.ravel(kappa_kdf)
     df['ece_rf'] = np.ravel(mean_ece_rf)
     df['ece_kdf'] = np.ravel(mean_ece_kdf)
     df['fold'] = folds
@@ -155,54 +166,75 @@ Parallel(n_jobs=assigned_workers,verbose=1)(
                 task_id
                 ) for task_id in benchmark_suite.tasks
             )
+
 # %%
 '''import matplotlib.pyplot as plt 
 import seaborn as sns
+import pandas as pd
+import numpy as np
+
+tasks = [3,6,12,14,16,18,22,28,32,43,219,3902,3903,3917,9952,9960,9978,10093,14965,14969,146820,167141]
+sample_size = [10,100,500,1000]
+reps = 5
 
 sns.set_context('talk')
-fig, ax = plt.subplots(1,2, figsize=(16,8))
 
-for ii in range(reps):
-    ax[0].plot(sample_size, error_kdf[:,ii], c='r', alpha=0.5, lw=1)
-    ax[0].plot(sample_size, error_rf[:,ii], c='k', alpha=0.5, lw=1)
+for task in tasks:
+    fig, ax = plt.subplots(1,2, figsize=(16,8))
+    
+    error_kdf = np.zeros((4,5), dtype=float)
+    error_rf = np.zeros((4,5), dtype=float)
+    ece_kdf = np.zeros((4,5), dtype=float)
+    ece_rf = np.zeros((4,5), dtype=float)
 
-ax[0].plot(sample_size, mean_kdf, label='KDF', c='r', lw=3)
-#ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
-ax[0].plot(sample_size, mean_rf, label='RF', c='k', lw=3)
-#ax.fill_between(sample_size, mean_rf-1.96*var_kdf, mean_rf+1.96*var_kdf, facecolor='k', alpha=0.5)
+    df = pd.read_csv('openML_cc18_task_'+str(task)+'.csv')
+    for ii in range(reps):
+        error_kdf[:,ii] = df['error_kdf'][df['fold']==ii]
+        error_rf[:,ii] = df['error_rf'][df['fold']==ii]
 
-ax[0].set_xlabel('Sample size')
-ax[0].set_ylabel('Generalization Error')
-ax[0].set_xscale('log')
-ax[0].legend(frameon=False)
-ax[0].set_title('Generalization Error', fontsize=24)
-ax[0].set_yticks([0,.2,.4,.6,.8,1])
-right_side = ax[0].spines["right"]
-right_side.set_visible(False)
-top_side = ax[0].spines["top"]
-top_side.set_visible(False)
+        ax[0].plot(sample_size, error_kdf[:,ii], c='r', alpha=0.5, lw=1)
+        ax[0].plot(sample_size, error_rf[:,ii], c='k', alpha=0.5, lw=1)
 
-for ii in range(reps):
-    ax[1].plot(sample_size, ece_kdf[:,ii], c='r', alpha=0.5, lw=1)
-    ax[1].plot(sample_size, ece_rf[:,ii], c='k', alpha=0.5, lw=1)
+    ax[0].plot(sample_size, np.mean(error_kdf,axis=1), label='KDF', c='r', lw=3)
+    #ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
+    ax[0].plot(sample_size, np.mean(error_rf,axis=1), label='RF', c='k', lw=3)
+    #ax.fill_between(sample_size, mean_rf-1.96*var_kdf, mean_rf+1.96*var_kdf, facecolor='k', alpha=0.5)
 
-ax[1].plot(sample_size, mean_ece_kdf, label='KDF', c='r', lw=3)
-#ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
-ax[1].plot(sample_size, mean_ece_rf, label='RF', c='k', lw=3)
-#ax.fill_between(sample_size, mean_rf-1.96*var_kdf, mean_rf+1.96*var_kdf, facecolor='k', alpha=0.5)
+    ax[0].set_xlabel('Sample size')
+    ax[0].set_ylabel('Generalization Error')
+    ax[0].set_xscale('log')
+    ax[0].legend(frameon=False)
+    ax[0].set_title('Generalization Error', fontsize=24)
+    ax[0].set_yticks([0,.2,.4,.6,.8,1])
+    right_side = ax[0].spines["right"]
+    right_side.set_visible(False)
+    top_side = ax[0].spines["top"]
+    top_side.set_visible(False)
 
-ax[1].set_xlabel('Sample size')
-ax[1].set_ylabel('ECE')
-ax[1].set_xscale('log')
-ax[1].legend(frameon=False)
-ax[1].set_title('Expected Callibration Error',fontsize=24)
-ax[1].set_yticks([0,.2,.4,.6,.8,1])
-right_side = ax[1].spines["right"]
-right_side.set_visible(False)
-top_side = ax[1].spines["top"]
-top_side.set_visible(False)
+    for ii in range(reps):
+        ece_kdf[:,ii] = df['ece_kdf'][df['fold']==ii]
+        ece_rf[:,ii] = df['ece_rf'][df['fold']==ii]
 
-plt.savefig('openML_cc18_14.pdf')
-plt.show()'''
+        ax[1].plot(sample_size, ece_kdf[:,ii], c='r', alpha=0.5, lw=1)
+        ax[1].plot(sample_size, ece_rf[:,ii], c='k', alpha=0.5, lw=1)
+
+    ax[1].plot(sample_size, np.mean(ece_kdf,axis=1), label='KDF', c='r', lw=3)
+    #ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
+    ax[1].plot(sample_size, np.mean(ece_rf,axis=1), label='RF', c='k', lw=3)
+    #ax.fill_between(sample_size, mean_rf-1.96*var_kdf, mean_rf+1.96*var_kdf, facecolor='k', alpha=0.5)
+
+    ax[1].set_xlabel('Sample size')
+    ax[1].set_ylabel('ECE')
+    ax[1].set_xscale('log')
+    ax[1].legend(frameon=False)
+    ax[1].set_title('Expected Callibration Error',fontsize=24)
+    ax[1].set_yticks([0,.2,.4,.6,.8,1])
+    right_side = ax[1].spines["right"]
+    right_side.set_visible(False)
+    top_side = ax[1].spines["top"]
+    top_side.set_visible(False)
+
+    plt.savefig('plots/openML_cc18_'+str(task)+'.pdf')
+#plt.show()'''
 
 # %%
