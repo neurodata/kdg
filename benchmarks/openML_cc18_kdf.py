@@ -139,8 +139,8 @@ def experiment(task_id, n_estimators=500, cv=5, reps=10):
 
     df['error_rf'] = np.ravel(mean_rf)
     df['error_kdf'] = np.ravel(mean_kdf)
-    df['kappa_rf'] = np.ravel(kappa_rf)
-    df['kappa_kdf'] = np.ravel(kappa_kdf)
+    df['kappa_rf'] = np.ravel(mean_kappa_rf)
+    df['kappa_kdf'] = np.ravel(mean_kappa_kdf)
     df['ece_rf'] = np.ravel(mean_ece_rf)
     df['ece_kdf'] = np.ravel(mean_ece_kdf)
     df['fold'] = folds
