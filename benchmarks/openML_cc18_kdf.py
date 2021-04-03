@@ -70,10 +70,10 @@ def experiment(task_id, n_estimators=500, cv=5, reps=10):
         return
     
     max_class = len(np.unique(y))
-    max_sample = np.floor(len(y)*0.8)
+    max_sample = np.floor(len(y)*(cv-1.1)/cv)
     sample_size = np.logspace(
         np.log10(max_class*2),
-        np.log10(sample_size),
+        np.log10(max_sample),
         num=10,
         endpoint=True,
         dtype=int
