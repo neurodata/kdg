@@ -173,27 +173,50 @@ Parallel(n_jobs=assigned_workers,verbose=1)(
             )
 
 # %%
-'''import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt 
 import seaborn as sns
 import pandas as pd
 import numpy as np
+from scipy.interpolate import interp1d
 
-tasks = [3,12,14,16,18,22,28,32,43,219,3902,3903,3917,9978,10093,14965]
-sample_size = [10,100,500,1000]
+tasks = [3,11,12,14,16,18,22,23,
+        28,31,32,37,43,45,49,53,
+        2074,3022,3549,3560,3902,
+        3903,3913,3917,3918,9946,
+        9952,9957,9960,9971,9978,
+        10093,10101,125922,146817,
+        146819,146820,146821,146822,
+        167141]
 reps = 5
+samples = []
+delta_kappas = []
+delta_eces = []
+kappa_over_dataset = [] 
+ece_over_dataset = []
 
 sns.set_context('talk')
 fig, ax = plt.subplots(1,2, figsize=(16,8))
+#minimum = 0
+#maximum = 1e10
 
 for task in tasks:
-    kappa_kdf = np.zeros((4,5), dtype=float)
-    kappa_rf = np.zeros((4,5), dtype=float)
-    delta_kappa = np.zeros((4,5), dtype=float)
-    delta_ece = np.zeros((4,5), dtype=float)
-    ece_kdf = np.zeros((4,5), dtype=float)
-    ece_rf = np.zeros((4,5), dtype=float)
-
     df = pd.read_csv('openML_cc18_task_'+str(task)+'.csv')
+    sample_ = list(np.unique(df['sample']))
+    samples.extend(sample_)
+
+samples = np.sort(np.unique(samples))
+
+for task in tasks:
+    df = pd.read_csv('openML_cc18_task_'+str(task)+'.csv')
+    sample_ = list(np.unique(df['sample']))
+
+    kappa_kdf = np.zeros((len(sample_),reps), dtype=float)
+    kappa_rf = np.zeros((len(sample_),reps), dtype=float)
+    delta_kappa = np.zeros((len(sample_),reps), dtype=float)
+    delta_ece = np.zeros((len(sample_),reps), dtype=float)
+    ece_kdf = np.zeros((len(sample_),reps), dtype=float)
+    ece_rf = np.zeros((len(sample_),reps), dtype=float)
+
     for ii in range(reps):
         kappa_kdf[:,ii] = df['kappa_kdf'][df['fold']==ii]
         kappa_rf[:,ii] = df['kappa_rf'][df['fold']==ii]
@@ -201,7 +224,13 @@ for task in tasks:
 
         #ax[0].plot(sample_size, delta_kappa[:,ii], c='k', alpha=0.5, lw=1)
 
-    ax[0].plot(sample_size, np.mean(delta_kappa,axis=1), c='k', lw=3)
+    mean_delta_kappa = np.mean(delta_kappa,axis=1)
+    interp_func_kappa = interp1d(sample_, mean_delta_kappa)
+    interpolated_kappa = np.array([np.nan]*len(samples))
+    interpolated_kappa_ = interp_func_kappa(samples[np.where((samples>=sample_[0]) & (samples<=sample_[-1]))[0]])
+    interpolated_kappa[np.where((samples>=sample_[0]) & (samples<=sample_[-1]))[0]] = interpolated_kappa_
+
+    ax[0].plot(sample_, mean_delta_kappa, c='r', alpha=0.3)
     #ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
     #ax[0].plot(sample_size, np.mean(kappa_rf,axis=1), label='RF', c='k', lw=3)
     #ax.fill_between(sample_size, mean_rf-1.96*var_kdf, mean_rf+1.96*var_kdf, facecolor='k', alpha=0.5)
@@ -225,7 +254,12 @@ for task in tasks:
         #ax[1].plot(sample_size, ece_kdf[:,ii], c='r', alpha=0.5, lw=1)
         #ax[1].plot(sample_size, delta_ece[:,ii], c='k', alpha=0.5, lw=1)
 
-    ax[1].plot(sample_size, np.mean(delta_ece,axis=1), c='k', lw=3)
+    mean_delta_ece = np.mean(delta_ece,axis=1)
+    interp_func_ece = interp1d(sample_, mean_delta_ece)
+    interpolated_ece = interp_func_kappa(samples[np.where((samples>=sample_[0]) & (samples<=sample_[-1]))[0]])
+    #interpolated_ece[np.where(samples<sample_[0] & samples>sample_[-1])] = np.nan
+
+    ax[1].plot(sample_, mean_delta_ece, c='r', alpha=0.3)
     #ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
     #ax[1].plot(sample_size, np.mean(ece_rf,axis=1), label='RF', c='k', lw=3)
     #ax.fill_between(sample_size, mean_rf-1.96*var_kdf, mean_rf+1.96*var_kdf, facecolor='k', alpha=0.5)
@@ -242,6 +276,6 @@ for task in tasks:
     top_side.set_visible(False)
 
 plt.savefig('plots/openML_cc18_all.pdf')
-#plt.show()'''
+#plt.show()
 
 # %%
