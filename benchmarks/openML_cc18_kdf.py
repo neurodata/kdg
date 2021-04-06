@@ -229,6 +229,7 @@ for task in tasks:
     interpolated_kappa = np.array([np.nan]*len(samples))
     interpolated_kappa_ = interp_func_kappa(samples[np.where((samples>=sample_[0]) & (samples<=sample_[-1]))[0]])
     interpolated_kappa[np.where((samples>=sample_[0]) & (samples<=sample_[-1]))[0]] = interpolated_kappa_
+    kappa_over_dataset.append(interpolated_kappa)
 
     ax[0].plot(sample_, mean_delta_kappa, c='r', alpha=0.3)
     #ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
@@ -256,7 +257,11 @@ for task in tasks:
 
     mean_delta_ece = np.mean(delta_ece,axis=1)
     interp_func_ece = interp1d(sample_, mean_delta_ece)
-    interpolated_ece = interp_func_kappa(samples[np.where((samples>=sample_[0]) & (samples<=sample_[-1]))[0]])
+    interpolated_ece = np.array([np.nan]*len(samples))
+    interpolated_ece_ = interp_func_ece(samples[np.where((samples>=sample_[0]) & (samples<=sample_[-1]))[0]])
+    interpolated_ece[np.where((samples>=sample_[0]) & (samples<=sample_[-1]))[0]] = interpolated_ece_
+    ece_over_dataset.append(interpolated_ece)
+
     #interpolated_ece[np.where(samples<sample_[0] & samples>sample_[-1])] = np.nan
 
     ax[1].plot(sample_, mean_delta_ece, c='r', alpha=0.3)
@@ -275,6 +280,10 @@ for task in tasks:
     top_side = ax[1].spines["top"]
     top_side.set_visible(False)
 
+ax[0].hlines(0, 4, np.max(samples), colors="k", linestyles="dashed", linewidth=1.5)
+ax[1].hlines(0, 4, np.max(samples), colors="k", linestyles="dashed", linewidth=1.5)
+ax[0].plot(samples, np.nanmean(kappa_over_dataset, axis=0), c='r', lw=3)
+ax[1].plot(samples, np.nanmean(ece_over_dataset, axis=0), c='r', lw=3)
 plt.savefig('plots/openML_cc18_all.pdf')
 #plt.show()
 
