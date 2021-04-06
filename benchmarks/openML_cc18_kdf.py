@@ -173,27 +173,27 @@ Parallel(n_jobs=assigned_workers,verbose=1)(
             )
 
 # %%
-'''import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt 
 import seaborn as sns
 import pandas as pd
 import numpy as np
 
-tasks = [3,12,14,16,18,22,28,32,43,219,3902,3903,3917,9978,10093,14965]
-sample_size = [10,100,500,1000]
+tasks = [3,11,12,14,16,18,22,23,28,31,32,37,43,45,49,53,2074,3022,3549,3560,3902,3903,3913,3917,3918,9946,9952,9957,9960,9971,9978,10093,10101,125922,146817,146819,146820,146821,146822,167141]
 reps = 5
 
 sns.set_context('talk')
 fig, ax = plt.subplots(1,2, figsize=(16,8))
 
 for task in tasks:
-    kappa_kdf = np.zeros((4,5), dtype=float)
-    kappa_rf = np.zeros((4,5), dtype=float)
-    delta_kappa = np.zeros((4,5), dtype=float)
-    delta_ece = np.zeros((4,5), dtype=float)
-    ece_kdf = np.zeros((4,5), dtype=float)
-    ece_rf = np.zeros((4,5), dtype=float)
-
     df = pd.read_csv('openML_cc18_task_'+str(task)+'.csv')
+    sample_size = np.unique(df['sample'])
+    kappa_kdf = np.zeros((len(sample_size),reps), dtype=float)
+    kappa_rf = np.zeros((len(sample_size),reps), dtype=float)
+    delta_kappa = np.zeros((len(sample_size),reps), dtype=float)
+    delta_ece = np.zeros((len(sample_size),reps), dtype=float)
+    ece_kdf = np.zeros((len(sample_size),reps), dtype=float)
+    ece_rf = np.zeros((len(sample_size),reps), dtype=float)
+
     for ii in range(reps):
         kappa_kdf[:,ii] = df['kappa_kdf'][df['fold']==ii]
         kappa_rf[:,ii] = df['kappa_rf'][df['fold']==ii]
@@ -242,6 +242,6 @@ for task in tasks:
     top_side.set_visible(False)
 
 plt.savefig('plots/openML_cc18_all.pdf')
-#plt.show()'''
+#plt.show()
 
 # %%
