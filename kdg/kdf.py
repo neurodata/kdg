@@ -41,7 +41,7 @@ class kdf(KernelDensityGraph):
                 for label in self.labels:
                     polytope_label_idx = np.where((y==label) & (polytopes_in_a_tree==polytope))[0]
                     
-                    if polytope_label_idx.size == 0:
+                    if polytope_label_idx.size == 0 or polytope_label_idx.size == 1:
                         continue
                     
                     self.polytope_means[label].append(
