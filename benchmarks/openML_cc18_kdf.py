@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier as rf
 from sklearn.metrics import cohen_kappa_score
+import os
 
 #%%
 def get_stratified_samples(y, samples_to_take):
@@ -151,10 +152,12 @@ def experiment(task_id, n_estimators=500, cv=5, reps=10):
     df['fold'] = folds
     df['sample'] = samples
 
-    df.to_csv('openML_cc18_task_'+str(task_id)+'.csv')
+    df.to_csv(folder+'/'+'openML_cc18_task_'+str(task_id)+'.csv')
 
 #%%
 np.random.seed(12345)
+folder = 'singleton_removed'
+os.mkdir(folder)
 cv = 5
 reps = 10
 n_estimators = 500
@@ -173,7 +176,7 @@ Parallel(n_jobs=assigned_workers,verbose=1)(
             )
 
 # %%
-import matplotlib.pyplot as plt 
+'''import matplotlib.pyplot as plt 
 import seaborn as sns
 import pandas as pd
 import numpy as np
@@ -186,7 +189,7 @@ tasks = [3,11,12,14,16,18,22,23,
         9952,9957,9960,9971,9978,
         10093,10101,125922,146817,
         146819,146820,146821,146822,
-        167141]
+        146824,167140,167141]
 reps = 5
 samples = []
 delta_kappas = []
@@ -284,7 +287,7 @@ ax[0].hlines(0, 4, np.max(samples), colors="k", linestyles="dashed", linewidth=1
 ax[1].hlines(0, 4, np.max(samples), colors="k", linestyles="dashed", linewidth=1.5)
 ax[0].plot(samples, np.nanmean(kappa_over_dataset, axis=0), c='r', lw=3)
 ax[1].plot(samples, np.nanmean(ece_over_dataset, axis=0), c='r', lw=3)
-plt.savefig('plots/openML_cc18_all.pdf')
+plt.savefig('plots/openML_cc18_all.pdf')'''
 #plt.show()
 
 # %%
