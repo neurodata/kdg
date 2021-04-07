@@ -176,7 +176,7 @@ Parallel(n_jobs=assigned_workers,verbose=1)(
             )
 
 # %%
-'''import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt 
 import seaborn as sns
 import pandas as pd
 import numpy as np
@@ -192,25 +192,37 @@ tasks = [3,11,12,14,16,18,22,23,
         146824,167140,167141]
 reps = 5
 samples = []
+samples_normalized = []
 delta_kappas = []
 delta_eces = []
 kappa_over_dataset = [] 
 ece_over_dataset = []
+kappa_normalized_over_dataset = []
+ece_normalized_over_dataset = []
 
 sns.set_context('talk')
-fig, ax = plt.subplots(1,2, figsize=(16,8))
+fig, ax = plt.subplots(2,2, figsize=(16,16))
 #minimum = 0
 #maximum = 1e10
 
 for task in tasks:
-    df = pd.read_csv('openML_cc18_task_'+str(task)+'.csv')
+    task_ = openml.tasks.get_task(task)
+    X, y = task_.get_X_and_y()
+    p = X.shape[1]
+
+    df = pd.read_csv('result_with_singleton_pure_leaf/openML_cc18_task_'+str(task)+'.csv')
     sample_ = list(np.unique(df['sample']))
     samples.extend(sample_)
+    samples_normalized.extend(sample_/p)
 
 samples = np.sort(np.unique(samples))
+samples_normalized = np.sort(np.unique(samples_normalized))
 
 for task in tasks:
-    df = pd.read_csv('openML_cc18_task_'+str(task)+'.csv')
+    X, y = task_.get_X_and_y()
+    p = X.shape[1]
+
+    df = pd.read_csv('result_with_singleton_pure_leaf/openML_cc18_task_'+str(task)+'.csv')
     sample_ = list(np.unique(df['sample']))
 
     kappa_kdf = np.zeros((len(sample_),reps), dtype=float)
@@ -234,20 +246,27 @@ for task in tasks:
     interpolated_kappa[np.where((samples>=sample_[0]) & (samples<=sample_[-1]))[0]] = interpolated_kappa_
     kappa_over_dataset.append(interpolated_kappa)
 
-    ax[0].plot(sample_, mean_delta_kappa, c='r', alpha=0.3)
+
+    interp_func_kappa_normalized = interp1d(sample_/p, mean_delta_kappa)
+    interpolated_kappa_normalized = np.array([np.nan]*len(samples_normalized))
+    interpolated_kappa_ = interp_func_kappa(samples[np.where((samples_normalized>=sample_[0]/p) & (samples_normalized<=sample_[-1]/p))[0]])
+    interpolated_kappa_normalized[np.where((samples_normalized>=sample_[0]/p) & (samples_normalized<=sample_[-1]/p))[0]] = interpolated_kappa_
+    kappa_normalized_over_dataset.append(interpolated_kappa)
+
+    ax[0][0].plot(sample_, mean_delta_kappa, c='r', alpha=0.3, lw=.5)
     #ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
     #ax[0].plot(sample_size, np.mean(kappa_rf,axis=1), label='RF', c='k', lw=3)
     #ax.fill_between(sample_size, mean_rf-1.96*var_kdf, mean_rf+1.96*var_kdf, facecolor='k', alpha=0.5)
 
-    ax[0].set_xlabel('Sample size')
-    ax[0].set_ylabel('kappa_kdf - kappa_rf')
-    ax[0].set_xscale('log')
-    #ax[0].legend(frameon=False)
-    ax[0].set_title('Delta Kappa', fontsize=24)
-    #ax[0].set_yticks([0,.2,.4,.6,.8,1])
-    right_side = ax[0].spines["right"]
+    ax[0][0].set_xlabel('Sample size')
+    ax[0][0].set_ylabel('kappa_kdf - kappa_rf')
+    ax[0][0].set_xscale('log')
+    #ax[0][0].legend(frameon=False)
+    ax[0][0].set_title('Delta Kappa', fontsize=24)
+    #ax[0][0].set_yticks([0,.2,.4,.6,.8,1])
+    right_side = ax[0][0].spines["right"]
     right_side.set_visible(False)
-    top_side = ax[0].spines["top"]
+    top_side = ax[0][0].spines["top"]
     top_side.set_visible(False)
 
     for ii in range(reps):
@@ -267,27 +286,27 @@ for task in tasks:
 
     #interpolated_ece[np.where(samples<sample_[0] & samples>sample_[-1])] = np.nan
 
-    ax[1].plot(sample_, mean_delta_ece, c='r', alpha=0.3)
+    ax[0][1].plot(sample_, mean_delta_ece, c='r', alpha=0.3, lw=.5)
     #ax.fill_between(sample_size, mean_kdf-1.96*var_kdf, mean_kdf+1.96*var_kdf, facecolor='r', alpha=0.5)
     #ax[1].plot(sample_size, np.mean(ece_rf,axis=1), label='RF', c='k', lw=3)
     #ax.fill_between(sample_size, mean_rf-1.96*var_kdf, mean_rf+1.96*var_kdf, facecolor='k', alpha=0.5)
 
-    ax[1].set_xlabel('Sample size')
-    ax[1].set_ylabel('ECE_kdf - ECE_rf')
-    ax[1].set_xscale('log')
+    ax[0][1].set_xlabel('Sample size')
+    ax[0][1].set_ylabel('ECE_kdf - ECE_rf')
+    ax[0][1].set_xscale('log')
     #ax[1].legend(frameon=False)
-    ax[1].set_title('Delta ECE',fontsize=24)
+    ax[0][1].set_title('Delta ECE',fontsize=24)
     #ax[1].set_yticks([0,.2,.4,.6,.8,1])
-    right_side = ax[1].spines["right"]
+    right_side = ax[0][1].spines["right"]
     right_side.set_visible(False)
-    top_side = ax[1].spines["top"]
+    top_side = ax[0][1].spines["top"]
     top_side.set_visible(False)
 
-ax[0].hlines(0, 4, np.max(samples), colors="k", linestyles="dashed", linewidth=1.5)
-ax[1].hlines(0, 4, np.max(samples), colors="k", linestyles="dashed", linewidth=1.5)
-ax[0].plot(samples, np.nanmean(kappa_over_dataset, axis=0), c='r', lw=3)
-ax[1].plot(samples, np.nanmean(ece_over_dataset, axis=0), c='r', lw=3)
-plt.savefig('plots/openML_cc18_all.pdf')'''
+ax[0][0].hlines(0, 4, np.max(samples), colors="k", linestyles="dashed", linewidth=1.5)
+ax[0][1].hlines(0, 4, np.max(samples), colors="k", linestyles="dashed", linewidth=1.5)
+ax[0][0].plot(samples, np.nanmean(kappa_over_dataset, axis=0), c='r', lw=3)
+ax[0][1].plot(samples, np.nanmean(ece_over_dataset, axis=0), c='r', lw=3)
+plt.savefig('plots/openML_cc18_all.pdf')
 #plt.show()
 
 # %%
