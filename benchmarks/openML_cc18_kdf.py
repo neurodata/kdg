@@ -183,14 +183,16 @@ import numpy as np
 import openml
 from scipy.interpolate import interp1d
 
-tasks = [3,11,12,14,16,18,22,23,
+'''tasks = [3,11,12,14,16,18,22,23,
         28,31,32,37,43,45,49,53,
         2074,3022,3549,3560,3902,
         3903,3913,3917,3918,9946,
         9952,9957,9960,9971,9978,
         10093,10101,125922,146817,
         146819,146820,146821,146822,
-        146824,167140,167141]
+        146824,167140,167141]'''
+
+tasks = [3,11,12,14,16,22,23,28,31,32,37,43,45,49,2074,3902,3903,3913,3917,9946,9952,9978,167141]
 reps = 5
 samples = []
 samples_normalized = []
@@ -224,7 +226,7 @@ for task in tasks:
     X, y = task_.get_X_and_y()
     p = X.shape[1]
 
-    df = pd.read_csv('result_with_singleton_pure_leaf/openML_cc18_task_'+str(task)+'.csv')
+    df = pd.read_csv('singleton_removed/openML_cc18_task_'+str(task)+'.csv')
     sample_ = list(np.unique(df['sample']))
     sample__ = list(np.unique(df['sample'])/p)
 
@@ -354,7 +356,7 @@ qunatiles = np.nanquantile(ece_normalized_over_dataset,[.25,.75],axis=0)
 ax[1][1].fill_between(samples_normalized, qunatiles[0], qunatiles[1], facecolor='r', alpha=.3)
 ax[1][1].hlines(0, np.min(samples_normalized), np.max(samples_normalized), colors="k", linestyles="dashed", linewidth=1.5)
 ax[1][1].plot(samples_normalized, np.nanmean(ece_normalized_over_dataset, axis=0), c='r', lw=3)
-plt.savefig('plots/openML_cc18_all.pdf')
+plt.savefig('plots/openML_cc18_all_without_singleton.pdf')
 #plt.show()
 
  # %%
