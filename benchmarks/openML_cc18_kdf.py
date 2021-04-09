@@ -156,11 +156,11 @@ def experiment(task_id, folder, n_estimators=500, cv=5, reps=10):
 
 #%%
 np.random.seed(12345)
-folder = 'amalgamated_activation'
+folder = 'amalgamated_activation2'
 os.mkdir(folder)
 cv = 5
 reps = 10
-n_estimators = 500
+n_estimators = 2
 n_cores = 1
 df = pd.DataFrame() 
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
@@ -193,7 +193,9 @@ from scipy.interpolate import interp1d
         146819,146820,146821,146822,
         146824,167140,167141]'''
 
-tasks = [3,6,11,12,14,16,22,23,28,31,32,37,43,45,49,2074,3902,3903,3913,3917,9946,9952,9964,9978,167141]
+tasks = [3,6,11,12,14,16,22,23,28,31,32,37,43,45,
+49,2074,3481,3902,3903,3913,3917,9946,9952,9964,9977,
+9978,146195,14970,167120,167141]
 reps = 5
 samples = []
 samples_normalized = []
@@ -214,7 +216,7 @@ for task in tasks:
     X, y = task_.get_X_and_y()
     p = X.shape[1]
 
-    df = pd.read_csv('amalgamated_activation/openML_cc18_task_'+str(task)+'.csv')
+    df = pd.read_csv('amalgamated_activation2/openML_cc18_task_'+str(task)+'.csv')
     sample_ = list(np.unique(df['sample']))
     samples.extend(sample_)
     #sample_ = list(np.unique(df['sample'])/p)
