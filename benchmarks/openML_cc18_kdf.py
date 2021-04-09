@@ -172,7 +172,8 @@ assigned_workers = total_cores//n_cores
 Parallel(n_jobs=assigned_workers,verbose=1)(
         delayed(experiment)(
                 task_id,
-                folder
+                folder,
+                n_estimators=n_estimators
                 ) for task_id in benchmark_suite.tasks
             )
 
