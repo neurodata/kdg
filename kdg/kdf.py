@@ -38,13 +38,13 @@ class kdf(KernelDensityGraph):
             predicted_leaf_ids_across_trees = np.array(
                 [tree.apply(X_) for tree in self.rf_model.estimators_]
                 ).T
-            _, polytope_idx, self.polytope_cardinality[label] = np.unique(
-                predicted_leaf_ids_across_trees, return_counts=True, return_inverse=True, axis=0
+            _, polytope_idx = np.unique(
+                predicted_leaf_ids_across_trees, return_inverse=True, axis=0
             )
             total_polytopes = np.max(polytope_idx)+1
 
             for polytope in range(total_polytopes):
-                idx = np.where(polytope_idx==polytope)
+                idx = np.where(polytope_idx==polytope)[0]
                 self.polytope_means[label].append(
                     np.mean(
                         X_[idx],
@@ -54,20 +54,24 @@ class kdf(KernelDensityGraph):
                 
                 if len(idx) == 1:
                     continue
-
+                
                 self.polytope_vars[label].append(
                     np.var(
                         X_[idx],
                         axis=0
                     )
                 )
+                self.polytope_cardinality[label].append(len(idx))
 
         for label in self.labels:
-            self.polytope_mean_cov[label] = np.average(
-                self.polytope_vars[label],
-                weights = self.polytope_cardinality[label],
-                axis = 0
-                )
+            if np.sum(self.polytope_cardinality[label]) == 0:
+                self.polytope_mean_cov[label] = 0
+            else:
+                self.polytope_mean_cov[label] = np.average(
+                    self.polytope_vars[label],
+                    weights = self.polytope_cardinality[label],
+                    axis = 0
+                    )
 
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
