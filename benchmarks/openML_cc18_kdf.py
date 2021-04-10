@@ -10,7 +10,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier as rf
 from sklearn.metrics import cohen_kappa_score
 import os
-
+from itertools import product
 #%%
 def get_stratified_samples(y, samples_to_take):
     labels = np.unique(y)
@@ -58,9 +58,10 @@ def get_stratified_samples(y, samples_to_take):
     return stratified_indices
 
 # %%
-def experiment(task_id, folder, max_depth, n_estimators=500, cv=5, reps=10):
+def experiment(task_id, max_depth, n_estimators=500, cv=5, reps=10):
     df = pd.DataFrame() 
     #task_id = 14
+    folder = 'amalgamated_activation_'+str(max_depth)
     task = openml.tasks.get_task(task_id)
     X, y = task.get_X_and_y()
 
@@ -173,18 +174,21 @@ benchmark_suite = openml.study.get_suite('OpenML-CC18')
 #%%
 total_cores = multiprocessing.cpu_count()
 assigned_workers = total_cores//n_cores
+folders = []
 
 for max_depth in depths:
     folder = 'amalgamated_activation_'+str(max_depth)
     os.mkdir(folder)
-    Parallel(n_jobs=assigned_workers,verbose=1)(
-            delayed(experiment)(
-                    task_id,
-                    folder,
-                    max_depth,
-                    n_estimators=n_estimators
-                    ) for task_id in benchmark_suite.tasks
-                )
+    folders.append(folder)
+
+iterable = product(depths, list(benchmark_suite.tasks))
+Parallel(n_jobs=assigned_workers,verbose=1)(
+         delayed(experiment)(
+                task_id,
+                max_depth,
+                n_estimators=n_estimators
+                ) for max_depth,task_id in iterable
+            )
 
 
  # %%
