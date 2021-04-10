@@ -51,6 +51,10 @@ class kdf(KernelDensityGraph):
                         axis=0
                     )
                 )
+                
+                if len(idx) == 1:
+                    continue
+
                 self.polytope_vars[label].append(
                     np.var(
                         X_[idx],
