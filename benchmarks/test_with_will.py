@@ -19,7 +19,7 @@ error = np.zeros(5, dtype=float)
 
 for ii, [train_index, test_index] in enumerate(skf.split(X, y)):
     np.random.seed(12345)
-    model_kdf = kdf({'n_estimators':5})
+    model_kdf = kdf({'n_estimators':1,'max_depth':2})
     model_kdf.fit(X[train_index], y[train_index])
     error[ii] = 1 - np.mean(y[test_index]==model_kdf.predict(X[test_index]))
 

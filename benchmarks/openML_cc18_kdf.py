@@ -59,9 +59,13 @@ def get_stratified_samples(y, samples_to_take):
 
 # %%
 def experiment(task_id, max_depth, n_estimators=500, cv=5, reps=10):
+
+    folder = 'amalgamated_activation_'+str(max_depth)
+    if os.path.isfile(folder+'/openML_cc18_task_'+str(task_id)+'.csv'):
+        return 
+
     df = pd.DataFrame() 
     #task_id = 14
-    folder = 'amalgamated_activation_'+str(max_depth)
     task = openml.tasks.get_task(task_id)
     X, y = task.get_X_and_y()
 
