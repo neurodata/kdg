@@ -182,7 +182,7 @@ folders = []
 
 for max_depth in depths:
     folder = 'amalgamated_activation_'+str(max_depth)
-    os.mkdir(folder)
+    #os.mkdir(folder)
     folders.append(folder)
 
 iterable = product(depths, list(benchmark_suite.tasks))
