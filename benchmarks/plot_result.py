@@ -27,14 +27,14 @@ fig, ax = plt.subplots(1,2, figsize=(16,8))
 #maximum = 1e10
 
 for file_ in files:
-    df = pd.read_csv(current_dir+'/'+file_)
+    df = pd.read_csv(current_dir+'/'+folder+'/'+file_)
     sample_ = list(np.unique(df['sample']))
     samples.extend(sample_)
 
 samples = np.sort(np.unique(samples))
 
 for file_ in files:
-    df = pd.read_csv(current_dir+'/'+file_)
+    df = pd.read_csv(current_dir+'/'+folder+'/'+file_)
     sample_ = list(np.unique(df['sample']))
 
     kappa_kdf = np.zeros((len(sample_),reps), dtype=float)
