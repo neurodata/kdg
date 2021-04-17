@@ -47,7 +47,7 @@ class kdf(KernelDensityGraph):
                 )
                 idx = np.where(
                     matched_samples>0
-                )
+                )[0]
                 self.polytope_means[label].append(
                     np.mean(
                         X_[idx],
