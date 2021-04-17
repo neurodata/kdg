@@ -34,38 +34,47 @@ class kdf(KernelDensityGraph):
             self.polytope_cardinality[label] = []
             self.polytope_mean_cov[label] = []
 
-        predicted_leaf_ids_across_trees = [tree.apply(X) for tree in self.rf_model.estimators_]
+            X_ = X[np.where(y==label)]
+            predicted_leaf_ids_across_trees = np.array(
+                [tree.apply(X_) for tree in self.rf_model.estimators_]
+                ).T
+            total_polytopes_this_label = len(X_)
 
-        for polytopes_in_a_tree in predicted_leaf_ids_across_trees:
-            for polytope in np.unique(polytopes_in_a_tree):
-                for label in self.labels:
-                    polytope_label_idx = np.where((y==label) & (polytopes_in_a_tree==polytope))[0]
-                    
-                    if polytope_label_idx.size == 0 or polytope_label_idx.size == 1:
-                        continue
-                    
-                    self.polytope_means[label].append(
-                        np.mean(
-                            X[polytope_label_idx],
-                            axis=0
-                        )
+            for polytope in range(total_polytopes_this_label):
+                matched_samples = np.sum(
+                    predicted_leaf_ids_across_trees == predicted_leaf_ids_across_trees[polytope],
+                    axis=1
+                )
+                idx = np.where(
+                    matched_samples>0
+                )
+                self.polytope_means[label].append(
+                    np.mean(
+                        X_[idx],
+                        axis=0
                     )
-                    self.polytope_vars[label].append(
-                        np.var(
-                            X[polytope_label_idx],
-                            axis=0
-                        )
+                )
+                
+                if len(idx) == 1:
+                    continue
+                
+                self.polytope_vars[label].append(
+                    np.var(
+                        X_[idx],
+                        axis=0
                     )
-                    self.polytope_cardinality[label].append(
-                        len(polytope_label_idx)
-                    )
+                )
+                self.polytope_cardinality[label].append(len(idx))
 
         for label in self.labels:
-            self.polytope_mean_cov[label] = np.average(
-                self.polytope_vars[label],
-                weights = self.polytope_cardinality[label],
-                axis = 0
-                )
+            if np.sum(self.polytope_cardinality[label]) == 0:
+                self.polytope_mean_cov[label] = 0
+            else:
+                self.polytope_mean_cov[label] = np.average(
+                    self.polytope_vars[label],
+                    weights = self.polytope_cardinality[label],
+                    axis = 0
+                    )
 
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
