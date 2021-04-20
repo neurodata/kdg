@@ -3,6 +3,7 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
 from scipy.stats import multivariate_normal
+from sklearn.covariance import EmpiricalCovariance
 
 class kdf(KernelDensityGraph):
 
@@ -48,21 +49,17 @@ class kdf(KernelDensityGraph):
                 idx = np.where(
                     matched_samples>0
                 )[0]
-                self.polytope_means[label].append(
-                    np.mean(
-                        X_[idx],
-                        axis=0
-                    )
-                )
-                
+
                 if len(idx) == 1:
                     continue
+
+                cov = EmpiricalCovariance().fit(X_[idx])
+                self.polytope_means[label].append(
+                    cov.location_
+                )
                 
                 self.polytope_vars[label].append(
-                    np.var(
-                        X_[idx],
-                        axis=0
-                    )
+                    cov.covariance_
                 )
                 self.polytope_cardinality[label].append(len(idx))
 
@@ -78,7 +75,7 @@ class kdf(KernelDensityGraph):
 
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
-        polytope_cov = np.eye(len(self.polytope_mean_cov[label]), dtype=float)*self.polytope_mean_cov[label]
+        polytope_cov = self.polytope_vars[label][polytope_idx] 
         polytope_cardinality = self.polytope_cardinality[label]
 
         var = multivariate_normal(
