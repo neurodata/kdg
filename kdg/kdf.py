@@ -81,7 +81,7 @@ class kdf(KernelDensityGraph):
         var = multivariate_normal(
             mean=polytope_mean, 
             cov=polytope_cov, 
-            allow_singular=False
+            allow_singular=True
             )
 
         likelihood = var.pdf(X)*polytope_cardinality[polytope_idx]/np.sum(polytope_cardinality)
