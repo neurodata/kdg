@@ -3,7 +3,7 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
 from scipy.stats import multivariate_normal
-from sklearn.covariance import EmpiricalCovariance
+from sklearn.covariance import ShrunkCovariance
 
 class kdf(KernelDensityGraph):
 
@@ -53,7 +53,7 @@ class kdf(KernelDensityGraph):
                 if len(idx) == 1:
                     continue
 
-                cov = EmpiricalCovariance().fit(X_[idx])
+                cov = ShrunkCovariance().fit(X_[idx])
                 self.polytope_means[label].append(
                     cov.location_
                 )
