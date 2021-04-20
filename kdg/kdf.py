@@ -75,7 +75,7 @@ class kdf(KernelDensityGraph):
 
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
-        polytope_cov = self.polytope_vars[label][polytope_idx] 
+        polytope_cov = self.polytope_mean_cov[label][polytope_idx]
         polytope_cardinality = self.polytope_cardinality[label]
 
         var = multivariate_normal(

@@ -58,7 +58,7 @@ def get_stratified_samples(y, samples_to_take):
     return stratified_indices
 
 # %%
-def experiment(task_id, n_estimators=500, cv=5, reps=10):
+def experiment(task_id, folder, n_estimators=500, cv=5, reps=10):
     df = pd.DataFrame() 
     #task_id = 14
     task = openml.tasks.get_task(task_id)
@@ -156,7 +156,7 @@ def experiment(task_id, n_estimators=500, cv=5, reps=10):
 
 #%%
 np.random.seed(12345)
-folder = 'result'
+folder = 'result_EM'
 os.mkdir(folder)
 cv = 5
 reps = 10
@@ -171,7 +171,8 @@ assigned_workers = total_cores//n_cores
 
 Parallel(n_jobs=assigned_workers,verbose=1)(
         delayed(experiment)(
-                task_id
+                task_id,
+                folder
                 ) for task_id in benchmark_suite.tasks
             )
 
