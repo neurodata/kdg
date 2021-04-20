@@ -7,7 +7,7 @@ import openml
 from scipy.interpolate import interp1d
 from os import listdir, getcwd 
 
-folder = 'result'
+folder = 'result_EM'
 current_dir = getcwd()
 files = listdir(current_dir+'/'+folder)
 
@@ -68,7 +68,7 @@ for file_ in files:
     ax[0].set_ylabel('kappa_kdf - kappa_rf')
     ax[0].set_xscale('log')
     #ax[0][0].legend(frameon=False)
-    ax[0].set_title('Delta Kappa', fontsize=24)
+    ax[0].set_title('Delta Kappa (higher better)', fontsize=24)
     #ax[0][0].set_yticks([0,.2,.4,.6,.8,1])
     right_side = ax[0].spines["right"]
     right_side.set_visible(False)
@@ -107,7 +107,7 @@ for file_ in files:
     ax[1].set_ylabel('ECE_kdf - ECE_rf')
     ax[1].set_xscale('log')
     #ax[1].legend(frameon=False)
-    ax[1].set_title('Delta ECE',fontsize=24)
+    ax[1].set_title('Delta ECE (lower better)',fontsize=24)
     #ax[1].set_yticks([0,.2,.4,.6,.8,1])
     right_side = ax[1].spines["right"]
     right_side.set_visible(False)
@@ -127,7 +127,7 @@ qunatiles = np.nanquantile(ece_over_dataset,[.25,.75],axis=0)
 ax[1].fill_between(samples, qunatiles[0], qunatiles[1], facecolor='r', alpha=.3)
 ax[1].plot(samples, np.nanmean(ece_over_dataset, axis=0), c='r', lw=3)
 
-plt.savefig('plots/openML_cc18_all_Gaussian_per_point.pdf')
+plt.savefig('plots/openML_cc18_all_Gaussian_per_point_EM.pdf')
 #plt.show()
 
  # %%
