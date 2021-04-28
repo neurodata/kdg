@@ -9,6 +9,7 @@ class kdf(KernelDensityGraph):
 
     def __init__(self, kwargs={}):
         super().__init__()
+        self.polytope_means_ = {}
         self.polytope_means = {}
         self.polytope_cov = {}
         self.polytope_cardinality = {}
@@ -31,6 +32,7 @@ class kdf(KernelDensityGraph):
 
         for label in self.labels:
             self.polytope_means[label] = []
+            self.polytope_means_[label] = []
             self.polytope_cov[label] = []
 
             X_ = X[np.where(y==label)[0]]
@@ -51,7 +53,7 @@ class kdf(KernelDensityGraph):
                 if len(idx) == 1:
                     continue
                 
-                self.polytope_means[label].append(
+                self.polytope_means_[label].append(
                     np.mean(
                         X_[idx],
                         axis=0
@@ -60,7 +62,8 @@ class kdf(KernelDensityGraph):
         
         for label in self.labels:
             covariance_types = {'full', 'tied', 'diag', 'spherical'}
-            means = self.polytope_means[label]
+            means = np.unique(self.polytope_means_[label], axis=0)
+            self.polytope_means[label] = means
             X_ = X[np.where(y==label)[0]]
             n_components = len(means)
             min_bic = 1e18
