@@ -1,16 +1,16 @@
 from .base import KernelDensityGraph
+from .gmm import GaussianMixture
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
 from scipy.stats import multivariate_normal
-from sklearn.covariance import LedoitWolf
 
 class kdf(KernelDensityGraph):
 
     def __init__(self, kwargs={}):
         super().__init__()
         self.polytope_means = {}
-        self.polytope_vars = {}
+        self.polytope_cov = {}
         self.polytope_cardinality = {}
         self.polytope_mean_cov = {}
         self.kwargs = kwargs
@@ -31,11 +31,9 @@ class kdf(KernelDensityGraph):
 
         for label in self.labels:
             self.polytope_means[label] = []
-            self.polytope_vars[label] = []
-            self.polytope_cardinality[label] = []
-            self.polytope_mean_cov[label] = []
+            self.polytope_cov[label] = []
 
-            X_ = X[np.where(y==label)]
+            X_ = X[np.where(y==label)[0]]
             predicted_leaf_ids_across_trees = np.array(
                 [tree.apply(X_) for tree in self.rf_model.estimators_]
                 ).T
@@ -52,31 +50,23 @@ class kdf(KernelDensityGraph):
 
                 if len(idx) == 1:
                     continue
-
-                cov = LedoitWolf().fit(X_[idx])
-                self.polytope_means[label].append(
-                    cov.location_
-                )
                 
-                self.polytope_vars[label].append(
-                    cov.covariance_
-                )
-                self.polytope_cardinality[label].append(len(idx))
-
-        for label in self.labels:
-            if np.sum(self.polytope_cardinality[label]) == 0:
-                self.polytope_mean_cov[label] = 0
-            else:
-                self.polytope_mean_cov[label] = np.average(
-                    self.polytope_vars[label],
-                    weights = self.polytope_cardinality[label],
-                    axis = 0
+                self.polytope_means[label].append(
+                    np.mean(
+                        X_[idx],
+                        axis=0
                     )
+                )
+        
+        for label in self.labels:
+            means = self.polytope_means[label]
+            n_components = len(means)
+            gm = GaussianMixture(n_components=n_components, means_init=means).fit(X[np.where(y==label)[0]])
+            self.polytope_cov[label] =  gm.covariances_
 
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
-        polytope_cov = self.polytope_mean_cov[label]
-        polytope_cardinality = self.polytope_cardinality[label]
+        polytope_cov = self.polytope_cov[label][polytope_idx]
 
         var = multivariate_normal(
             mean=polytope_mean, 
@@ -84,7 +74,7 @@ class kdf(KernelDensityGraph):
             allow_singular=True
             )
 
-        likelihood = var.pdf(X)*polytope_cardinality[polytope_idx]/np.sum(polytope_cardinality)
+        likelihood = var.pdf(X)
         return likelihood
 
     def predict_proba(self, X):
