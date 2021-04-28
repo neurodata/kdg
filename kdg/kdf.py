@@ -59,10 +59,22 @@ class kdf(KernelDensityGraph):
                 )
         
         for label in self.labels:
+            covariance_types = {'full', 'tied', 'diag', 'spherical'}
             means = self.polytope_means[label]
+            X_ = X[np.where(y==label)[0]]
             n_components = len(means)
-            gm = GaussianMixture(n_components=n_components, means_init=means).fit(X[np.where(y==label)[0]])
-            self.polytope_cov[label] =  gm.covariances_
+            min_bic = 1e18
+            tmp_cov = 0
+            
+            for cov_type in covariance_types:
+                try:
+                    gm = GaussianMixture(n_components=n_components, covariance_type=cov_type, means_init=means).fit(X_)
+                    if min_bic > gm.bic(X_):
+                        tmp_cov = gm.covariances_
+                except:
+                    pass
+
+            self.polytope_cov[label] =  tmp_cov
 
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
@@ -93,7 +105,7 @@ class kdf(KernelDensityGraph):
         )
         
         for ii,label in enumerate(self.labels):
-            for polytope_idx,_ in enumerate(self.polytope_cardinality[label]):
+            for polytope_idx,_ in enumerate(self.polytope_means[label]):
                 likelihoods[:,ii] += self._compute_pdf(X, label, polytope_idx)
 
         proba = (likelihoods.T/(np.sum(likelihoods,axis=1)+1e-200)).T
