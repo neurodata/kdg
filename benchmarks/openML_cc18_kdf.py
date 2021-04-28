@@ -155,11 +155,10 @@ def experiment(task_id, folder, n_estimators=500, cv=5, reps=10):
     df.to_csv(folder+'/'+'openML_cc18_task_'+str(task_id)+'.csv')
 
 #%%
-np.random.seed(12345)
 folder = 'result'
 os.mkdir(folder)
 cv = 5
-reps = 10
+reps = 100
 n_estimators = 10
 n_cores = 1
 df = pd.DataFrame() 
