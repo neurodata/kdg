@@ -7,7 +7,7 @@ import openml
 from scipy.interpolate import interp1d
 from os import listdir, getcwd 
 
-folder = 'result_EM'
+folder = 'result'
 current_dir = getcwd()
 files = listdir(current_dir+'/'+folder)
 
