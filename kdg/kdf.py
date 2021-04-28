@@ -72,13 +72,14 @@ class kdf(KernelDensityGraph):
             for cov_type in covariance_types:
                 try:
                     gm = GaussianMixture(n_components=n_components, covariance_type=cov_type, means_init=means).fit(X_)
+                    print(gm.bic(X_))
                     if min_bic > gm.bic(X_):
                         tmp_cov = gm.covariances_
                 except:
                     pass
 
             self.polytope_cov[label] =  tmp_cov
-
+            print('\n')
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
         polytope_cov = self.polytope_cov[label][polytope_idx]
