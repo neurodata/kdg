@@ -110,3 +110,23 @@ def generate_gaussian_parity(
         X = X @ R
 
     return X, y.astype(int)
+
+def pdf(x, cov_scale=0.25):
+    mu01 = np.array([-0.5,0.5])
+    mu02 = np.array([0.5,-0.5])
+    mu11 = np.array([0.5,0.5])
+    mu12 = np.array([-0.5,-0.5])
+    cov = cov_scale* np.eye(2)
+    inv_cov = np.linalg.inv(cov) 
+
+    p0 = (
+        np.exp(-(x - mu01)@inv_cov@(x-mu01).T) 
+        + np.exp(-(x - mu02)@inv_cov@(x-mu02).T)
+    )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+
+    p1 = (
+        np.exp(-(x - mu11)@inv_cov@(x-mu11).T) 
+        + np.exp(-(x - mu12)@inv_cov@(x-mu12).T)
+    )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+
+    return p0/(p0+p1)
