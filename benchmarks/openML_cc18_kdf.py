@@ -159,7 +159,7 @@ folder = 'result'
 os.mkdir(folder)
 cv = 5
 reps = 10
-n_estimators = 10
+n_estimators = 500
 n_cores = 1
 df = pd.DataFrame() 
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
