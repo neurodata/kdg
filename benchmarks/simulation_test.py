@@ -12,12 +12,12 @@ from sklearn.metrics import cohen_kappa_score
 import os
 from kdg.utils import generate_gaussian_parity, pdf, hellinger
 # %%
-reps = 1000
+reps = 100
 n_estimators = 500
 sample_size = np.logspace(
         np.log10(10),
-        np.log10(10000),
-        num=10,
+        np.log10(1000),
+        num=5,
         endpoint=True,
         dtype=int
         )
@@ -41,6 +41,7 @@ hellinger_dist_rf = []
 sample_list = []
 
 for sample in sample_size:
+    print('Doing sample %d'%sample)
     for i in range(reps):
         X, y = generate_gaussian_parity(sample)
         model_kdf = kdf({'n_estimators':n_estimators})
@@ -57,5 +58,6 @@ for sample in sample_size:
 df['hellinger dist kdf'] = hellinger_dist_kdf
 df['hellinger dist rf'] = hellinger_dist_rf
 df['sample'] = sample_list
-
+df.to_csv('simulation_res_1000.csv')
         
+# %%
