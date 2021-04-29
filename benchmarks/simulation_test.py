@@ -22,8 +22,8 @@ sample_size = np.logspace(
         dtype=int
         )
 delta = 0.01
-p = np.arange(-2,2,step=delta)
-q = np.arange(-2,2,step=delta)
+p = np.arange(-1,1,step=delta)
+q = np.arange(-1,1,step=delta)
 xx, yy = np.meshgrid(p,q)
 grid_samples = np.concatenate(
             (
