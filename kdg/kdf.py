@@ -63,7 +63,7 @@ class kdf(KernelDensityGraph):
                     )
                 for cov_type in covariance_types:
                     try:
-                        gm = GaussianMixture(n_components=1, covariance_type=cov_type).fit(X_[idx])
+                        gm = GaussianMixture(n_components=1, covariance_type=cov_type).fit(X_[idx], reg_covar=1e-3)
                         if min_bic > gm.bic(X_[idx]):
                             min_bic = gm.bic(X_[idx])
                             tmp_cov = gm.covariances_[0]
