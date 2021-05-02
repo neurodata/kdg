@@ -4,16 +4,26 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
 from scipy.stats import multivariate_normal
+import warnings
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, kwargs={}):
+    def __init__(self, kwargs={}, covariance_types = {'full', 'tied', 'diag', 'spherical'}, criterion=None):
         super().__init__()
+
+        if len(covariance_types) > 1 and criterion == None:
+            raise ValueError(
+                    "The criterion cannot be None when there are more than 1 covariance_types."
+                )
+            return
+            
         self.polytope_means = {}
         self.polytope_cov = {}
         self.polytope_cardinality = {}
         self.polytope_mean_cov = {}
         self.kwargs = kwargs
+        self.covariance_types = covariance_types
+        self.criterion = criterion
 
     def fit(self, X, y):
         r"""
@@ -28,7 +38,6 @@ class kdf(KernelDensityGraph):
         X, y = check_X_y(X, y)
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
-        covariance_types = {'full', 'tied', 'diag', 'spherical'}
 
         for label in self.labels:
             self.polytope_means[label] = []
@@ -52,24 +61,45 @@ class kdf(KernelDensityGraph):
                 if len(idx) == 1:
                     continue
                 
-                min_bic = 1e20
-                tmp_means = np.mean(
+                if self.criterion == None:
+                    gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types).fit(X_[idx], reg_covar=1e-4)
+                    self.polytope_means[label].append(
+                            np.mean(
+                            X_[idx],
+                            axis=0
+                        )
+                    )
+                    self.polytope_cov[label].append(
+                            np.var(
+                            X_[idx],
+                            axis=0
+                        )
+                    )
+                else:
+                    min_val = 1e20
+                    tmp_means = np.mean(
                         X_[idx],
                         axis=0
                     )
-                tmp_cov = np.var(
+                    tmp_cov = np.var(
                         X_[idx],
                         axis=0
                     )
-                for cov_type in covariance_types:
-                    try:
-                        gm = GaussianMixture(n_components=1, covariance_type=cov_type).fit(X_[idx], reg_covar=1e-3)
-                        if min_bic > gm.bic(X_[idx]):
-                            min_bic = gm.bic(X_[idx])
-                            tmp_cov = gm.covariances_[0]
-                            tmp_means = gm.means_[0]
-                    except:
-                        pass
+                    for cov_type in covariance_types:
+                        try:
+                            gm = GaussianMixture(n_components=1, covariance_type=cov_type).fit(X_[idx], reg_covar=1e-3)
+
+                            if self.criterion == 'aic':
+                                constarint = gm.aic(X_[idx])
+                            else:
+                                constraint = gm.bic(X_[idx])
+
+                            if min_val > constarint:
+                                min_bic = constarint
+                                tmp_cov = gm.covariances_[0]
+                                tmp_means = gm.means_[0]
+                        except:
+                            warnings.warn("Could not fit for cov_type "+cov_type)
                     
                 self.polytope_means[label].append(
                     tmp_means
@@ -77,7 +107,6 @@ class kdf(KernelDensityGraph):
                 self.polytope_cov[label].append(
                     tmp_cov
                 )
-                #print(tmp_cov)
         
             
     def _compute_pdf(self, X, label, polytope_idx):
