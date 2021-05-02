@@ -12,28 +12,54 @@ from sklearn.metrics import cohen_kappa_score
 import os
 from kdg.utils import generate_gaussian_parity, pdf, hellinger
 # %%
-reps = 100
+reps = 1000
 n_estimators = 500
 sample_size = np.logspace(
         np.log10(10),
-        np.log10(1000),
-        num=5,
+        np.log10(10000),
+        num=10,
         endpoint=True,
         dtype=int
         )
-delta = 0.01
-p = np.arange(-1,1,step=delta)
-q = np.arange(-1,1,step=delta)
-xx, yy = np.meshgrid(p,q)
-grid_samples = np.concatenate(
+
+#%%
+def experiment_kdf(sample, n_estimators=500):
+    X, y = generate_gaussian_parity(sample)
+    p = np.arange(-1,1,step=0.01)
+    q = np.arange(-1,1,step=0.01)
+    xx, yy = np.meshgrid(p,q)
+    grid_samples = np.concatenate(
             (
                 xx.reshape(-1,1),
                 yy.reshape(-1,1)
             ),
             axis=1
-) 
-true_pdf_class1 = np.array([pdf(x) for x in grid_samples]).reshape(-1,1)
-true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
+    ) 
+    model_kdf = kdf({'n_estimators':n_estimators})
+    model_kdf.fit(X, y)
+    proba_kdf = model_kdf.predict_proba(grid_samples)
+    true_pdf_class1 = np.array([pdf(x) for x in grid_samples]).reshape(-1,1)
+    true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
+    return hellinger(proba_kdf, true_pdf)
+
+def experiment_rf(sample, n_estimators=500):
+    X, y = generate_gaussian_parity(sample)
+    p = np.arange(-1,1,step=0.01)
+    q = np.arange(-1,1,step=0.01)
+    xx, yy = np.meshgrid(p,q)
+    grid_samples = np.concatenate(
+            (
+                xx.reshape(-1,1),
+                yy.reshape(-1,1)
+            ),
+            axis=1
+    ) 
+    model_rf = rf(n_estimators=n_estimators).fit(X, y)
+    proba_rf = model_rf.predict_proba(grid_samples)
+    true_pdf_class1 = np.array([pdf(x) for x in grid_samples]).reshape(-1,1)
+    true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
+    return hellinger(proba_rf, true_pdf)
+    
 #%%
 df = pd.DataFrame()
 hellinger_dist_kdf = []
@@ -42,18 +68,24 @@ sample_list = []
 
 for sample in sample_size:
     print('Doing sample %d'%sample)
-    for i in range(reps):
-        X, y = generate_gaussian_parity(sample)
-        model_kdf = kdf({'n_estimators':n_estimators})
-        model_kdf.fit(X, y)
-        model_rf = rf(n_estimators=n_estimators).fit(X, y)
 
-        proba_kdf = model_kdf.predict_proba(grid_samples)
-        proba_rf = model_rf.predict_proba(grid_samples)
+    hellinger_dist_kdf.extend(
+        Parallel(n_jobs=-1)(
+        delayed(experiment_kdf)(
+                sample
+                ) for _ in range(reps)
+            )
+    )
 
-        hellinger_dist_kdf.append(hellinger(proba_kdf, true_pdf))
-        hellinger_dist_rf.append(hellinger(proba_rf, true_pdf))
-        sample_list.append(sample)
+    hellinger_dist_rf.extend(
+        Parallel(n_jobs=-1)(
+        delayed(experiment_rf)(
+                sample
+                ) for _ in range(reps)
+            )
+    )
+
+    sample_list.extend([sample]*reps)
 
 df['hellinger dist kdf'] = hellinger_dist_kdf
 df['hellinger dist rf'] = hellinger_dist_rf
