@@ -8,7 +8,7 @@ import warnings
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, kwargs={}, covariance_types = {'full', 'tied', 'diag', 'spherical'}, criterion=None):
+    def __init__(self, kwargs={}, covariance_types = {'full'}, criterion=None):
         super().__init__()
 
         if len(covariance_types) > 1 and criterion == None:
@@ -16,7 +16,7 @@ class kdf(KernelDensityGraph):
                     "The criterion cannot be None when there are more than 1 covariance_types."
                 )
             return
-            
+
         self.polytope_means = {}
         self.polytope_cov = {}
         self.polytope_cardinality = {}
@@ -62,7 +62,7 @@ class kdf(KernelDensityGraph):
                     continue
                 
                 if self.criterion == None:
-                    gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types).fit(X_[idx], reg_covar=1e-4)
+                    gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types[0]).fit(X_[idx], reg_covar=1e-4)
                     self.polytope_means[label].append(
                             np.mean(
                             X_[idx],

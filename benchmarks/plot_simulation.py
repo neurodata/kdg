@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 from os import listdir, getcwd 
 
 #%%
-df = pd.read_csv('simulation_res.csv')
+df = pd.read_csv('simulation_res_10000.csv')
 sample_size = np.logspace(
         np.log10(10),
         np.log10(10000),
