@@ -8,7 +8,7 @@ import warnings
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, kwargs={}, covariance_types = {'full'}, criterion=None):
+    def __init__(self, covariance_types = {'full'}, criterion=None, kwargs={}):
         super().__init__()
 
         if len(covariance_types) > 1 and criterion == None:
