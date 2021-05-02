@@ -36,7 +36,7 @@ def experiment_kdf(sample, cov_type, n_estimators=500):
             ),
             axis=1
     ) 
-    model_kdf = kdf({'n_estimators':n_estimators}, covarice_types = cov_type)
+    model_kdf = kdf({'n_estimators':n_estimators}, covariance_types = cov_type)
     model_kdf.fit(X, y)
     proba_kdf = model_kdf.predict_proba(grid_samples)
     true_pdf_class1 = np.array([pdf(x) for x in grid_samples]).reshape(-1,1)
