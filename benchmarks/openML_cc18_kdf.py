@@ -58,7 +58,7 @@ def get_stratified_samples(y, samples_to_take):
     return stratified_indices
 
 # %%
-def experiment(task_id, folder, n_estimators=500, cv=5, reps=10):
+def experiment(task_id, cov_type, folder, n_estimators=500, cv=5, reps=10):
     df = pd.DataFrame() 
     #task_id = 14
     task = openml.tasks.get_task(task_id)
@@ -70,6 +70,7 @@ def experiment(task_id, folder, n_estimators=500, cv=5, reps=10):
     if np.isnan(np.sum(X)):
         return
     
+    dim = X.shape[1]
     max_class = len(np.unique(y))
     max_sample = min(np.floor(len(y)*(cv-1.1)/cv),10000)
     sample_size = np.logspace(
@@ -88,6 +89,7 @@ def experiment(task_id, folder, n_estimators=500, cv=5, reps=10):
     mean_kappa_kdf = np.zeros((len(sample_size),cv), dtype=float)
     folds = []
     samples = []
+    dims = []
 
     error_rf = np.zeros((len(sample_size),reps), dtype=float)
     error_kdf = np.zeros((len(sample_size),reps), dtype=float)
@@ -120,7 +122,7 @@ def experiment(task_id, folder, n_estimators=500, cv=5, reps=10):
                 error_rf[jj][ii] = 1 - np.mean(y_test==predicted_label)
                 kappa_rf[jj][ii] = cohen_kappa_score(predicted_label, y_test)
 
-                model_kdf = kdf({'n_estimators':n_estimators})
+                model_kdf = kdf(covariance_types = cov_type, kwargs={'n_estimators':n_estimators})
                 model_kdf.fit(X_train[train_idx], y_train[train_idx])
                 proba_kdf = model_kdf.predict_proba(X_test)
                 predicted_label = np.argmax(proba_kdf, axis = 1)
@@ -141,6 +143,7 @@ def experiment(task_id, folder, n_estimators=500, cv=5, reps=10):
             #var_ece_kdf[jj] = np.var(ece_kdf[jj], ddof=1)
             folds.append(fold)
             samples.append(sample)
+            dims.append(dim)
         fold += 1
 
     df['error_rf'] = np.ravel(mean_rf)
@@ -151,11 +154,12 @@ def experiment(task_id, folder, n_estimators=500, cv=5, reps=10):
     df['ece_kdf'] = np.ravel(mean_ece_kdf)
     df['fold'] = folds
     df['sample'] = samples
+    df['dimension'] = dims
 
-    df.to_csv(folder+'/'+'openML_cc18_task_'+str(task_id)+'.csv')
+    df.to_csv(folder+'/'+'openML_cc18_task_'+cov_type+'_'+str(task_id)+'.csv')
 
 #%%
-folder = 'result'
+folder = 'result_cov'
 os.mkdir(folder)
 cv = 5
 reps = 10
@@ -163,17 +167,20 @@ n_estimators = 500
 n_cores = 1
 df = pd.DataFrame() 
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
+covarice_types = {"full", "tied", "diag", "spherical"}
 
 #%%
 total_cores = multiprocessing.cpu_count()
 assigned_workers = total_cores//n_cores
 
-Parallel(n_jobs=assigned_workers,verbose=1)(
-        delayed(experiment)(
-                task_id,
-                folder
-                ) for task_id in benchmark_suite.tasks
-            )
+for cov_type in covarice_types:
+    Parallel(n_jobs=assigned_workers,verbose=1)(
+            delayed(experiment)(
+                    task_id,
+                    cov_type,
+                    folder
+                    ) for task_id in benchmark_suite.tasks
+                )
 
 
 # %%
