@@ -11,7 +11,7 @@ class kdf(KernelDensityGraph):
     def __init__(self, covariance_types = ['full'], criterion=None, kwargs={}):
         super().__init__()
         
-        if ~isinstance(covariance_types, str) and criterion == None:
+        if isinstance(covariance_types, str)==False and criterion == None:
             raise ValueError(
                     "The criterion cannot be None when there are more than 1 covariance_types."
                 )
@@ -62,18 +62,12 @@ class kdf(KernelDensityGraph):
                     continue
                 
                 if self.criterion == None:
-                    gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types[0], reg_covar=1e-4).fit(X_[idx])
+                    gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types, reg_covar=1e-4).fit(X_[idx])
                     self.polytope_means[label].append(
-                            np.mean(
-                            X_[idx],
-                            axis=0
-                        )
+                            gm.means_[0]
                     )
                     self.polytope_cov[label].append(
-                            np.var(
-                            X_[idx],
-                            axis=0
-                        )
+                            gm.covariances_[0]
                     )
                 else:
                     min_val = 1e20
@@ -101,12 +95,12 @@ class kdf(KernelDensityGraph):
                         except:
                             warnings.warn("Could not fit for cov_type "+cov_type)
                     
-                self.polytope_means[label].append(
-                    tmp_means
-                )
-                self.polytope_cov[label].append(
-                    tmp_cov
-                )
+                    self.polytope_means[label].append(
+                        tmp_means
+                    )
+                    self.polytope_cov[label].append(
+                        tmp_cov
+                    )
         
             
     def _compute_pdf(self, X, label, polytope_idx):
