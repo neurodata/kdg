@@ -23,7 +23,7 @@ sample_size = np.logspace(
         )
 
 #%%
-def experiment_kdf(sample, cov_type, n_estimators=500):
+def experiment_kdf(sample, n_estimators=500):
     X, y = generate_gaussian_parity(sample)
     p = np.arange(-1,1,step=0.01)
     q = np.arange(-1,1,step=0.01)
