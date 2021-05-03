@@ -8,10 +8,10 @@ import warnings
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, covariance_types = {'full'}, criterion=None, kwargs={}):
+    def __init__(self, covariance_types = ['full'], criterion=None, kwargs={}):
         super().__init__()
-
-        if len(covariance_types) > 1 and criterion == None:
+        
+        if ~isinstance(covariance_types, str) and criterion == None:
             raise ValueError(
                     "The criterion cannot be None when there are more than 1 covariance_types."
                 )
@@ -62,7 +62,7 @@ class kdf(KernelDensityGraph):
                     continue
                 
                 if self.criterion == None:
-                    gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types[0]).fit(X_[idx], reg_covar=1e-4)
+                    gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types[0], reg_covar=1e-4).fit(X_[idx])
                     self.polytope_means[label].append(
                             np.mean(
                             X_[idx],
@@ -87,7 +87,7 @@ class kdf(KernelDensityGraph):
                     )
                     for cov_type in covariance_types:
                         try:
-                            gm = GaussianMixture(n_components=1, covariance_type=cov_type).fit(X_[idx], reg_covar=1e-3)
+                            gm = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-3).fit(X_[idx])
 
                             if self.criterion == 'aic':
                                 constarint = gm.aic(X_[idx])
