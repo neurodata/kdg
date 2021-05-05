@@ -21,7 +21,7 @@ sample_size = np.logspace(
         endpoint=True,
         dtype=int
         )
-covarice_types = {'diag', 'full', 'spherical', 'tied'}
+covarice_types = {'diag', 'full', 'spherical'}
 
 #%%
 def experiment_kdf(sample, cov_type, n_estimators=500):
