@@ -8,11 +8,11 @@ from scipy.interpolate import interp1d
 from os import listdir, getcwd 
 
 #%%
-df = pd.read_csv('simulation_res_10000.csv')
+df = pd.read_csv('simulation_res.csv')
 sample_size = np.logspace(
         np.log10(10),
-        np.log10(10000),
-        num=10,
+        np.log10(50000),
+        num=15,
         endpoint=True,
         dtype=int
         )
@@ -57,5 +57,10 @@ ax.set_xscale('log')
 ax.set_xlabel('Sample size')
 ax.set_ylabel('Hellinger Distance')
 ax.legend()
+
+right_side = ax.spines["right"]
+right_side.set_visible(False)
+top_side = ax.spines["top"]
+top_side.set_visible(False)
 plt.savefig('plots/sim_res.pdf')
 # %%
