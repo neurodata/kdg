@@ -21,7 +21,7 @@ sample_size = np.logspace(
         endpoint=True,
         dtype=int
         )
-covarice_types = {"full"}
+covarice_types = {'diag', 'full', 'spherical', 'non_amalgamated'}
 
 #%%
 def experiment_kdf(sample, cov_type, n_estimators=500):
@@ -36,7 +36,7 @@ def experiment_kdf(sample, cov_type, n_estimators=500):
             ),
             axis=1
     ) 
-    model_kdf = kdf(covariance_types = cov_type, kwargs={'n_estimators':n_estimators})
+    model_kdf = kdf(covariance_types = cov_type,criterion = 'aic', kwargs={'n_estimators':n_estimators})
     model_kdf.fit(X, y)
     proba_kdf = model_kdf.predict_proba(grid_samples)
     true_pdf_class1 = np.array([pdf(x) for x in grid_samples]).reshape(-1,1)
@@ -63,7 +63,7 @@ def experiment_rf(sample, n_estimators=500):
     
 #%%
 
-for cov_type in covarice_types:
+'''for cov_type in covarice_types:
     df = pd.DataFrame()
     hellinger_dist_kdf = []
     hellinger_dist_rf = []
@@ -94,6 +94,37 @@ for cov_type in covarice_types:
     df['hellinger dist kdf'] = hellinger_dist_kdf
     df['hellinger dist rf'] = hellinger_dist_rf
     df['sample'] = sample_list
-    df.to_csv('simulation_res_'+cov_type+'.csv')
+    df.to_csv('simulation_res_'+cov_type+'.csv')'''
         
 # %%
+df = pd.DataFrame()
+hellinger_dist_kdf = []
+hellinger_dist_rf = []
+sample_list = []
+
+for sample in sample_size:
+    print('Doing sample %d for %s'%(sample,covarice_types))
+
+    hellinger_dist_kdf.extend(
+        Parallel(n_jobs=-1)(
+        delayed(experiment_kdf)(
+                sample,
+                cov_type=covarice_types
+                ) for _ in range(reps)
+            )
+        )
+
+    hellinger_dist_rf.extend(
+        Parallel(n_jobs=-1)(
+        delayed(experiment_rf)(
+                sample
+                ) for _ in range(reps)
+            )
+    )
+
+    sample_list.extend([sample]*reps)
+
+df['hellinger dist kdf'] = hellinger_dist_kdf
+df['hellinger dist rf'] = hellinger_dist_rf
+df['sample'] = sample_list
+df.to_csv('simulation_res_AIC.csv')
