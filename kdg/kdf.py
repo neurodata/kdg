@@ -79,7 +79,7 @@ class kdf(KernelDensityGraph):
                         X_[idx],
                         axis=0
                     )
-                    for cov_type in covariance_types:
+                    for cov_type in self.covariance_types:
                         try:
                             gm = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-3).fit(X_[idx])
 
