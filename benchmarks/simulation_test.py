@@ -36,7 +36,7 @@ def experiment_kdf(sample, cov_type, n_estimators=500):
             ),
             axis=1
     ) 
-    model_kdf = kdf(covariance_types = cov_type,criterion = 'aic', kwargs={'n_estimators':n_estimators})
+    model_kdf = kdf(covariance_types = cov_type,criterion = 'bic', kwargs={'n_estimators':n_estimators})
     model_kdf.fit(X, y)
     proba_kdf = model_kdf.predict_proba(grid_samples)
     true_pdf_class1 = np.array([pdf(x) for x in grid_samples]).reshape(-1,1)
@@ -93,5 +93,5 @@ for sample in sample_size:
 df['hellinger dist kdf'] = hellinger_dist_kdf
 df['hellinger dist rf'] = hellinger_dist_rf
 df['sample'] = sample_list
-df.to_csv('simulation_res_AIC.csv')
+df.to_csv('simulation_res_BIC.csv')
 # %%
