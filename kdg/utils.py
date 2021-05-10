@@ -48,6 +48,7 @@ def generate_gaussian_parity(
     centers=None,
     class_label=None,
     cluster_std=0.25,
+    center_box=(-1.0,1.0),
     angle_params=None,
     random_state=None,
 ):
@@ -66,6 +67,8 @@ def generate_gaussian_parity(
         class label for each blob.
     cluster_std : float, optional (default=1)
         The standard deviation of the blobs.
+    center_box : tuple of float (min, max), default=(-1.0, 1.0)
+        The bounding box for each cluster center when centers are generated at random.
     angle_params: float, optional (default=None)
         Number of radians to rotate the distribution by.
     random_state : int, RandomState instance, default=None
@@ -100,6 +103,7 @@ def generate_gaussian_parity(
         n_features=2,
         centers=centers,
         cluster_std=cluster_std,
+        center_box=center_box
     )
 
     for blob in range(blob_num):
