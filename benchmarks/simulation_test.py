@@ -16,8 +16,8 @@ reps = 100
 n_estimators = 500
 sample_size = np.logspace(
         np.log10(10),
-        np.log10(50000),
-        num=15,
+        np.log10(5000),
+        num=10,
         endpoint=True,
         dtype=int
         )
