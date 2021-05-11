@@ -76,7 +76,7 @@ for sample in sample_size:
         delayed(experiment_kdf)(
                 sample,
                 cov_type=covarice_types,
-                criterion='bic'
+                criterion='aic'
                 ) for _ in range(reps)
             )
         )
@@ -94,5 +94,5 @@ for sample in sample_size:
 df['hellinger dist kdf'] = hellinger_dist_kdf
 df['hellinger dist rf'] = hellinger_dist_rf
 df['sample'] = sample_list
-df.to_csv('simulation_res_BIC.csv')
+df.to_csv('simulation_res_AIC.csv')
 # %%
