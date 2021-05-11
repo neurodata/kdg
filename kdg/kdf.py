@@ -8,7 +8,7 @@ import warnings
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, covariance_types = ['full'], criterion=None, kwargs={}):
+    def __init__(self, covariance_types = 'full', criterion=None, kwargs={}):
         super().__init__()
         
         if isinstance(covariance_types, str)==False and criterion == None:
@@ -79,22 +79,23 @@ class kdf(KernelDensityGraph):
                         X_[idx],
                         axis=0
                     )
+                    
                     for cov_type in self.covariance_types:
                         try:
                             gm = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-3).fit(X_[idx])
-
-                            if self.criterion == 'aic':
-                                constarint = gm.aic(X_[idx])
-                            else:
-                                constraint = gm.bic(X_[idx])
-
-                            if min_val > constarint:
-                                min_bic = constarint
-                                tmp_cov = gm.covariances_[0]
-                                tmp_means = gm.means_[0]
                         except:
                             warnings.warn("Could not fit for cov_type "+cov_type)
-                    
+                        else:
+                            if self.criterion == 'aic':
+                                constraint = gm.aic(X_[idx])
+                            elif self.criterion == 'bic':
+                                constraint = gm.bic(X_[idx])
+
+                            if min_val > constraint:
+                                min_val = constraint
+                                tmp_cov = gm.covariances_[0]
+                                tmp_means = gm.means_[0]
+                        
                     self.polytope_means[label].append(
                         tmp_means
                     )

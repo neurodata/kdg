@@ -24,10 +24,10 @@ sample_size = np.logspace(
 covarice_types = {'diag', 'full', 'spherical'}
 
 #%%
-def experiment_kdf(sample, cov_type, n_estimators=500):
-    X, y = generate_gaussian_parity(sample)
-    p = np.arange(-1,1,step=0.01)
-    q = np.arange(-1,1,step=0.01)
+def experiment_kdf(sample, cov_type, criterion=None, n_estimators=500):
+    X, y = generate_gaussian_parity(sample, cluster_std=0.5)
+    p = np.arange(-1,1,step=0.006)
+    q = np.arange(-1,1,step=0.006)
     xx, yy = np.meshgrid(p,q)
     grid_samples = np.concatenate(
             (
@@ -36,7 +36,7 @@ def experiment_kdf(sample, cov_type, n_estimators=500):
             ),
             axis=1
     ) 
-    model_kdf = kdf(covariance_types = cov_type,criterion = 'bic', kwargs={'n_estimators':n_estimators})
+    model_kdf = kdf(covariance_types = cov_type,criterion = criterion, kwargs={'n_estimators':n_estimators})
     model_kdf.fit(X, y)
     proba_kdf = model_kdf.predict_proba(grid_samples)
     true_pdf_class1 = np.array([pdf(x) for x in grid_samples]).reshape(-1,1)
@@ -44,9 +44,9 @@ def experiment_kdf(sample, cov_type, n_estimators=500):
     return hellinger(proba_kdf, true_pdf)
 
 def experiment_rf(sample, n_estimators=500):
-    X, y = generate_gaussian_parity(sample)
-    p = np.arange(-1,1,step=0.01)
-    q = np.arange(-1,1,step=0.01)
+    X, y = generate_gaussian_parity(sample, cluster_std=0.5)
+    p = np.arange(-1,1,step=0.006)
+    q = np.arange(-1,1,step=0.006)
     xx, yy = np.meshgrid(p,q)
     grid_samples = np.concatenate(
             (
