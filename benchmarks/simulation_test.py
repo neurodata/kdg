@@ -39,7 +39,7 @@ def experiment_kdf(sample, cov_type, criterion=None, n_estimators=500):
     model_kdf = kdf(covariance_types = cov_type,criterion = criterion, kwargs={'n_estimators':n_estimators})
     model_kdf.fit(X, y)
     proba_kdf = model_kdf.predict_proba(grid_samples)
-    true_pdf_class1 = np.array([pdf(x) for x in grid_samples]).reshape(-1,1)
+    true_pdf_class1 = np.array([pdf(x, cov_scale=0.5) for x in grid_samples]).reshape(-1,1)
     true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
     return hellinger(proba_kdf, true_pdf)
 
@@ -57,7 +57,7 @@ def experiment_rf(sample, n_estimators=500):
     ) 
     model_rf = rf(n_estimators=n_estimators).fit(X, y)
     proba_rf = model_rf.predict_proba(grid_samples)
-    true_pdf_class1 = np.array([pdf(x) for x in grid_samples]).reshape(-1,1)
+    true_pdf_class1 = np.array([pdf(x, cov_scale=0.5) for x in grid_samples]).reshape(-1,1)
     true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
     return hellinger(proba_rf, true_pdf)
     
@@ -75,7 +75,8 @@ for sample in sample_size:
         Parallel(n_jobs=-1)(
         delayed(experiment_kdf)(
                 sample,
-                cov_type=covarice_types
+                cov_type=covarice_types,
+                criterion='bic'
                 ) for _ in range(reps)
             )
         )
