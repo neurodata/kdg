@@ -63,12 +63,12 @@ def experiment_rf(sample, n_estimators=500):
     
         
 # %%
-df = pd.DataFrame()
-hellinger_dist_kdf = []
-hellinger_dist_rf = []
-sample_list = []
-
 for cov_type in covarice_types:
+    df = pd.DataFrame()
+    hellinger_dist_kdf = []
+    hellinger_dist_rf = []
+    sample_list = []
+    
     for sample in sample_size:
         print('Doing sample %d for %s'%(sample,cov_type))
 
