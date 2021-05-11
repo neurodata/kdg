@@ -68,31 +68,32 @@ hellinger_dist_kdf = []
 hellinger_dist_rf = []
 sample_list = []
 
-for sample in sample_size:
-    print('Doing sample %d for %s'%(sample,covarice_types))
+for cov_type in covarice_types:
+    for sample in sample_size:
+        print('Doing sample %d for %s'%(sample,cov_type))
 
-    hellinger_dist_kdf.extend(
-        Parallel(n_jobs=-1)(
-        delayed(experiment_kdf)(
-                sample,
-                cov_type=covarice_types,
-                criterion='aic'
-                ) for _ in range(reps)
+        hellinger_dist_kdf.extend(
+            Parallel(n_jobs=-1)(
+            delayed(experiment_kdf)(
+                    sample,
+                    cov_type=cov_type,
+                    criterion=None
+                    ) for _ in range(reps)
+                )
             )
+
+        hellinger_dist_rf.extend(
+            Parallel(n_jobs=-1)(
+            delayed(experiment_rf)(
+                    sample
+                    ) for _ in range(reps)
+                )
         )
 
-    hellinger_dist_rf.extend(
-        Parallel(n_jobs=-1)(
-        delayed(experiment_rf)(
-                sample
-                ) for _ in range(reps)
-            )
-    )
+        sample_list.extend([sample]*reps)
 
-    sample_list.extend([sample]*reps)
-
-df['hellinger dist kdf'] = hellinger_dist_kdf
-df['hellinger dist rf'] = hellinger_dist_rf
-df['sample'] = sample_list
-df.to_csv('simulation_res_AIC.csv')
+    df['hellinger dist kdf'] = hellinger_dist_kdf
+    df['hellinger dist rf'] = hellinger_dist_rf
+    df['sample'] = sample_list
+    df.to_csv('simulation_res_'+cov_type+'.csv')
 # %%
