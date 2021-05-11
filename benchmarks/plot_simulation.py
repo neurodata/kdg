@@ -8,11 +8,11 @@ from scipy.interpolate import interp1d
 from os import listdir, getcwd 
 
 #%%
-df = pd.read_csv('simulation_res_spherical.csv')
+df = pd.read_csv('simulation_res_BIC.csv')
 sample_size = np.logspace(
         np.log10(10),
-        np.log10(50000),
-        num=15,
+        np.log10(5000),
+        num=10,
         endpoint=True,
         dtype=int
         )
@@ -64,11 +64,11 @@ top_side = ax.spines["top"]
 top_side.set_visible(False)
 plt.savefig('plots/sim_res_spherical.pdf')
 # %% plot them all
-covariance_types = ['diag', 'full', 'spherical', 'non_amalgamated', 'AIC', 'BIC']
+covariance_types = ['full', 'spherical', 'diag', 'AIC', 'BIC']
 sample_size = np.logspace(
         np.log10(10),
-        np.log10(50000),
-        num=15,
+        np.log10(5000),
+        num=10,
         endpoint=True,
         dtype=int
         )
@@ -76,7 +76,7 @@ dist_rf_med = []
 dist_rf_25_quantile = []
 dist_rf_75_quantile = []
 clr = ["#e41a1c", "#f781bf", "#b15928", "#377eb8", "#4daf4a", "#984ea3"]
-c = sns.color_palette(clr, n_colors=len(clr))
+c = sns.color_palette(clr, n_colors=5)
 
 df = pd.read_csv('simulation_res_full.csv')
 

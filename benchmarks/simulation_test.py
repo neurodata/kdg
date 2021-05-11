@@ -26,6 +26,7 @@ covarice_types = {'diag', 'full', 'spherical'}
 #%%
 def experiment_kdf(sample, cov_type, criterion=None, n_estimators=500):
     X, y = generate_gaussian_parity(sample, cluster_std=0.5)
+    X_test, y_test = generate_gaussian_parity(1000, cluster_std=0.5)
     p = np.arange(-1,1,step=0.006)
     q = np.arange(-1,1,step=0.006)
     xx, yy = np.meshgrid(p,q)
@@ -41,10 +42,13 @@ def experiment_kdf(sample, cov_type, criterion=None, n_estimators=500):
     proba_kdf = model_kdf.predict_proba(grid_samples)
     true_pdf_class1 = np.array([pdf(x, cov_scale=0.5) for x in grid_samples]).reshape(-1,1)
     true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
-    return hellinger(proba_kdf, true_pdf)
+
+    error = 1 - np.mean(model_kdf.predict(X_test)==y_test)
+    return hellinger(proba_kdf, true_pdf), error
 
 def experiment_rf(sample, n_estimators=500):
     X, y = generate_gaussian_parity(sample, cluster_std=0.5)
+    X_test, y_test = generate_gaussian_parity(1000, cluster_std=0.5)
     p = np.arange(-1,1,step=0.006)
     q = np.arange(-1,1,step=0.006)
     xx, yy = np.meshgrid(p,q)
@@ -59,7 +63,9 @@ def experiment_rf(sample, n_estimators=500):
     proba_rf = model_rf.predict_proba(grid_samples)
     true_pdf_class1 = np.array([pdf(x, cov_scale=0.5) for x in grid_samples]).reshape(-1,1)
     true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
-    return hellinger(proba_rf, true_pdf)
+
+    error = 1 - np.mean(model_rf.predict(X_test)==y_test)
+    return hellinger(proba_rf, true_pdf), error
     
         
 # %%
@@ -72,14 +78,16 @@ for cov_type in covarice_types:
     for sample in sample_size:
         print('Doing sample %d for %s'%(sample,cov_type))
 
-        hellinger_dist_kdf.extend(
-            Parallel(n_jobs=-1)(
-            delayed(experiment_kdf)(
+        res_kdf = Parallel(n_jobs=-1)(
+                    delayed(experiment_kdf)(
                     sample,
                     cov_type=cov_type,
                     criterion=None
                     ) for _ in range(reps)
                 )
+        print(res_kdf)
+        hellinger_dist_kdf.extend(
+                res_kdf[0]
             )
 
         hellinger_dist_rf.extend(
