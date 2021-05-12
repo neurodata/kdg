@@ -93,7 +93,7 @@ for cov_type in covarice_types:
                     sample
                     ) for _ in range(reps)
                 )
-
+        print(res_kdf[10][0],type(res_kdf))
         for ii in range(reps):
             hellinger_dist_kdf.extend(
                     res_kdf[ii][0]
@@ -190,7 +190,7 @@ for sample in sample_size:
                 sample
                 ) for _ in range(reps)
             )
-    print(res_kdf[10][0],type(res_kdf))
+    
     for ii in range(reps):
         hellinger_dist_kdf.extend(
                 res_kdf[ii][0]
