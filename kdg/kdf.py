@@ -1,18 +1,29 @@
 from .base import KernelDensityGraph
+from sklearn.mixture import GaussianMixture
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
 from scipy.stats import multivariate_normal
+import warnings
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, kwargs={}):
+    def __init__(self, covariance_types = 'full', criterion=None, kwargs={}):
         super().__init__()
+        
+        if isinstance(covariance_types, str)==False and criterion == None:
+            raise ValueError(
+                    "The criterion cannot be None when there are more than 1 covariance_types."
+                )
+            return
+
         self.polytope_means = {}
-        self.polytope_vars = {}
+        self.polytope_cov = {}
         self.polytope_cardinality = {}
         self.polytope_mean_cov = {}
         self.kwargs = kwargs
+        self.covariance_types = covariance_types
+        self.criterion = criterion
 
     def fit(self, X, y):
         r"""
@@ -30,47 +41,72 @@ class kdf(KernelDensityGraph):
 
         for label in self.labels:
             self.polytope_means[label] = []
-            self.polytope_vars[label] = []
-            self.polytope_cardinality[label] = []
-            self.polytope_mean_cov[label] = []
+            self.polytope_cov[label] = []
 
-        predicted_leaf_ids_across_trees = [tree.apply(X) for tree in self.rf_model.estimators_]
+            X_ = X[np.where(y==label)[0]]
+            predicted_leaf_ids_across_trees = np.array(
+                [tree.apply(X_) for tree in self.rf_model.estimators_]
+                ).T
+            total_polytopes_this_label = len(X_)
 
-        for polytopes_in_a_tree in predicted_leaf_ids_across_trees:
-            for polytope in np.unique(polytopes_in_a_tree):
-                for label in self.labels:
-                    polytope_label_idx = np.where((y==label) & (polytopes_in_a_tree==polytope))[0]
-                    
-                    if polytope_label_idx.size == 0 or polytope_label_idx.size == 1:
-                        continue
-                    
-                    self.polytope_means[label].append(
-                        np.mean(
-                            X[polytope_label_idx],
-                            axis=0
-                        )
-                    )
-                    self.polytope_vars[label].append(
-                        np.var(
-                            X[polytope_label_idx],
-                            axis=0
-                        )
-                    )
-                    self.polytope_cardinality[label].append(
-                        len(polytope_label_idx)
-                    )
-
-        for label in self.labels:
-            self.polytope_mean_cov[label] = np.average(
-                self.polytope_vars[label],
-                weights = self.polytope_cardinality[label],
-                axis = 0
+            for polytope in range(total_polytopes_this_label):
+                matched_samples = np.sum(
+                    predicted_leaf_ids_across_trees == predicted_leaf_ids_across_trees[polytope],
+                    axis=1
                 )
+                idx = np.where(
+                    matched_samples>0
+                )[0]
 
+                if len(idx) == 1:
+                    continue
+                
+                if self.criterion == None:
+                    gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types, reg_covar=1e-4).fit(X_[idx])
+                    self.polytope_means[label].append(
+                            gm.means_[0]
+                    )
+                    self.polytope_cov[label].append(
+                            gm.covariances_[0]
+                    )
+                else:
+                    min_val = 1e20
+                    tmp_means = np.mean(
+                        X_[idx],
+                        axis=0
+                    )
+                    tmp_cov = np.var(
+                        X_[idx],
+                        axis=0
+                    )
+                    
+                    for cov_type in self.covariance_types:
+                        try:
+                            gm = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-3).fit(X_[idx])
+                        except:
+                            warnings.warn("Could not fit for cov_type "+cov_type)
+                        else:
+                            if self.criterion == 'aic':
+                                constraint = gm.aic(X_[idx])
+                            elif self.criterion == 'bic':
+                                constraint = gm.bic(X_[idx])
+
+                            if min_val > constraint:
+                                min_val = constraint
+                                tmp_cov = gm.covariances_[0]
+                                tmp_means = gm.means_[0]
+                        
+                    self.polytope_means[label].append(
+                        tmp_means
+                    )
+                    self.polytope_cov[label].append(
+                        tmp_cov
+                    )
+        
+            
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
-        polytope_cov = np.eye(len(self.polytope_mean_cov[label]), dtype=float)*self.polytope_mean_cov[label]
-        polytope_cardinality = self.polytope_cardinality[label]
+        polytope_cov = self.polytope_cov[label][polytope_idx]
 
         var = multivariate_normal(
             mean=polytope_mean, 
@@ -78,7 +114,7 @@ class kdf(KernelDensityGraph):
             allow_singular=True
             )
 
-        likelihood = var.pdf(X)*polytope_cardinality[polytope_idx]/np.sum(polytope_cardinality)
+        likelihood = var.pdf(X)
         return likelihood
 
     def predict_proba(self, X):
@@ -97,10 +133,10 @@ class kdf(KernelDensityGraph):
         )
         
         for ii,label in enumerate(self.labels):
-            for polytope_idx,_ in enumerate(self.polytope_cardinality[label]):
-                likelihoods[:,ii] += self._compute_pdf(X, label, polytope_idx)
+            for polytope_idx,_ in enumerate(self.polytope_means[label]):
+                likelihoods[:,ii] += np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
 
-        proba = (likelihoods.T/(np.sum(likelihoods,axis=1)+1e-200)).T
+        proba = (likelihoods.T/(np.sum(likelihoods,axis=1)+1e-100)).T
         return proba
 
     def predict(self, X):

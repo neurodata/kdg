@@ -9,7 +9,6 @@ class KernelDensityGraph(ABC):
     def fit(self, X=None, y=None):
         r"""
         Fits the kernel density graph.
-
         Parameters
         ----------
         X : ndarray
@@ -23,7 +22,6 @@ class KernelDensityGraph(ABC):
     def predict_proba(self, X):
         r"""
         Calculate posteriors using the kernel density graph.
-
         Parameters
         ----------
         X : ndarray
@@ -35,7 +33,6 @@ class KernelDensityGraph(ABC):
     def predict(self, X):
         r"""
         Perform inference using the kernel density graph.
-
         Parameters
         ----------
         X : ndarray
