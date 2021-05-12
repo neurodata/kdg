@@ -126,7 +126,7 @@ err_rf = []
 sample_list = []
     
 for sample in sample_size:
-    print('Doing sample %d for %s'%(sample,cov_type))
+    print('Doing sample %d for %s'%(sample,covarice_types))
 
     res_kdf = Parallel(n_jobs=-1)(
                 delayed(experiment_kdf)(
@@ -175,7 +175,7 @@ err_rf = []
 sample_list = []
     
 for sample in sample_size:
-    print('Doing sample %d for %s'%(sample,cov_type))
+    print('Doing sample %d for %s'%(sample,covarice_types))
 
     res_kdf = Parallel(n_jobs=-1)(
                 delayed(experiment_kdf)(
