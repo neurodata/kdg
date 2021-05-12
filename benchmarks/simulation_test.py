@@ -95,18 +95,17 @@ for cov_type in covarice_types:
                 )
         
         for ii in range(reps):
-            print(res_kdf[10][0],type(ii))
-            hellinger_dist_kdf.extend(
+            hellinger_dist_kdf.append(
                     res_kdf[ii][0]
                 )
-            err_kdf.extend(
+            err_kdf.append(
                     res_kdf[ii][1]
                 )
 
-            hellinger_dist_rf.extend(
+            hellinger_dist_rf.append(
                     res_rf[ii][0]
                 )
-            err_rf.extend(
+            err_rf.append(
                     res_rf[ii][1]
                 )
 
@@ -144,17 +143,17 @@ for sample in sample_size:
             )
 
     for ii in range(reps):
-        hellinger_dist_kdf.extend(
+        hellinger_dist_kdf.append(
                 res_kdf[ii][0]
             )
-        err_kdf.extend(
+        err_kdf.append(
                 res_kdf[ii][1]
             )
 
-        hellinger_dist_rf.extend(
+        hellinger_dist_rf.append(
                 res_rf[ii][0]
             )
-        err_rf.extend(
+        err_rf.append(
                 res_rf[ii][1]
             )
 
@@ -193,17 +192,17 @@ for sample in sample_size:
             )
     
     for ii in range(reps):
-        hellinger_dist_kdf.extend(
+        hellinger_dist_kdf.append(
                 res_kdf[ii][0]
             )
-        err_kdf.extend(
+        err_kdf.append(
                 res_kdf[ii][1]
             )
 
-        hellinger_dist_rf.extend(
+        hellinger_dist_rf.append(
                 res_rf[ii][0]
             )
-        err_rf.extend(
+        err_rf.append(
                 res_rf[ii][1]
             )
 
