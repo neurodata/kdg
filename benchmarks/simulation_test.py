@@ -190,20 +190,20 @@ for sample in sample_size:
                 sample
                 ) for _ in range(reps)
             )
-
+    print(res_kdf[10][0],type(res_kdf))
     for ii in range(reps):
         hellinger_dist_kdf.extend(
-                res_kdf[ii,0]
+                res_kdf[ii][0]
             )
         err_kdf.extend(
-                res_kdf[ii,1]
+                res_kdf[ii][1]
             )
 
         hellinger_dist_rf.extend(
-                res_rf[ii,0]
+                res_rf[ii][0]
             )
         err_rf.extend(
-                res_rf[ii,1]
+                res_rf[ii][1]
             )
 
     sample_list.extend([sample]*reps)
