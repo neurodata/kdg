@@ -85,7 +85,7 @@ for cov_type in covarice_types:
                     criterion=None
                     ) for _ in range(reps)
                 )
-        print(res_kdf[:][0])
+        print(res_kdf[:,0])
         hellinger_dist_kdf.extend(
                 res_kdf[0]
             )
