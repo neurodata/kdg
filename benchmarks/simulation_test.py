@@ -214,3 +214,24 @@ df['error kdf'] = err_kdf
 df['error rf'] = err_rf
 df['sample'] = sample_list
 df.to_csv('simulation_res_BIC.csv')
+
+#%%
+from kdg import kdn
+import keras
+from keras import layers
+from kdg.utils import generate_gaussian_parity, pdf, hellinger
+import numpy as np
+#%%
+network = keras.Sequential()
+network.add(layers.Dense(5, activation='relu'))
+network.add(layers.Dense(5, activation='relu'))
+network.add(layers.Dense(units=2, activation = 'softmax'))
+
+model_kdn = kdn(network)
+
+X, y = generate_gaussian_parity(100, cluster_std=0.5)
+model_kdn.fit(X,y)
+
+# %%
+print(np.mean(model_kdn.predict(X)==y))
+# %%

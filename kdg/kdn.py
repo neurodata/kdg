@@ -14,7 +14,7 @@ class kdn(KernelDensityGraph):
         criterion=None,
         complie_kwargs = {
             "loss": "categorical_crossentropy",
-            "optimizer": Adam(3e-4)
+            "optimizer": keras.optimizers.Adam(3e-4)
             },
         fit_kwargs = {
             "epochs": 100,
@@ -23,9 +23,13 @@ class kdn(KernelDensityGraph):
             }
         ):
         super().__init__()
+        self.polytope_means = {}
+        self.polytope_cov = {}
         self.network = network
         self.compile_kwargs = complie_kwargs
         self.fit_kwargs = fit_kwargs
+        self.covariance_types = covariance_types
+        self.criterion = criterion
 
     def _get_polytopes(self, X):
         polytope_memberships = []
@@ -33,9 +37,9 @@ class kdn(KernelDensityGraph):
         total_layers = len(self.network.layers)
 
         for layer_id in range(total_layers):
-            weights, bias = network.layers[layer_id].get_weights()
+            weights, bias = self.network.layers[layer_id].get_weights()
             preactivation = np.matmul(last_activations, weights) + bias
-            if layer_id == len(total_layers) - 1:
+            if layer_id == total_layers - 1:
                 binary_preactivation = (preactivation > 0.5).astype('int')
             else:
                 binary_preactivation = (preactivation > 0).astype('int')
@@ -66,7 +70,8 @@ class kdn(KernelDensityGraph):
             self.polytope_cov[label] = []
 
             X_ = X[np.where(y==label)[0]]
-            polytopes = self._get_polytopes(X_)
+            polytopes = self._get_polytopes(X_)[0]
+            
             for polytope in polytopes:
                 idx = np.where(polytopes==polytope)[0]
                 
