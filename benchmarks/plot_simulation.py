@@ -112,10 +112,13 @@ for sample in sample_size:
     )
 
 sns.set_context('talk')
-fig, ax = plt.subplots(2,1, figsize=(8,8))
+fig, ax = plt.subplots(1,2, figsize=(16,8))
 
-ax.plot(sample_size, dist_rf_med, c="k", label='RF')
-ax.fill_between(sample_size, dist_rf_25_quantile, dist_rf_75_quantile, facecolor='k', alpha=.3)
+ax[0].plot(sample_size, dist_rf_med, c="k", label='RF')
+ax[0].fill_between(sample_size, dist_rf_25_quantile, dist_rf_75_quantile, facecolor='k', alpha=.3)
+
+ax[1].plot(sample_size, err_rf_med, c="k", label='RF')
+ax[1].fill_between(sample_size, err_rf_25_quantile, err_rf_75_quantile, facecolor='k', alpha=.3)
 
 for ii, cov_type in enumerate(covariance_types):
     filename = 'simulation_res_' + cov_type + '.csv'
@@ -159,7 +162,7 @@ for ii, cov_type in enumerate(covariance_types):
 ax[0].set_xscale('log')
 ax[0].set_xlabel('Sample size')
 ax[0].set_ylabel('Hellinger Distance')
-ax[0].legend()
+#ax[0].legend()
 
 ax[1].set_xscale('log')
 ax[1].set_xlabel('Sample size')
@@ -180,3 +183,4 @@ plt.savefig('plots/sim_res_all.pdf')
 
 
 # %%
+
