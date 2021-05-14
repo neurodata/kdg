@@ -85,25 +85,33 @@ for cov_type in covarice_types:
     for sample in sample_size:
         print('Doing sample %d for %s'%(sample,cov_type))
 
-        for ii in range(reps):
-            dist, err = experiment_kdn(
+        res_kdn = Parallel(n_jobs=10)(
+                    delayed(experiment_kdn)(
                     sample,
                     cov_type=cov_type,
                     criterion=None
-                    )
-            hellinger_dist_kdn.append(
-                    dist
-                )
-            err_kdn.append(
-                    err
+                    ) for _ in range(reps)
                 )
 
-            dist, err = experiment_nn(sample)
+        res_nn = Parallel(n_jobs=10)(
+            delayed(experiment_nn)(
+                    sample
+                    ) for _ in range(reps)
+                )
+        
+        for ii in range(reps):
+            hellinger_dist_kdn.append(
+                    res_kdn[ii][0]
+                )
+            err_kdn.append(
+                    res_kdn[ii][1]
+                )
+
             hellinger_dist_nn.append(
-                    dist
+                    res_nn[ii][0]
                 )
             err_nn.append(
-                    err
+                    res_nn[ii][1]
                 )
 
         sample_list.extend([sample]*reps)
@@ -125,25 +133,33 @@ sample_list = []
 for sample in sample_size:
     print('Doing sample %d for %s'%(sample,covarice_types))
 
-    for ii in range(reps):
-        dist, err = experiment_kdn(
+    res_kdn = Parallel(n_jobs=10)(
+                delayed(experiment_kdn)(
                 sample,
                 cov_type=covarice_types,
                 criterion='aic'
-                )
-        hellinger_dist_kdn.append(
-                dist
-            )
-        err_kdn.append(
-                err
+                ) for _ in range(reps)
             )
 
-        dist, err = experiment_nn(sample)
+    res_nn = Parallel(n_jobs=10)(
+        delayed(experiment_nn)(
+                sample
+                ) for _ in range(reps)
+            )
+
+    for ii in range(reps):
+        hellinger_dist_kdn.append(
+                res_kdn[ii][0]
+            )
+        err_kdn.append(
+                res_kdn[ii][1]
+            )
+
         hellinger_dist_nn.append(
-                dist
+                res_nn[ii][0]
             )
         err_nn.append(
-                err
+                res_nn[ii][1]
             )
 
     sample_list.extend([sample]*reps)
@@ -166,25 +182,33 @@ sample_list = []
 for sample in sample_size:
     print('Doing sample %d for %s'%(sample,covarice_types))
 
-    for ii in range(reps):
-        dist, err = experiment_kdn(
+    res_kdn = Parallel(n_jobs=10)(
+                delayed(experiment_kdn)(
                 sample,
                 cov_type=covarice_types,
                 criterion='bic'
-                )
-        hellinger_dist_kdn.append(
-                dist
-            )
-        err_kdn.append(
-                err
+                ) for _ in range(reps)
             )
 
-        dist, err = experiment_nn(sample)
+    res_nn = Parallel(n_jobs=10)(
+        delayed(experiment_nn)(
+                sample
+                ) for _ in range(reps)
+            )
+    
+    for ii in range(reps):
+        hellinger_dist_kdn.append(
+                res_kdn[ii][0]
+            )
+        err_kdn.append(
+                res_kdn[ii][1]
+            )
+
         hellinger_dist_nn.append(
-                dist
+                res_nn[ii][0]
             )
         err_nn.append(
-                err
+                res_nn[ii][1]
             )
 
     sample_list.extend([sample]*reps)
