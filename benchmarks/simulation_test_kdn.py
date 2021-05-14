@@ -21,9 +21,8 @@ covarice_types = {'diag', 'full', 'spherical'}
 def experiment_kdn(sample, cov_type, criterion=None):
     network = keras.Sequential()
     #network.add(layers.Dense(2, activation="relu", input_shape=(2)))
-    network.add(layers.Dense(15, activation='relu'))
-    network.add(layers.Dense(15, activation='relu'))
-    network.add(layers.Dense(15, activation='relu'))
+    network.add(layers.Dense(3, activation='relu'))
+    network.add(layers.Dense(3, activation='relu'))
     network.add(layers.Dense(units=2, activation = 'softmax'))
 
     X, y = generate_gaussian_parity(sample, cluster_std=0.5)
@@ -50,9 +49,8 @@ def experiment_kdn(sample, cov_type, criterion=None):
 def experiment_nn(sample):
     network_base = keras.Sequential()
     #network_base.add(layers.Dense(2, activation="relu", input_shape=(2)))
-    network_base.add(layers.Dense(15, activation='relu'))
-    network_base.add(layers.Dense(15, activation='relu'))
-    network_base.add(layers.Dense(15, activation='relu'))
+    network_base.add(layers.Dense(3, activation='relu'))
+    network_base.add(layers.Dense(3, activation='relu'))
     network_base.add(layers.Dense(units=2, activation = 'softmax'))
     network_base.compile(loss="categorical_crossentropy", optimizer=keras.optimizers.Adam(3e-4))
 
