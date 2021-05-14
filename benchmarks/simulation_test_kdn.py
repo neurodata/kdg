@@ -108,7 +108,7 @@ for cov_type in covarice_types:
                 )
 
             hellinger_dist_nn.append(
-                    res_rf[ii][0]
+                    res_nn[ii][0]
                 )
             err_nn.append(
                     res_nn[ii][1]
@@ -116,10 +116,10 @@ for cov_type in covarice_types:
 
         sample_list.extend([sample]*reps)
 
-    df['hellinger dist kdn'] = hellinger_dist_kdf
-    df['hellinger dist nn'] = hellinger_dist_rf
-    df['error kdn'] = err_kdf
-    df['error nn'] = err_rf
+    df['hellinger dist kdn'] = hellinger_dist_kdn
+    df['hellinger dist nn'] = hellinger_dist_nn
+    df['error kdn'] = err_kdn
+    df['error nn'] = err_nn
     df['sample'] = sample_list
     df.to_csv('simulation_res_nn_'+cov_type+'.csv')
 # %%
