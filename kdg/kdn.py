@@ -76,7 +76,7 @@ class kdn(KernelDensityGraph):
                 idx = np.where(polytopes==polytope)[0]
                 
                 if len(idx) == 1:
-                        continue
+                    continue
                     
                 if self.criterion == None:
                     gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types, reg_covar=1e-4).fit(X_[idx])
