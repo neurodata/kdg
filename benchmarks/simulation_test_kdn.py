@@ -20,6 +20,8 @@ covarice_types = {'diag', 'full', 'spherical'}
 #%%
 def experiment_kdn(sample, cov_type, criterion=None):
     network = keras.Sequential()
+    #network.add(layers.Dense(2, activation="relu", input_shape=(2)))
+    network.add(layers.Dense(15, activation='relu'))
     network.add(layers.Dense(15, activation='relu'))
     network.add(layers.Dense(15, activation='relu'))
     network.add(layers.Dense(units=2, activation = 'softmax'))
@@ -47,6 +49,8 @@ def experiment_kdn(sample, cov_type, criterion=None):
 
 def experiment_nn(sample):
     network_base = keras.Sequential()
+    #network_base.add(layers.Dense(2, activation="relu", input_shape=(2)))
+    network_base.add(layers.Dense(15, activation='relu'))
     network_base.add(layers.Dense(15, activation='relu'))
     network_base.add(layers.Dense(15, activation='relu'))
     network_base.add(layers.Dense(units=2, activation = 'softmax'))
@@ -65,11 +69,12 @@ def experiment_nn(sample):
             axis=1
     ) 
     network_base.fit(X, keras.utils.to_categorical(y), epochs=100, batch_size=32, verbose=False)
-    proba_nn = network_base.predict_proba(grid_samples)
+    proba_nn = network_base.predict(grid_samples)
     true_pdf_class1 = np.array([pdf(x, cov_scale=0.5) for x in grid_samples]).reshape(-1,1)
     true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
 
-    error = 1 - np.mean(network_base.predict(X_test)==y_test)
+    predicted_label = np.argmax(network_base.predict(X_test), axis=1)
+    error = 1 - np.mean(predicted_label==y_test)
     return hellinger(proba_nn, true_pdf), error
     
         
@@ -83,9 +88,9 @@ for cov_type in covarice_types:
     sample_list = []
     
     for sample in sample_size:
-        print('Doing sample %d for %s'%(sample,cov_type))
 
         for ii in range(reps):
+            print('Doing sample %d for %s reps %d'%(sample,cov_type,ii))
             dist, err = experiment_kdn(
                     sample,
                     cov_type=cov_type,
@@ -123,9 +128,9 @@ err_nn = []
 sample_list = []
     
 for sample in sample_size:
-    print('Doing sample %d for %s'%(sample,covarice_types))
 
     for ii in range(reps):
+        print('Doing sample %d for %s reps %d'%(sample,cov_type,ii))
         dist, err = experiment_kdn(
                 sample,
                 cov_type=covarice_types,
@@ -164,9 +169,9 @@ err_nn = []
 sample_list = []
     
 for sample in sample_size:
-    print('Doing sample %d for %s'%(sample,covarice_types))
-
+    
     for ii in range(reps):
+        print('Doing sample %d for %s reps %d'%(sample,cov_type,ii))
         dist, err = experiment_kdn(
                 sample,
                 cov_type=covarice_types,
