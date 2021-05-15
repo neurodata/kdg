@@ -78,6 +78,7 @@ def experiment_nn(sample):
         
 # %%
 for cov_type in covarice_types:
+    break
     df = pd.DataFrame()
     hellinger_dist_kdn = []
     hellinger_dist_nn = []
@@ -126,9 +127,9 @@ err_nn = []
 sample_list = []
     
 for sample in sample_size:
-
+    break
     for ii in range(reps):
-        print('Doing sample %d for %s reps %d'%(sample,cov_type,ii))
+        print('Doing sample %d for %s reps %d'%(sample,covarice_types,ii))
         dist, err = experiment_kdn(
                 sample,
                 cov_type=covarice_types,
@@ -169,7 +170,7 @@ sample_list = []
 for sample in sample_size:
     
     for ii in range(reps):
-        print('Doing sample %d for %s reps %d'%(sample,cov_type,ii))
+        print('Doing sample %d for %s reps %d'%(sample,covarice_types,ii))
         dist, err = experiment_kdn(
                 sample,
                 cov_type=covarice_types,
