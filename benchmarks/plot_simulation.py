@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 from os import listdir, getcwd 
 
 #%%
-df = pd.read_csv('simulation_res_BIC.csv')
+df = pd.read_csv('simulation_res_nn_BIC.csv')
 sample_size = np.logspace(
         np.log10(10),
         np.log10(5000),
@@ -32,8 +32,8 @@ err_rf_75_quantile = []
 
 #%%
 for sample in sample_size:
-    res_kdf = df['hellinger dist kdf'][df['sample']==sample]
-    res_rf = df['hellinger dist rf'][df['sample']==sample]
+    res_kdf = df['hellinger dist kdn'][df['sample']==sample]
+    res_rf = df['hellinger dist nn'][df['sample']==sample]
 
     dist_kdf_med.append(np.median(res_kdf))
     dist_rf_med.append(np.median(res_rf))
@@ -69,7 +69,7 @@ right_side = ax.spines["right"]
 right_side.set_visible(False)
 top_side = ax.spines["top"]
 top_side.set_visible(False)
-plt.savefig('plots/sim_res_spherical.pdf')
+#plt.savefig('plots/sim_res_spherical.pdf')
 # %% plot them all
 covariance_types = ['full', 'spherical', 'diag', 'AIC', 'BIC']
 sample_size = np.logspace(
@@ -89,11 +89,11 @@ err_rf_75_quantile = []
 clr = ["#e41a1c", "#f781bf", "#b15928", "#377eb8", "#4daf4a", "#984ea3"]
 c = sns.color_palette(clr, n_colors=5)
 
-df = pd.read_csv('simulation_res_full.csv')
+df = pd.read_csv('simulation_res_nn_full.csv')
 
 for sample in sample_size:
-    res_rf = df['hellinger dist rf'][df['sample']==sample]
-    err_rf = df['error rf'][df['sample']==sample]
+    res_rf = df['hellinger dist nn'][df['sample']==sample]
+    err_rf = df['error nn'][df['sample']==sample]
 
     dist_rf_med.append(np.median(res_rf))
     dist_rf_25_quantile.append(
@@ -114,14 +114,14 @@ for sample in sample_size:
 sns.set_context('talk')
 fig, ax = plt.subplots(1,2, figsize=(16,8))
 
-ax[0].plot(sample_size, dist_rf_med, c="k", label='RF')
+ax[0].plot(sample_size, dist_rf_med, c="k", label='NN')
 ax[0].fill_between(sample_size, dist_rf_25_quantile, dist_rf_75_quantile, facecolor='k', alpha=.3)
 
-ax[1].plot(sample_size, err_rf_med, c="k", label='RF')
+ax[1].plot(sample_size, err_rf_med, c="k", label='NN')
 ax[1].fill_between(sample_size, err_rf_25_quantile, err_rf_75_quantile, facecolor='k', alpha=.3)
 
 for ii, cov_type in enumerate(covariance_types):
-    filename = 'simulation_res_' + cov_type + '.csv'
+    filename = 'simulation_res_nn_' + cov_type + '.csv'
     df = pd.read_csv(filename)
 
     dist_kdf_med = []
@@ -133,8 +133,8 @@ for ii, cov_type in enumerate(covariance_types):
     err_kdf_75_quantile = []    
 
     for sample in sample_size:
-        res_kdf = df['hellinger dist kdf'][df['sample']==sample]
-        err_kdf = df['error kdf'][df['sample']==sample]
+        res_kdf = df['hellinger dist kdn'][df['sample']==sample]
+        err_kdf = df['error kdn'][df['sample']==sample]
         #res_rf = df['hellinger dist rf'][df['sample']==sample]
 
         dist_kdf_med.append(np.median(res_kdf))
@@ -179,7 +179,7 @@ right_side.set_visible(False)
 top_side = ax[1].spines["top"]
 top_side.set_visible(False)
 
-plt.savefig('plots/sim_res_all.pdf')
+plt.savefig('plots/sim_res_nn_all.pdf')
 
 
 # %%

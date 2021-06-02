@@ -1,5 +1,6 @@
 import numpy as np 
 from sklearn.datasets import make_blobs
+from numpy.random import uniform
 
 def get_ece(predicted_posterior, predicted_label, true_label, num_bins=40):
     poba_hist = []
@@ -134,3 +135,13 @@ def pdf(x, cov_scale=0.25):
     )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
 
     return p0/(p0+p1)
+
+def sparse_parity(
+    n_samples,
+    p_star = 3,
+    p = 20
+):
+    X = uniform(low=-1,high=1,size=(n_samples,p))
+    y = np.sum(X[:,:p_star]>0, axis=1)%2
+
+    return X, y.astype(int)
