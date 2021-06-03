@@ -6,22 +6,30 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier as rf
 #%%
 p = 20
-n_samples = 5000
+p_star = 3
+sample_size = np.logspace(
+        np.log10(10),
+        np.log10(5000),
+        num=10,
+        endpoint=True,
+        dtype=int
+        )
 n_test = 1000
 reps = 100
 covarice_types = {'diag', 'full', 'spherical'}
-criterion = 'bic'
+criterion = 'aic'
 n_estimators = 500
 df = pd.DataFrame()
-p_star_list = []
 reps_list = []
 accuracy_kdf = []
 accuracy_rf = []
+sample_list = []
 # %%
-for p_star in range(20,0,-1):
+for sample in sample_size:
+    print('Doing sample %d'%sample)
     for ii in range(reps):
         X, y = sparse_parity(
-            n_samples,
+            sample,
             p_star=p_star,
             p=p
         )
@@ -30,6 +38,7 @@ for p_star in range(20,0,-1):
             p_star=p_star,
             p=p
         )
+
         #train kdf
         model_kdf = kdf(
             covariance_types = covarice_types,
@@ -37,25 +46,26 @@ for p_star in range(20,0,-1):
             kwargs={'n_estimators':n_estimators}
         )
         model_kdf.fit(X, y)
-        accuracy_kdf.extend(
+        accuracy_kdf.append(
             np.mean(
                 model_kdf.predict(X_test) == y_test
             )
         )
+
         #train rf
         model_rf = rf(n_estimators=n_estimators).fit(X, y)
-        accuracy_rf.extend(
+        accuracy_rf.append(
             np.mean(
                 model_rf.predict(X_test) == y_test
             )
         )
-
-        reps_list.extend(ii)
-        p_star_list.extend(p_star)
+        reps_list.append(ii)
+        sample_list.append(sample)
 
 df['accuracy kdf'] = accuracy_kdf
 df['accuracy rf'] = accuracy_rf
 df['reps'] = reps_list
-df['p_star'] = p_star_list
+df['sample'] = sample_list
 
 df.to_csv('high_dim_res_aic_kdf.csv')
+# %%

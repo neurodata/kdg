@@ -139,11 +139,9 @@ def pdf(x, cov_scale=0.25):
 def sparse_parity(
     n_samples,
     p_star = 3,
-    p = 20,
-    cluster_std=0.25,
-    center_box=(-1.0,1.0)
+    p = 20
 ):
-    X = np.zeros(n_samples, p)
+    X = np.zeros((n_samples,p))
 
     for i in range(p):
         X[:,i] = normal(

@@ -67,7 +67,6 @@ def experiment_rf(sample, n_estimators=500):
     error = 1 - np.mean(model_rf.predict(X_test)==y_test)
     return hellinger(proba_rf, true_pdf), error
     
-        
 # %%
 for cov_type in covarice_types:
     df = pd.DataFrame()
