@@ -160,7 +160,7 @@ def experiment(task_id, cov_type, folder, n_estimators=500, cv=5, reps=10):
 
 #%%
 folder = 'result_cov'
-#os.mkdir(folder)
+os.mkdir(folder)
 cv = 5
 reps = 10
 n_estimators = 500
