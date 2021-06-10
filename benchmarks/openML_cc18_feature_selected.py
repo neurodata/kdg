@@ -163,7 +163,7 @@ def experiment(task_id, cov_type, criterion, folder, n_estimators=500, cv=5, rep
     df['sample'] = samples
     df['dimension'] = dims
 
-    df.to_csv(folder+'/'+'openML_cc18_task_feature_selected_'+cov_type+'_'+str(task_id)+'.csv')
+    df.to_csv(folder+'/'+'openML_cc18_task_feature_selected_'+str(task_id)+'.csv')
 
 #%%
 folder = 'result_feature_selected'

@@ -70,7 +70,7 @@ class kdf(KernelDensityGraph):
                             gm.covariances_[0]
                     )
                 else:
-                    min_val = 1e20
+                    min_val = np.inf
                     tmp_means = np.mean(
                         X_[idx],
                         axis=0
