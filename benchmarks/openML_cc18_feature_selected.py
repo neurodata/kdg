@@ -181,11 +181,10 @@ criterion = 'aic'
 total_cores = multiprocessing.cpu_count()
 assigned_workers = total_cores//n_cores
 
-for cov_type in covarice_types:
-    Parallel(n_jobs=assigned_workers,verbose=1)(
+Parallel(n_jobs=assigned_workers,verbose=1)(
             delayed(experiment)(
                     task_id,
-                    cov_type,
+                    covarice_types,
                     criterion,
                     folder
                     ) for task_id in benchmark_suite.tasks
