@@ -60,7 +60,7 @@ def get_stratified_samples(y, samples_to_take):
     return stratified_indices
 
 # %%
-def experiment(task_id, cov_type, folder, n_estimators=500, cv=5, reps=10):
+def experiment(task_id, cov_type, criterion, folder, n_estimators=500, cv=5, reps=10):
     df = pd.DataFrame() 
     #task_id = 14
     task = openml.tasks.get_task(task_id)
@@ -129,7 +129,7 @@ def experiment(task_id, cov_type, folder, n_estimators=500, cv=5, reps=10):
                 error_rf[jj][ii] = 1 - np.mean(y_test==predicted_label)
                 kappa_rf[jj][ii] = cohen_kappa_score(predicted_label, y_test)
 
-                model_kdf = kdf(covariance_types = cov_type, kwargs={'n_estimators':n_estimators})
+                model_kdf = kdf(covariance_types = cov_type, criterion=criterion, kwargs={'n_estimators':n_estimators})
                 model_kdf.fit(X_train[train_idx], y_train[train_idx])
                 proba_kdf = model_kdf.predict_proba(X_test)
                 predicted_label = np.argmax(proba_kdf, axis = 1)
@@ -166,15 +166,16 @@ def experiment(task_id, cov_type, folder, n_estimators=500, cv=5, reps=10):
     df.to_csv(folder+'/'+'openML_cc18_task_feature_selected_'+cov_type+'_'+str(task_id)+'.csv')
 
 #%%
-folder = 'result_cov'
-#os.mkdir(folder)
+folder = 'result_feature_selected'
+os.mkdir(folder)
 cv = 5
 reps = 10
 n_estimators = 500
 n_cores = 1
 df = pd.DataFrame() 
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
-covarice_types = {"full", "tied", "diag", "spherical"}
+covarice_types = {'diag', 'full', 'spherical'}
+criterion = 'aic'
 
 #%%
 total_cores = multiprocessing.cpu_count()
@@ -185,6 +186,7 @@ for cov_type in covarice_types:
             delayed(experiment)(
                     task_id,
                     cov_type,
+                    criterion,
                     folder
                     ) for task_id in benchmark_suite.tasks
                 )
