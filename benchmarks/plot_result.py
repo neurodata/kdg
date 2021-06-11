@@ -7,7 +7,7 @@ import openml
 from scipy.interpolate import interp1d
 from os import listdir, getcwd 
 
-folder = 'result'
+folder = 'result_feature_selected'
 current_dir = getcwd()
 files = listdir(current_dir+'/'+folder)
 
@@ -21,6 +21,7 @@ ece_over_dataset = []
 kappa_normalized_over_dataset = []
 ece_normalized_over_dataset = []
 
+#%%
 sns.set_context('talk')
 fig, ax = plt.subplots(1,2, figsize=(16,8))
 #minimum = 0
@@ -128,7 +129,7 @@ ax[1].plot(samples, np.nanmedian(ece_over_dataset, axis=0), c='r', lw=3)
 
 ax[0].text(50, 0.1, "kdf wins")
 ax[1].text(50, - 0.1, "kdf wins")
-plt.savefig('plots/openML_cc18_all_Gaussian_per_point_EM.pdf')
+plt.savefig('plots/openML_cc18_all_feature_selected.pdf')
 #plt.show()
 
  # %%
