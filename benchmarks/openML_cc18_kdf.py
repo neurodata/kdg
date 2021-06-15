@@ -58,7 +58,7 @@ def get_stratified_samples(y, samples_to_take):
     return stratified_indices
 
 # %%
-def experiment(task_id, cov_type, folder, n_estimators=500, cv=5, reps=10):
+def experiment(task_id, cov_type, criterion, folder, n_estimators=500, cv=5, reps=10):
     df = pd.DataFrame() 
     #task_id = 14
     task = openml.tasks.get_task(task_id)
@@ -156,7 +156,7 @@ def experiment(task_id, cov_type, folder, n_estimators=500, cv=5, reps=10):
     df['sample'] = samples
     df['dimension'] = dims
 
-    df.to_csv(folder+'/'+'openML_cc18_task_'+cov_type+'_'+str(task_id)+'.csv')
+    df.to_csv(folder+'/'+'openML_cc18_task_bic_'+str(task_id)+'.csv')
 
 #%%
 folder = 'result_cov'
@@ -168,19 +168,19 @@ n_cores = 1
 df = pd.DataFrame() 
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 covarice_types = {"full", "tied", "diag", "spherical"}
-
+criterion = 'bic'
 #%%
 total_cores = multiprocessing.cpu_count()
 assigned_workers = total_cores//n_cores
 
-for cov_type in covarice_types:
-    Parallel(n_jobs=assigned_workers,verbose=1)(
-            delayed(experiment)(
-                    task_id,
-                    cov_type,
-                    folder
-                    ) for task_id in benchmark_suite.tasks
-                )
+Parallel(n_jobs=assigned_workers,verbose=1)(
+        delayed(experiment)(
+                task_id,
+                covarice_types,
+                criterion,
+                folder
+                ) for task_id in benchmark_suite.tasks
+            )
 
 
 # %%
