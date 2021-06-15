@@ -125,6 +125,7 @@ def experiment(task_id, cov_type, criterion, folder, n_estimators=500, cv=5, rep
                 network_base.add(layers.Dense(dim+2, activation='relu', input_shape=(dim,)))
                 network_base.add(layers.Dense(dim+2, activation='relu'))
                 network_base.add(layers.Dense(units=max_class, activation = 'softmax'))
+                network_base.compile(loss="categorical_crossentropy", optimizer=keras.optimizers.Adam(3e-4))
 
                 train_idx =  get_stratified_samples(y_train, sample)
 
