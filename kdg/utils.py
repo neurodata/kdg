@@ -141,12 +141,6 @@ def sparse_parity(
     p_star = 3,
     p = 20
 ):
-    '''X = np.zeros((n_samples,p))
-
-    for i in range(p):
-        X[:,i] = normal(
-            size=n_samples
-        )'''
     X = np.random.uniform(low=-1,high=1,size=(n_samples,p))
     y = np.sum(X[:,:p_star]>0, axis=1)%2
 
