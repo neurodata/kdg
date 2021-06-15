@@ -7,21 +7,23 @@ from sklearn.ensemble import RandomForestClassifier as rf
 #%%
 p = 20
 p_star = 3
-sample_size = np.logspace(
+'''sample_size = np.logspace(
         np.log10(10),
         np.log10(5000),
         num=10,
         endpoint=True,
         dtype=int
-        )
+        )'''
+sample_size = [1000,5000,10000]
 n_test = 1000
 reps = 100
 covarice_types = {'diag', 'full', 'spherical'}
-criterion = 'aic'
+criterion = 'bic'
 n_estimators = 500
 df = pd.DataFrame()
 reps_list = []
 accuracy_kdf = []
+accuracy_kdf_ = []
 accuracy_rf = []
 sample_list = []
 # %%
@@ -41,7 +43,6 @@ for sample in sample_size:
 
         #train kdf
         model_kdf = kdf(
-            pca_dim=p_star,
             covariance_types = covarice_types,
             criterion = criterion, 
             kwargs={'n_estimators':n_estimators}
@@ -53,22 +54,36 @@ for sample in sample_size:
             )
         )
 
+        #train feature selected kdf
+        model_kdf = kdf(
+            covariance_types = covarice_types,
+            criterion = criterion, 
+            kwargs={'n_estimators':n_estimators}
+        )
+        model_kdf.fit(X[:,:3], y)
+        accuracy_kdf_.append(
+            np.mean(
+                model_kdf.predict(X_test[:,:3]) == y_test
+            )
+        )
+
         #train rf
-        '''model_rf = rf(n_estimators=n_estimators).fit(X, y)
+        model_rf = rf(n_estimators=n_estimators).fit(X, y)
         accuracy_rf.append(
             np.mean(
                 model_rf.predict(X_test) == y_test
             )
-        )'''
+        )
         reps_list.append(ii)
         sample_list.append(sample)
 
 df['accuracy kdf'] = accuracy_kdf
-#df['accuracy rf'] = accuracy_rf
+df['feature selected kdf'] = accuracy_kdf_
+df['accuracy rf'] = accuracy_rf
 df['reps'] = reps_list
 df['sample'] = sample_list
 
-df.to_csv('high_dim_res_aic_kdf_3.csv')
+df.to_csv('high_dim_res_aic_kdf.csv')
 # %% plot the result
 import pandas as pd
 import seaborn as sns
@@ -76,18 +91,11 @@ import matplotlib.pyplot as plt
 import numpy as np 
 
 filename1 = 'high_dim_res_aic_kdf.csv'
-filename2 = 'high_dim_res_aic_kdf_3.csv'
 
 df = pd.read_csv(filename1)
-df_ = pd.read_csv(filename2)
 
-sample_size = np.logspace(
-        np.log10(10),
-        np.log10(5000),
-        num=10,
-        endpoint=True,
-        dtype=int
-        )
+sample_size = [1000,5000,10000]
+
 err_rf_med = []
 err_rf_25_quantile = []
 err_rf_75_quantile = []
@@ -106,7 +114,7 @@ err_kdf_75_quantile_ = []
 for sample in sample_size:
     err_rf = 1 - df['accuracy rf'][df['sample']==sample]
     err_kdf = 1 - df['accuracy kdf'][df['sample']==sample]
-    err_kdf_ = 1 - df_['accuracy kdf'][df_['sample']==sample]
+    err_kdf_ = 1 - df['feature selected kdf'][df['sample']==sample]
 
     err_rf_med.append(np.median(err_rf))
     err_rf_25_quantile.append(
@@ -138,10 +146,10 @@ fig, ax = plt.subplots(1,1, figsize=(8,8))
 ax.plot(sample_size, err_rf_med, c="k", label='RF')
 ax.fill_between(sample_size, err_rf_25_quantile, err_rf_75_quantile, facecolor='k', alpha=.3)
 
-ax.plot(sample_size, err_kdf_med, c="r", label='KDF (AIC)')
+ax.plot(sample_size, err_kdf_med, c="r", label='KDF (BIC)')
 ax.fill_between(sample_size, err_kdf_25_quantile, err_kdf_75_quantile, facecolor='r', alpha=.3)
 
-ax.plot(sample_size, err_kdf_med_, c="b", label='KDF (AIC and feteaure selected)')
+ax.plot(sample_size, err_kdf_med_, c="b", label='KDF (BIC and feteaure selected)')
 ax.fill_between(sample_size, err_kdf_25_quantile_, err_kdf_75_quantile_, facecolor='b', alpha=.3)
 
 right_side = ax.spines["right"]
@@ -155,4 +163,5 @@ ax.set_ylabel('error')
 ax.legend(frameon=False)
 
 plt.savefig('plots/high_dim.pdf')
+
 # %%
