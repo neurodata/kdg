@@ -12,6 +12,7 @@ from sklearn.metrics import cohen_kappa_score
 import os
 import keras
 from keras import layers
+import warnings
 
 #%%
 def get_stratified_samples(y, samples_to_take):
@@ -189,11 +190,14 @@ assigned_workers = total_cores//n_cores
 
 for task_id in benchmark_suite.tasks:
     print('Doing taks '+str(task_id))
-    experiment(
-        task_id,
-        covarice_types,
-        criterion,
-        folder
-        )
+    try:
+        experiment(
+            task_id,
+            covarice_types,
+            criterion,
+            folder
+            )
+    except:
+        warnings.warn("Could not fit for task "+str(task_id))
 
 # %%
