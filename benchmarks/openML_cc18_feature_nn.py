@@ -136,7 +136,7 @@ def experiment(task_id, cov_type, criterion, folder, n_estimators=500, cv=5, rep
                 error_nn[jj][ii] = 1 - np.mean(y_test==predicted_label)
                 kappa_nn[jj][ii] = cohen_kappa_score(predicted_label, y_test)
 
-                model_kdn = kdn(network, covariance_types = cov_type, criterion=criterion, kwargs={'n_estimators':n_estimators})
+                model_kdn = kdn(network, covariance_types = cov_type, criterion=criterion)
                 model_kdn.fit(X_train[train_idx], y_train[train_idx])
                 proba_kdn = model_kdn.predict_proba(X_test)
                 predicted_label = np.argmax(proba_kdn, axis = 1)
