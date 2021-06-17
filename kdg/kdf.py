@@ -38,7 +38,8 @@ class kdf(KernelDensityGraph):
         X, y = check_X_y(X, y)
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
-
+        feature_dim = X.shape[1]
+        
         for label in self.labels:
             self.polytope_means[label] = []
             self.polytope_cov[label] = []
@@ -86,7 +87,7 @@ class kdf(KernelDensityGraph):
                         axis=0
                     )
                     tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
-                    
+
                     for cov_type in self.covariance_types:
                         try:
                             gm = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-3).fit(X_[idx])

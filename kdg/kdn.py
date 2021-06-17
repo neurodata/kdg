@@ -64,7 +64,8 @@ class kdn(KernelDensityGraph):
 
         self.network.compile(**self.compile_kwargs)
         self.network.fit(X, keras.utils.to_categorical(y), **self.fit_kwargs)
-
+        feature_dim = X.shape[1]
+        
         for label in self.labels:
             self.polytope_means[label] = []
             self.polytope_cov[label] = []
@@ -103,7 +104,7 @@ class kdn(KernelDensityGraph):
                         axis=0
                     )
                     tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
-                     
+
                     for cov_type in self.covariance_types:
                         try:
                             gm = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-3).fit(X_[idx])
