@@ -83,11 +83,16 @@ class kdn(KernelDensityGraph):
                     self.polytope_means[label].append(
                             gm.means_[0]
                     )
+                    if self.covariance_types == 'spherical':
+                        tmp_cov = np.eye(feature_dim)*tmp_cov
+                    elif self.covariance_types == 'diag':
+                        tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
+
                     self.polytope_cov[label].append(
-                            gm.covariances_[0]
+                            tmp_cov
                     )
                 else:
-                    min_val = 1e20
+                    min_val = np.inf
                     tmp_means = np.mean(
                         X_[idx],
                         axis=0
@@ -111,6 +116,12 @@ class kdn(KernelDensityGraph):
                             if min_val > constraint:
                                 min_val = constraint
                                 tmp_cov = gm.covariances_[0]
+                                
+                                if cov_type == 'spherical':
+                                    tmp_cov = np.eye(feature_dim)*tmp_cov
+                                elif cov_type == 'diag':
+                                    tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
+
                                 tmp_means = gm.means_[0]
                             
                     self.polytope_means[label].append(
