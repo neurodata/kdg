@@ -83,6 +83,7 @@ class kdn(KernelDensityGraph):
                     self.polytope_means[label].append(
                             gm.means_[0]
                     )
+                    tmp_cov = gm.covariances_[0]
                     if self.covariance_types == 'spherical':
                         tmp_cov = np.eye(feature_dim)*tmp_cov
                     elif self.covariance_types == 'diag':
@@ -101,7 +102,8 @@ class kdn(KernelDensityGraph):
                         X_[idx],
                         axis=0
                     )
-                        
+                    tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
+                     
                     for cov_type in self.covariance_types:
                         try:
                             gm = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-3).fit(X_[idx])
