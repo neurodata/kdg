@@ -182,7 +182,7 @@ n_estimators = 500
 n_cores = 1
 df = pd.DataFrame() 
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
-covarice_types = {"full", "tied", "diag", "spherical"}
+covarice_types = {"full", "diag", "spherical"}
 criterion = 'bic'
 #%%
 total_cores = multiprocessing.cpu_count()
