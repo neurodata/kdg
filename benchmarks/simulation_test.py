@@ -126,13 +126,14 @@ grid_samples = np.concatenate(
                 xx.reshape(-1,1),
                 yy.reshape(-1,1),
                 tmp.reshape(-1,1),
+                tmp.reshape(-1,1),
                 tmp.reshape(-1,1)
             ),
             axis=1
     ) 
-#model_kdf = kdf(kwargs={'n_estimators':40})
+#model_kdf = kdf(kwargs={'n_estimators':500})
 #model_kdf.fit(X, y)
-proba_kdf = model_kdf.predict_proba(grid_samples)
+proba_kdf = model_kdf.rf_model.predict_proba(grid_samples)
 
 data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':proba_kdf[:,0]})
 data = data.pivot(index='x', columns='y', values='z')
