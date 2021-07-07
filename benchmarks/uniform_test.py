@@ -41,7 +41,7 @@ def experiment_kdf(sample, n_estimators=500):
     model_kdf.fit(X, y)
     proba_kdf = model_kdf.predict_proba(grid_samples)
     true_pdf_class1 = np.array([np.sum(grid_samples>0, axis=1)%2]).reshape(-1,1)
-    true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
+    true_pdf = np.concatenate([1-true_pdf_class1, true_pdf_class1], axis = 1)
 
     error = 1 - np.mean(model_kdf.predict(X_test)==y_test)
     return hellinger(proba_kdf, true_pdf), error
@@ -62,7 +62,7 @@ def experiment_rf(sample, n_estimators=500):
     model_rf = rf(n_estimators=n_estimators).fit(X, y)
     proba_rf = model_rf.predict_proba(grid_samples)
     true_pdf_class1 = np.array([np.sum(grid_samples>0, axis=1)%2]).reshape(-1,1)
-    true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
+    true_pdf = np.concatenate([1-true_pdf_class1, true_pdf_class1], axis = 1)
 
     error = 1 - np.mean(model_rf.predict(X_test)==y_test)
     return hellinger(proba_rf, true_pdf), error
