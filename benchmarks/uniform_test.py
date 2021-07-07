@@ -2,6 +2,7 @@
 from kdg import kdf
 from kdg.utils import get_ece
 import openml
+from kdg.utils import sparse_parity
 import multiprocessing
 from joblib import Parallel, delayed
 import numpy as np
@@ -24,8 +25,8 @@ sample_size = np.logspace(
 
 #%%
 def experiment_kdf(sample, n_estimators=500):
-    X, y = generate_gaussian_parity(sample, cluster_std=0.5)
-    X_test, y_test = generate_gaussian_parity(1000, cluster_std=0.5)
+    X, y = sparse_parity(sample, p_star=2, p=2)
+    X_test, y_test = sparse_parity(1000, p_star=2, p=2)
     p = np.arange(-1,1,step=0.006)
     q = np.arange(-1,1,step=0.006)
     xx, yy = np.meshgrid(p,q)
@@ -39,15 +40,15 @@ def experiment_kdf(sample, n_estimators=500):
     model_kdf = kdf(kwargs={'n_estimators':n_estimators})
     model_kdf.fit(X, y)
     proba_kdf = model_kdf.predict_proba(grid_samples)
-    true_pdf_class1 = np.array([pdf(x, cov_scale=0.5) for x in grid_samples]).reshape(-1,1)
+    true_pdf_class1 = np.array([np.sum(x>0, axis=1)%2 for x in grid_samples]).reshape(-1,1)
     true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
 
     error = 1 - np.mean(model_kdf.predict(X_test)==y_test)
     return hellinger(proba_kdf, true_pdf), error
 
 def experiment_rf(sample, n_estimators=500):
-    X, y = generate_gaussian_parity(sample, cluster_std=0.5)
-    X_test, y_test = generate_gaussian_parity(1000, cluster_std=0.5)
+    X, y = sparse_parity(sample, p_star=2, p=2)
+    X_test, y_test = sparse_parity(1000, p_star=2, p=2)
     p = np.arange(-1,1,step=0.006)
     q = np.arange(-1,1,step=0.006)
     xx, yy = np.meshgrid(p,q)
@@ -60,7 +61,7 @@ def experiment_rf(sample, n_estimators=500):
     ) 
     model_rf = rf(n_estimators=n_estimators).fit(X, y)
     proba_rf = model_rf.predict_proba(grid_samples)
-    true_pdf_class1 = np.array([pdf(x, cov_scale=0.5) for x in grid_samples]).reshape(-1,1)
+    true_pdf_class1 = np.array([np.sum(x>0, axis=1)%2 for x in grid_samples]).reshape(-1,1)
     true_pdf = np.concatenate([true_pdf_class1, 1-true_pdf_class1], axis = 1)
 
     error = 1 - np.mean(model_rf.predict(X_test)==y_test)
@@ -111,40 +112,4 @@ df['hellinger dist rf'] = hellinger_dist_rf
 df['error kdf'] = err_kdf
 df['error rf'] = err_rf
 df['sample'] = sample_list
-df.to_csv('simulation_res.csv')
-# %%
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-p = np.arange(-1,1,step=0.06)
-q = np.arange(-1,1,step=0.06)
-xx, yy = np.meshgrid(p,q)
-tmp = np.ones(xx.shape)
-
-grid_samples = np.concatenate(
-            (
-                xx.reshape(-1,1),
-                yy.reshape(-1,1),
-                tmp.reshape(-1,1),
-                tmp.reshape(-1,1)
-            ),
-            axis=1
-    ) 
-#model_kdf = kdf(kwargs={'n_estimators':40})
-#model_kdf.fit(X, y)
-proba_kdf = model_kdf.predict_proba(grid_samples)
-
-data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':proba_kdf[:,0]})
-data = data.pivot(index='x', columns='y', values='z')
-
-
-sns.set_context("talk")
-fig, ax = plt.subplots(1,1, figsize=(8,8))
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-ax1.set_xticklabels(['-1','' , '', '', '', '', '','','','','0','','','','','','','','','1'])
-ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','','','','0','','','','','','','','','','','','','1'])
-#ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','' , '', '', '', '', '', '','','','','', '0','','' , '', '', '', '', '','','','','','','','','','','','','1'])
-ax.set_title('Estimated PDF of xor-nxor simulation data',fontsize=24)
-ax.invert_yaxis()
-# %%
+df.to_csv('simulation_res_uniform.csv')
