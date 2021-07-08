@@ -145,3 +145,51 @@ def sparse_parity(
     y = np.sum(X[:,:p_star]>0, axis=1)%2
 
     return X, y.astype(int)
+
+def gaussian_sparse_parity(
+    n_samples,
+    centers=None,
+    class_label=None,
+    p_star = 3,
+    p = 20,
+    cluster_std = 0.25,
+    center_box=(-1.0,1.0),
+    random_state = None
+):
+    if random_state != None:
+        np.random.seed(random_state)
+
+    if centers == None:
+        if p_star == 2:
+            centers = np.array([(-0.5, 0.5), (0.5, 0.5), (-0.5, -0.5), (0.5, -0.5)])
+        else:
+            centers = np.array(
+                [(0.5, 0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, -0.5, 0.5), (0.5, 0.5, -0.5), (0.5, -0.5, -0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, -0.5), (-0.5, -0.5, -0.5)]
+                )
+
+    if class_label == None:
+        class_label = 1 - np.sum(centers[:,:p_star]>0, axis=1)%2
+    
+    blob_num = len(class_label)
+
+    # get the number of samples in each blob with equal probability
+    samples_per_blob = np.random.multinomial(
+        n_samples, 1 / blob_num * np.ones(blob_num)
+    )
+    
+    X, y = make_blobs(
+        n_samples=samples_per_blob,
+        n_features=p_star,
+        centers=centers,
+        cluster_std=cluster_std,
+        center_box=center_box
+    )
+
+    for blob in range(blob_num):
+        y[np.where(y == blob)] = class_label[blob]
+
+    if p > p_star:
+        X_noise = np.random.uniform(low=center_box[0],high=center_box[1],size=(n_samples,p-p_star))
+        X = np.concatenate((X, X_noise), axis=1)
+
+    return X, y.astype(int)

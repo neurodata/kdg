@@ -1,7 +1,7 @@
 #%%
 import numpy as np
 from kdg import kdf
-from kdg.utils import sparse_parity
+from kdg.utils import gaussian_sparse_parity
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier as rf
 #%%
@@ -16,26 +16,26 @@ p_star = 3
         )'''
 sample_size = [1000,5000,10000]
 n_test = 1000
-reps = 100
-covarice_types = {'diag', 'full', 'spherical'}
-criterion = 'bic'
-n_estimators = 500
+reps = 10
+
+n_estimators = 1
 df = pd.DataFrame()
 reps_list = []
 accuracy_kdf = []
 accuracy_kdf_ = []
 accuracy_rf = []
+accuracy_rf_ = []
 sample_list = []
 # %%
 for sample in sample_size:
     print('Doing sample %d'%sample)
     for ii in range(reps):
-        X, y = sparse_parity(
+        X, y = gaussian_sparse_parity(
             sample,
             p_star=p_star,
             p=p
         )
-        X_test, y_test = sparse_parity(
+        X_test, y_test = gaussian_sparse_parity(
             n_test,
             p_star=p_star,
             p=p
@@ -43,8 +43,6 @@ for sample in sample_size:
 
         #train kdf
         model_kdf = kdf(
-            covariance_types = covarice_types,
-            criterion = criterion, 
             kwargs={'n_estimators':n_estimators}
         )
         model_kdf.fit(X, y)
@@ -53,11 +51,9 @@ for sample in sample_size:
                 model_kdf.predict(X_test) == y_test
             )
         )
-
+        print(accuracy_kdf)
         #train feature selected kdf
         model_kdf = kdf(
-            covariance_types = covarice_types,
-            criterion = criterion, 
             kwargs={'n_estimators':n_estimators}
         )
         model_kdf.fit(X[:,:3], y)
@@ -66,12 +62,19 @@ for sample in sample_size:
                 model_kdf.predict(X_test[:,:3]) == y_test
             )
         )
-
+        print(accuracy_kdf_)
         #train rf
         model_rf = rf(n_estimators=n_estimators).fit(X, y)
         accuracy_rf.append(
             np.mean(
                 model_rf.predict(X_test) == y_test
+            )
+        )
+
+        model_rf = rf(n_estimators=n_estimators).fit(X[:,:3], y)
+        accuracy_rf_.append(
+            np.mean(
+                model_rf.predict(X_test[:,:3]) == y_test
             )
         )
         reps_list.append(ii)
@@ -80,17 +83,18 @@ for sample in sample_size:
 df['accuracy kdf'] = accuracy_kdf
 df['feature selected kdf'] = accuracy_kdf_
 df['accuracy rf'] = accuracy_rf
+df['feature selected rf'] = accuracy_rf_
 df['reps'] = reps_list
 df['sample'] = sample_list
 
-df.to_csv('high_dim_res_aic_kdf.csv')
+df.to_csv('high_dim_res_kdf_single_tree.csv')
 # %% plot the result
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np 
 
-filename1 = 'high_dim_res_aic_kdf.csv'
+filename1 = 'high_dim_res_kdf.csv'
 
 df = pd.read_csv(filename1)
 
@@ -146,10 +150,10 @@ fig, ax = plt.subplots(1,1, figsize=(8,8))
 ax.plot(sample_size, err_rf_med, c="k", label='RF')
 ax.fill_between(sample_size, err_rf_25_quantile, err_rf_75_quantile, facecolor='k', alpha=.3)
 
-ax.plot(sample_size, err_kdf_med, c="r", label='KDF (BIC)')
+ax.plot(sample_size, err_kdf_med, c="r", label='KDF')
 ax.fill_between(sample_size, err_kdf_25_quantile, err_kdf_75_quantile, facecolor='r', alpha=.3)
 
-ax.plot(sample_size, err_kdf_med_, c="b", label='KDF (BIC and feteaure selected)')
+ax.plot(sample_size, err_kdf_med_, c="b", label='KDF (feteaure selected)')
 ax.fill_between(sample_size, err_kdf_25_quantile_, err_kdf_75_quantile_, facecolor='b', alpha=.3)
 
 right_side = ax.spines["right"]
