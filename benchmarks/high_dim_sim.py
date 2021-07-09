@@ -18,7 +18,7 @@ sample_size = [1000,5000,10000]
 n_test = 1000
 reps = 10
 
-n_estimators = 1
+n_estimators = 500
 df = pd.DataFrame()
 reps_list = []
 accuracy_kdf = []
@@ -87,7 +87,7 @@ df['feature selected rf'] = accuracy_rf_
 df['reps'] = reps_list
 df['sample'] = sample_list
 
-df.to_csv('high_dim_res_kdf_single_tree.csv')
+df.to_csv('high_dim_res_kdf.csv')
 # %% plot the result
 import pandas as pd
 import seaborn as sns
@@ -104,6 +104,10 @@ err_rf_med = []
 err_rf_25_quantile = []
 err_rf_75_quantile = []
 
+err_rf_med_ = []
+err_rf_25_quantile_ = []
+err_rf_75_quantile_ = []
+
 err_kdf_med = []
 err_kdf_25_quantile = []
 err_kdf_75_quantile = []
@@ -117,6 +121,7 @@ err_kdf_75_quantile_ = []
 
 for sample in sample_size:
     err_rf = 1 - df['accuracy rf'][df['sample']==sample]
+    err_rf_ = 1 - df['feature selected rf'][df['sample']==sample]
     err_kdf = 1 - df['accuracy kdf'][df['sample']==sample]
     err_kdf_ = 1 - df['feature selected kdf'][df['sample']==sample]
 
@@ -126,6 +131,14 @@ for sample in sample_size:
         )
     err_rf_75_quantile.append(
         np.quantile(err_rf,[.75])[0]
+    )
+
+    err_rf_med_.append(np.median(err_rf_))
+    err_rf_25_quantile_.append(
+            np.quantile(err_rf_,[.25])[0]
+        )
+    err_rf_75_quantile_.append(
+        np.quantile(err_rf_,[.75])[0]
     )
 
     err_kdf_med.append(np.median(err_kdf))
@@ -150,6 +163,9 @@ fig, ax = plt.subplots(1,1, figsize=(8,8))
 ax.plot(sample_size, err_rf_med, c="k", label='RF')
 ax.fill_between(sample_size, err_rf_25_quantile, err_rf_75_quantile, facecolor='k', alpha=.3)
 
+ax.plot(sample_size, err_rf_med_, c="g", label='RF (feature selected)')
+ax.fill_between(sample_size, err_rf_25_quantile_, err_rf_75_quantile_, facecolor='g', alpha=.3)
+
 ax.plot(sample_size, err_kdf_med, c="r", label='KDF')
 ax.fill_between(sample_size, err_kdf_25_quantile, err_kdf_75_quantile, facecolor='r', alpha=.3)
 
@@ -166,6 +182,6 @@ ax.set_xlabel('Sample size')
 ax.set_ylabel('error')
 ax.legend(frameon=False)
 
-plt.savefig('plots/high_dim.pdf')
+plt.savefig('plots/high_dim_gaussian.pdf')
 
 # %%

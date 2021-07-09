@@ -10,7 +10,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier as rf
 from sklearn.metrics import cohen_kappa_score
 import os
-from kdg.utils import generate_gaussian_parity, pdf, hellinger
+from kdg.utils import generate_gaussian_parity, pdf, hellinger, gaussian_sparse_parity
 # %%
 reps = 100
 n_estimators = 500
@@ -125,12 +125,12 @@ grid_samples = np.concatenate(
             (
                 xx.reshape(-1,1),
                 yy.reshape(-1,1),
-                tmp.reshape(-1,1)
+                tmp.reshape(-1,1),
             ),
             axis=1
     ) 
-model_kdf = kdf(kwargs={'n_estimators':500})
-model_kdf.fit(X, y)
+#model_kdf = kdf(covariance_types = {'diag', 'full', 'spherical'}, criterion='bic', kwargs={'n_estimators':500})
+#model_kdf.fit(X, y)
 proba_kdf = model_kdf.predict_proba(grid_samples)
 
 data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':proba_kdf[:,0]})
