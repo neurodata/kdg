@@ -7,7 +7,7 @@ import pandas as pd
 reps = 100
 n_train = 1000
 n_test = 1000
-dimensions = range(1,101)
+dimensions = range(1,501,5)
 #%%
 err_kdf_med = []
 err_kdf_25_quantile = []
@@ -21,6 +21,7 @@ for dim in dimensions:
     err_kdf = []
     err_rf = []
 
+    print('Doing dimension ',dim)
     for _ in range(reps):
         X, y = trunk_sim(n_train, dim=dim)
         X_test, y_test = trunk_sim(n_test, dim=dim)
@@ -59,3 +60,4 @@ df['err_kdf_25_quantile'] = err_kdf_25_quantile
 df['err_kdf_75_quantile'] = err_kdf_75_quantile
 
 df.to_csv('trunk_res.csv')
+# %%
