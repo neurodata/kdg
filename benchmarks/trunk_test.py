@@ -61,3 +61,35 @@ df['err_kdf_75_quantile'] = err_kdf_75_quantile
 
 df.to_csv('trunk_res.csv')
 # %%
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
+df = pd.read_csv('trunk_res.csv')
+err_kdf_med = df['err_kdf_med']
+err_kdf_25_quantile = df['err_kdf_25_quantile']
+err_kdf_75_quantile = df['err_kdf_75_quantile']
+err_rf_med = df['err_rf_med']
+err_rf_25_quantile = df['err_rf_25_quantile']
+err_rf_75_quantile = df['err_rf_75_quantile']
+
+sns.set_context('talk')
+fig, ax = plt.subplots(1,1,figsize=(8,8))
+
+ax.plot(range(1,501,5), err_rf_med, c="k", label='RF')
+ax.fill_between(range(1,501,5), err_rf_25_quantile, err_rf_75_quantile, facecolor='k', alpha=.3)
+
+ax.plot(range(1,501,5), err_kdf_med, c="r", label='KDF')
+ax.fill_between(range(1,501,5), err_kdf_25_quantile, err_kdf_75_quantile, facecolor='r', alpha=.3)
+
+right_side = ax.spines["right"]
+right_side.set_visible(False)
+top_side = ax.spines["top"]
+top_side.set_visible(False)
+
+ax.set_xlabel('Dimension')
+ax.set_ylabel('error')
+ax.legend(frameon=False)
+
+plt.savefig('plots/trunk.pdf')
+# %%
