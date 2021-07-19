@@ -8,7 +8,7 @@ import warnings
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, covariance_types = 'full', criterion=None, kwargs={}):
+    def __init__(self, bootstrap=100, covariance_types = 'full', criterion=None, kwargs={}):
         super().__init__()
         
         if isinstance(covariance_types, str)==False and criterion == None:
@@ -24,6 +24,7 @@ class kdf(KernelDensityGraph):
         self.kwargs = kwargs
         self.covariance_types = covariance_types
         self.criterion = criterion
+        self.bootstrap = bootstrap
 
     def fit(self, X, y):
         r"""
@@ -62,60 +63,63 @@ class kdf(KernelDensityGraph):
                 if len(idx) == 1:
                     continue
                 
-                if self.criterion == None:
-                    gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types, reg_covar=1e-4).fit(X_[idx])
-                    self.polytope_means[label].append(
-                            gm.means_[0]
-                    )
-                    tmp_cov = gm.covariances_[0]
-                    if self.covariance_types == 'spherical':
-                        tmp_cov = np.eye(feature_dim)*tmp_cov
-                    elif self.covariance_types == 'diag':
+                for _ in range(self.bootstrap):
+                    idx_ = np.random.choice(idx, len(idx), replace=True)
+
+                    if self.criterion == None:
+                        gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types, reg_covar=1e-4).fit(X_[idx_])
+                        self.polytope_means[label].append(
+                                gm.means_[0]
+                        )
+                        tmp_cov = gm.covariances_[0]
+                        if self.covariance_types == 'spherical':
+                            tmp_cov = np.eye(feature_dim)*tmp_cov
+                        elif self.covariance_types == 'diag':
+                            tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
+
+                        self.polytope_cov[label].append(
+                                tmp_cov
+                        )
+                    else:
+                        min_val = np.inf
+                        tmp_means = np.mean(
+                            X_[idx_],
+                            axis=0
+                        )
+                        tmp_cov = np.var(
+                            X_[idx_],
+                            axis=0
+                        )
                         tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
 
-                    self.polytope_cov[label].append(
+                        for cov_type in self.covariance_types:
+                            try:
+                                gm = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-3).fit(X_[idx_])
+                            except:
+                                warnings.warn("Could not fit for cov_type "+cov_type)
+                            else:
+                                if self.criterion == 'aic':
+                                    constraint = gm.aic(X_[idx_])
+                                elif self.criterion == 'bic':
+                                    constraint = gm.bic(X_[idx_])
+
+                                if min_val > constraint:
+                                    min_val = constraint
+                                    tmp_cov = gm.covariances_[0]
+
+                                    if cov_type == 'spherical':
+                                        tmp_cov = np.eye(feature_dim)*tmp_cov
+                                    elif cov_type == 'diag':
+                                        tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
+
+                                    tmp_means = gm.means_[0]
+                            
+                        self.polytope_means[label].append(
+                            tmp_means
+                        )
+                        self.polytope_cov[label].append(
                             tmp_cov
-                    )
-                else:
-                    min_val = np.inf
-                    tmp_means = np.mean(
-                        X_[idx],
-                        axis=0
-                    )
-                    tmp_cov = np.var(
-                        X_[idx],
-                        axis=0
-                    )
-                    tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
-
-                    for cov_type in self.covariance_types:
-                        try:
-                            gm = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-3).fit(X_[idx])
-                        except:
-                            warnings.warn("Could not fit for cov_type "+cov_type)
-                        else:
-                            if self.criterion == 'aic':
-                                constraint = gm.aic(X_[idx])
-                            elif self.criterion == 'bic':
-                                constraint = gm.bic(X_[idx])
-
-                            if min_val > constraint:
-                                min_val = constraint
-                                tmp_cov = gm.covariances_[0]
-
-                                if cov_type == 'spherical':
-                                    tmp_cov = np.eye(feature_dim)*tmp_cov
-                                elif cov_type == 'diag':
-                                    tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
-
-                                tmp_means = gm.means_[0]
-                        
-                    self.polytope_means[label].append(
-                        tmp_means
-                    )
-                    self.polytope_cov[label].append(
-                        tmp_cov
-                    )
+                        )
         
             
     def _compute_pdf(self, X, label, polytope_idx):
