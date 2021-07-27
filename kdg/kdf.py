@@ -62,17 +62,12 @@ class kdf(KernelDensityGraph):
                 if len(idx) == 1:
                     continue
                 
-                X_tmp = X_[idx].copy()
-                X_tmp[:,3:] = 10*X_tmp[:,3:]
 
                 if self.criterion == None:
                     gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types, reg_covar=1e-4).fit(X_[idx])
                     self.polytope_means[label].append(
                             gm.means_[0]
                     )
-
-                    #test
-                    gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types, reg_covar=1e-4).fit(X_tmp)
                     tmp_cov = gm.covariances_[0]
                     if self.covariance_types == 'spherical':
                         tmp_cov = np.eye(feature_dim)*tmp_cov
@@ -89,7 +84,7 @@ class kdf(KernelDensityGraph):
                         axis=0
                     )
                     tmp_cov = np.var(
-                        X_tmp,
+                        X_[idx],
                         axis=0
                     )
                     tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
@@ -97,7 +92,6 @@ class kdf(KernelDensityGraph):
                     for cov_type in self.covariance_types:
                         try:
                             gm = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-3).fit(X_[idx])
-                            gm_ = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-4).fit(X_tmp)
                         except:
                             warnings.warn("Could not fit for cov_type "+cov_type)
                         else:
@@ -108,7 +102,7 @@ class kdf(KernelDensityGraph):
 
                             if min_val > constraint:
                                 min_val = constraint
-                                tmp_cov = gm_.covariances_[0]
+                                tmp_cov = gm.covariances_[0]
 
                                 if cov_type == 'spherical':
                                     tmp_cov = np.eye(feature_dim)*tmp_cov
