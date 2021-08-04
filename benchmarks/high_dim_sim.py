@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier as rf
 #%%
 p = 20
-p_star = 3
+p_star = 20
 '''sample_size = np.logspace(
         np.log10(10),
         np.log10(5000),
@@ -87,14 +87,14 @@ df['feature selected rf'] = accuracy_rf_
 df['reps'] = reps_list
 df['sample'] = sample_list
 
-df.to_csv('high_dim_res_kdf_bw_corrected.csv')
+df.to_csv('high_dim_res_kdf_no_noise20d.csv')
 # %% plot the result
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np 
 
-filename1 = 'high_dim_res_kdf_bw_corrected.csv'
+filename1 = 'high_dim_res_kdf_no_noise20d.csv'
 
 df = pd.read_csv(filename1)
 
@@ -182,6 +182,6 @@ ax.set_xlabel('Sample size')
 ax.set_ylabel('error')
 ax.legend(frameon=False)
 
-plt.savefig('plots/high_dim_gaussian_bw_corrected.pdf')
+plt.savefig('plots/high_dim_gaussian_no_noise.pdf')
 
 # %%

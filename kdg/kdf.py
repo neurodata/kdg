@@ -48,7 +48,10 @@ class kdf(KernelDensityGraph):
             predicted_leaf_ids_across_trees = np.array(
                 [tree.apply(X_) for tree in self.rf_model.estimators_]
                 ).T
-            total_polytopes_this_label = len(X_)
+            _, polytope_idx = np.unique(
+                predicted_leaf_ids_across_trees, return_inverse=True, axis=0
+            )
+            total_polytopes_this_label = np.max(polytope_idx)+1
 
             for polytope in range(total_polytopes_this_label):
                 matched_samples = np.sum(
