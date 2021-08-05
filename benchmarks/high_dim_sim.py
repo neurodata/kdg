@@ -1,12 +1,12 @@
 #%%
 import numpy as np
 from kdg import kdf
-from kdg.utils import gaussian_sparse_parity
+from kdg.utils import gaussian_sparse_parity, trunk_sim
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier as rf
 #%%
 p = 20
-p_star = 20
+p_star = 3
 '''sample_size = np.logspace(
         np.log10(10),
         np.log10(5000),
@@ -30,12 +30,12 @@ sample_list = []
 for sample in sample_size:
     print('Doing sample %d'%sample)
     for ii in range(reps):
-        X, y = gaussian_sparse_parity(
+        X, y = trunk_sim(
             sample,
             p_star=p_star,
             p=p
         )
-        X_test, y_test = gaussian_sparse_parity(
+        X_test, y_test = trunk_sim(
             n_test,
             p_star=p_star,
             p=p
@@ -87,14 +87,14 @@ df['feature selected rf'] = accuracy_rf_
 df['reps'] = reps_list
 df['sample'] = sample_list
 
-df.to_csv('high_dim_res_kdf_no_noise20d.csv')
+df.to_csv('high_dim_res_kdf_trunk_noise.csv')
 # %% plot the result
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np 
 
-filename1 = 'high_dim_res_kdf_no_noise20d.csv'
+filename1 = 'high_dim_res_kdf_trunk_noise.csv'
 
 df = pd.read_csv(filename1)
 
@@ -163,14 +163,14 @@ fig, ax = plt.subplots(1,1, figsize=(8,8))
 ax.plot(sample_size, err_rf_med, c="k", label='RF')
 ax.fill_between(sample_size, err_rf_25_quantile, err_rf_75_quantile, facecolor='k', alpha=.3)
 
-ax.plot(sample_size, err_rf_med_, c="g", label='RF (feature selected)')
-ax.fill_between(sample_size, err_rf_25_quantile_, err_rf_75_quantile_, facecolor='g', alpha=.3)
+#ax.plot(sample_size, err_rf_med_, c="g", label='RF (feature selected)')
+#ax.fill_between(sample_size, err_rf_25_quantile_, err_rf_75_quantile_, facecolor='g', alpha=.3)
 
 ax.plot(sample_size, err_kdf_med, c="r", label='KDF')
 ax.fill_between(sample_size, err_kdf_25_quantile, err_kdf_75_quantile, facecolor='r', alpha=.3)
 
-ax.plot(sample_size, err_kdf_med_, c="b", label='KDF (feteaure selected)')
-ax.fill_between(sample_size, err_kdf_25_quantile_, err_kdf_75_quantile_, facecolor='b', alpha=.3)
+#ax.plot(sample_size, err_kdf_med_, c="b", label='KDF (feteaure selected)')
+#ax.fill_between(sample_size, err_kdf_25_quantile_, err_kdf_75_quantile_, facecolor='b', alpha=.3)
 
 right_side = ax.spines["right"]
 right_side.set_visible(False)
@@ -182,6 +182,6 @@ ax.set_xlabel('Sample size')
 ax.set_ylabel('error')
 ax.legend(frameon=False)
 
-plt.savefig('plots/high_dim_gaussian_no_noise.pdf')
+plt.savefig('plots/high_dim_trunk_noise.pdf')
 
 # %%
