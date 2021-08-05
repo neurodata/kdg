@@ -196,18 +196,21 @@ def gaussian_sparse_parity(
 
 def trunk_sim(
     n_samples,
-    dim = 1
+    p_star=3,
+    p=3,
+    center_box=(-1.0,1.0),
+    random_state = None
 ):
     samples_per_class = np.random.multinomial(
         n_samples, 1 / 2 * np.ones(2)
     )
 
-    mean = 1./np.sqrt(np.arange(1,dim+1,1))
+    mean = 1./np.sqrt(np.arange(1,p_star+1,1))
 
     X = np.concatenate(
         (
-            np.random.multivariate_normal(mean, np.eye(dim), size=samples_per_class[0]),
-            np.random.multivariate_normal(-mean, np.eye(dim), size=samples_per_class[1])
+            np.random.multivariate_normal(mean, np.eye(p_star), size=samples_per_class[0]),
+            np.random.multivariate_normal(-mean, np.eye(p_star), size=samples_per_class[1])
         ),
         axis=0
     )
@@ -218,5 +221,9 @@ def trunk_sim(
         ),
         axis=0
     )
+
+    if p > p_star:
+        X_noise = np.random.uniform(low=center_box[0],high=center_box[1],size=(n_samples,p-p_star))
+        X = np.concatenate((X, X_noise), axis=1)
 
     return X, y.astype(int)
