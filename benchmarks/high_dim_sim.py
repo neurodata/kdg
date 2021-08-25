@@ -30,12 +30,12 @@ sample_list = []
 for sample in sample_size:
     print('Doing sample %d'%sample)
     for ii in range(reps):
-        X, y = trunk_sim(
+        X, y = gaussian_sparse_parity(
             sample,
             p_star=p_star,
             p=p
         )
-        X_test, y_test = trunk_sim(
+        X_test, y_test = gaussian_sparse_parity(
             n_test,
             p_star=p_star,
             p=p
@@ -87,14 +87,14 @@ df['feature selected rf'] = accuracy_rf_
 df['reps'] = reps_list
 df['sample'] = sample_list
 
-df.to_csv('high_dim_res_kdf_trunk_noise.csv')
+df.to_csv('high_dim_res_kdf_gaussian_min_cov.csv')
 # %% plot the result
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np 
 
-filename1 = 'high_dim_res_kdf_trunk_noise.csv'
+filename1 = 'high_dim_res_kdf_gaussian_min_cov.csv'
 
 df = pd.read_csv(filename1)
 
@@ -182,6 +182,6 @@ ax.set_xlabel('Sample size')
 ax.set_ylabel('error')
 ax.legend(frameon=False)
 
-plt.savefig('plots/high_dim_trunk_noise.pdf')
+plt.savefig('plots/high_dim_gaussian_min_cov.pdf')
 
 # %%
