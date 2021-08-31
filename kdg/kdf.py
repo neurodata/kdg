@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestClassifier as rf
 import numpy as np
 from scipy.stats import multivariate_normal
 import warnings
-from sklearn.covariance import MinCovDet
+from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf
 
 class kdf(KernelDensityGraph):
 
@@ -66,12 +66,15 @@ class kdf(KernelDensityGraph):
                 if len(idx) == 1:
                     continue
                 
-                mcd = MinCovDet().fit(X_[idx])
+                #tmp = fast_mcd(X_[idx])
+                covariance_model = LedoitWolf()
+                covariance_model.fit(X_[idx])
+
                 self.polytope_means[label].append(
-                    mcd.location_
+                    covariance_model.location_
                 )
                 self.polytope_cov[label].append(
-                    mcd.covariance_
+                    covariance_model.covariance_
                 )
         
             

@@ -4,10 +4,10 @@ from kdg import kdf
 from kdg.utils import trunk_sim
 import pandas as pd
 # %%
-reps = 100
-n_train = 1000
+reps = 10
+n_train = 500
 n_test = 1000
-dimensions = range(1,501,5)
+dimensions = range(1,6010,100)
 #%%
 err_kdf_med = []
 err_kdf_25_quantile = []
@@ -23,9 +23,9 @@ for dim in dimensions:
 
     print('Doing dimension ',dim)
     for _ in range(reps):
-        X, y = trunk_sim(n_train, dim=dim)
-        X_test, y_test = trunk_sim(n_test, dim=dim)
-        model_kdf = kdf(covariance_types = {'diag', 'full', 'spherical'}, criterion='bic', kwargs={'n_estimators':500})
+        X, y = trunk_sim(n_train, p_star=dim, p=dim)
+        X_test, y_test = trunk_sim(n_test, p_star=dim, p=dim)
+        model_kdf = kdf(kwargs={'n_estimators':500})
         model_kdf.fit(X, y)
 
         err_kdf.append(

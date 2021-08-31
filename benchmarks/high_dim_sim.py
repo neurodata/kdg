@@ -45,15 +45,18 @@ for sample in sample_size:
         model_kdf = kdf(
             kwargs={'n_estimators':n_estimators}
         )
+        
         model_kdf.fit(X, y)
         accuracy_kdf.append(
             np.mean(
                 model_kdf.predict(X_test) == y_test
             )
         )
+        reps_list.append(ii)
+        sample_list.append(sample)
         print(accuracy_kdf)
         #train feature selected kdf
-        model_kdf = kdf(
+       ''' model_kdf = kdf(
             kwargs={'n_estimators':n_estimators}
         )
         model_kdf.fit(X[:,:3], y)
@@ -76,25 +79,24 @@ for sample in sample_size:
             np.mean(
                 model_rf.predict(X_test[:,:3]) == y_test
             )
-        )
-        reps_list.append(ii)
-        sample_list.append(sample)
+        )'''
+        
 
 df['accuracy kdf'] = accuracy_kdf
-df['feature selected kdf'] = accuracy_kdf_
+#df['feature selected kdf'] = accuracy_kdf_
 df['accuracy rf'] = accuracy_rf
-df['feature selected rf'] = accuracy_rf_
+#df['feature selected rf'] = accuracy_rf_
 df['reps'] = reps_list
 df['sample'] = sample_list
 
-df.to_csv('high_dim_res_kdf_gaussian_min_cov.csv')
+df.to_csv('high_dim_res_kdf_gaussian_LedoitWolf.csv')
 # %% plot the result
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np 
 
-filename1 = 'high_dim_res_kdf_gaussian_min_cov.csv'
+filename1 = 'high_dim_res_kdf_gaussian_LedoitWolf.csv'
 
 df = pd.read_csv(filename1)
 
@@ -121,9 +123,9 @@ err_kdf_75_quantile_ = []
 
 for sample in sample_size:
     err_rf = 1 - df['accuracy rf'][df['sample']==sample]
-    err_rf_ = 1 - df['feature selected rf'][df['sample']==sample]
+    #err_rf_ = 1 - df['feature selected rf'][df['sample']==sample]
     err_kdf = 1 - df['accuracy kdf'][df['sample']==sample]
-    err_kdf_ = 1 - df['feature selected kdf'][df['sample']==sample]
+    #err_kdf_ = 1 - df['feature selected kdf'][df['sample']==sample]
 
     err_rf_med.append(np.median(err_rf))
     err_rf_25_quantile.append(
@@ -134,12 +136,12 @@ for sample in sample_size:
     )
 
     err_rf_med_.append(np.median(err_rf_))
-    err_rf_25_quantile_.append(
-            np.quantile(err_rf_,[.25])[0]
-        )
-    err_rf_75_quantile_.append(
-        np.quantile(err_rf_,[.75])[0]
-    )
+    #err_rf_25_quantile_.append(
+    #        np.quantile(err_rf_,[.25])[0]
+    #    )
+    #err_rf_75_quantile_.append(
+    #    np.quantile(err_rf_,[.75])[0]
+    #)
 
     err_kdf_med.append(np.median(err_kdf))
     err_kdf_25_quantile.append(
@@ -149,13 +151,13 @@ for sample in sample_size:
         np.quantile(err_kdf,[.75])[0]
     )
 
-    err_kdf_med_.append(np.median(err_kdf_))
-    err_kdf_25_quantile_.append(
-            np.quantile(err_kdf_,[.25])[0]
-        )
-    err_kdf_75_quantile_.append(
-        np.quantile(err_kdf_,[.75])[0]
-    )
+    #err_kdf_med_.append(np.median(err_kdf_))
+    #err_kdf_25_quantile_.append(
+    #        np.quantile(err_kdf_,[.25])[0]
+    #    )
+    #err_kdf_75_quantile_.append(
+    #    np.quantile(err_kdf_,[.75])[0]
+    #)
 
 sns.set_context('talk')
 fig, ax = plt.subplots(1,1, figsize=(8,8))
@@ -182,6 +184,6 @@ ax.set_xlabel('Sample size')
 ax.set_ylabel('error')
 ax.legend(frameon=False)
 
-plt.savefig('plots/high_dim_gaussian_min_cov.pdf')
+plt.savefig('plots/high_dim_gaussian_LedoitWolf.pdf')
 
 # %%
