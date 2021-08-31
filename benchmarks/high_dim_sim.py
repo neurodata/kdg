@@ -52,6 +52,11 @@ for sample in sample_size:
                 model_kdf.predict(X_test) == y_test
             )
         )
+        accuracy_rf.append(
+            np.mean(
+                model_kdf.rf_model.predict(X_test) == y_test
+            )
+        )
         reps_list.append(ii)
         sample_list.append(sample)
         print(accuracy_kdf)
