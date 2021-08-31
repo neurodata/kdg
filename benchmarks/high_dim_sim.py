@@ -116,7 +116,7 @@ for sample in sample_size:
         np.quantile(err_rf,[.75])[0]
     )
 
-    err_rf_med_.append(np.median(err_rf_))
+    #err_rf_med_.append(np.median(err_rf_))
     #err_rf_25_quantile_.append(
     #        np.quantile(err_rf_,[.25])[0]
     #    )
