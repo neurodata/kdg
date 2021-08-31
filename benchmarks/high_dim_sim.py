@@ -56,30 +56,6 @@ for sample in sample_size:
         sample_list.append(sample)
         print(accuracy_kdf)
         #train feature selected kdf
-       ''' model_kdf = kdf(
-            kwargs={'n_estimators':n_estimators}
-        )
-        model_kdf.fit(X[:,:3], y)
-        accuracy_kdf_.append(
-            np.mean(
-                model_kdf.predict(X_test[:,:3]) == y_test
-            )
-        )
-        print(accuracy_kdf_)
-        #train rf
-        model_rf = rf(n_estimators=n_estimators).fit(X, y)
-        accuracy_rf.append(
-            np.mean(
-                model_rf.predict(X_test) == y_test
-            )
-        )
-
-        model_rf = rf(n_estimators=n_estimators).fit(X[:,:3], y)
-        accuracy_rf_.append(
-            np.mean(
-                model_rf.predict(X_test[:,:3]) == y_test
-            )
-        )'''
         
 
 df['accuracy kdf'] = accuracy_kdf
