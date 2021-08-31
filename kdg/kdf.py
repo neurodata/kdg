@@ -60,7 +60,7 @@ class kdf(KernelDensityGraph):
                     axis=1
                 )
                 idx = np.where(
-                    matched_samples>3
+                    matched_samples>4
                 )[0]
 
                 if len(idx) == 1:
