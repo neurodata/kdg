@@ -5,9 +5,9 @@ from kdg.utils import trunk_sim
 import pandas as pd
 # %%
 reps = 10
-n_train = 500
+n_train = 100
 n_test = 1000
-dimensions = range(1,6010,100)
+dimensions = range(1,1000,10)
 #%%
 err_kdf_med = []
 err_kdf_25_quantile = []
@@ -55,9 +55,10 @@ df = pd.DataFrame()
 df['err_rf_med'] = err_rf_med
 df['err_rf_25_quantile'] = err_rf_25_quantile
 df['err_rf_75_quantile'] = err_rf_75_quantile
-df['err_kdf_med'] = err_kdf_med
+df['err_kdf_med'] = err_kdf_med 
 df['err_kdf_25_quantile'] = err_kdf_25_quantile
 df['err_kdf_75_quantile'] = err_kdf_75_quantile
+
 
 df.to_csv('trunk_res.csv')
 # %%
