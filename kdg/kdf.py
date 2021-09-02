@@ -60,14 +60,14 @@ class kdf(KernelDensityGraph):
                     axis=1
                 )
                 idx = np.where(
-                    matched_samples>4
+                    matched_samples>0
                 )[0]
 
                 if len(idx) == 1:
                     continue
                 
                 #tmp = fast_mcd(X_[idx])
-                covariance_model = LedoitWolf()
+                covariance_model = EmpiricalCovariance()
                 covariance_model.fit(X_[idx])
 
                 self.polytope_means[label].append(
