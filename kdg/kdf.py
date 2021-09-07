@@ -66,15 +66,22 @@ class kdf(KernelDensityGraph):
                 if len(idx) == 1:
                     continue
                 
-                #tmp = fast_mcd(X_[idx])
-                covariance_model = EmpiricalCovariance()
-                covariance_model.fit(X_[idx])
+                scales = matched_samples[idx]/np.max(matched_samples[idx])
+                X_tmp = X_[idx].copy()
+                location_ = np.average(X_tmp, axis=0, weights=scales)
+                X_tmp -= location_
+                
+                for ii, scale in enumerate(scales):
+                    X_tmp[ii,:] *= np.sqrt(scale)
+
+                covariance_model = EmpiricalCovariance(assume_centered=True)
+                covariance_model.fit(X_tmp)
 
                 self.polytope_means[label].append(
-                    covariance_model.location_
+                    location_
                 )
                 self.polytope_cov[label].append(
-                    covariance_model.covariance_
+                    covariance_model.covariance_*len(idx)/sum(scales)
                 )
         
             
