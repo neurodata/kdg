@@ -9,22 +9,15 @@ from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, covariance_types = 'full', criterion=None, kwargs={}):
+    def __init__(self, kwargs={}):
         super().__init__()
-        
-        if isinstance(covariance_types, str)==False and criterion == None:
-            raise ValueError(
-                    "The criterion cannot be None when there are more than 1 covariance_types."
-                )
-            return
 
         self.polytope_means = {}
         self.polytope_cov = {}
         self.polytope_cardinality = {}
         self.polytope_mean_cov = {}
         self.kwargs = kwargs
-        self.covariance_types = covariance_types
-        self.criterion = criterion
+        self.is_fitted = False
 
     def fit(self, X, y):
         r"""
@@ -36,11 +29,17 @@ class kdf(KernelDensityGraph):
         y : ndarray
             Output (i.e. response) data matrix.
         """
+        if self.is_fitted:
+            raise ValueError(
+                "Model already fitted!"
+            )
+            return
+
         X, y = check_X_y(X, y)
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
         feature_dim = X.shape[1]
-        
+
         for label in self.labels:
             self.polytope_means[label] = []
             self.polytope_cov[label] = []
@@ -74,7 +73,7 @@ class kdf(KernelDensityGraph):
                 sqrt_scales = np.sqrt(scales).reshape(-1,1) @ np.ones(feature_dim).reshape(1,-1)
                 X_tmp *= sqrt_scales
 
-                covariance_model = EmpiricalCovariance(assume_centered=True)
+                covariance_model = LedoitWolf(assume_centered=True)
                 covariance_model.fit(X_tmp)
 
                 self.polytope_means[label].append(
@@ -83,6 +82,8 @@ class kdf(KernelDensityGraph):
                 self.polytope_cov[label].append(
                     covariance_model.covariance_*len(idx)/sum(scales)
                 )
+        
+        self.is_fitted = True
         
             
     def _compute_pdf(self, X, label, polytope_idx):
