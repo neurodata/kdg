@@ -70,14 +70,14 @@ df['accuracy rf'] = accuracy_rf
 df['reps'] = reps_list
 df['sample'] = sample_list
 
-df.to_csv('high_dim_res_kdf_gaussian_5tree.csv')
+df.to_csv('high_dim_res_kdf_gaussian_treeAvg.csv')
 # %% plot the result
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np 
 
-filename1 = 'high_dim_res_kdf_gaussian_5tree.csv'
+filename1 = 'high_dim_res_kdf_gaussian_treeAvg.csv'
 
 df = pd.read_csv(filename1)
 
@@ -165,6 +165,6 @@ ax.set_xlabel('Sample size')
 ax.set_ylabel('error')
 ax.legend(frameon=False)
 
-plt.savefig('plots/high_dim_gaussian_5tree.pdf')
+plt.savefig('plots/high_dim_gaussian_treeAvg.pdf')
 
 # %%

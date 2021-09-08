@@ -71,8 +71,8 @@ class kdf(KernelDensityGraph):
                 location_ = np.average(X_tmp, axis=0, weights=scales)
                 X_tmp -= location_
                 
-                for ii, scale in enumerate(scales):
-                    X_tmp[ii,:] *= np.sqrt(scale)
+                sqrt_scales = np.sqrt(scales).reshape(-1,1) @ np.ones(feature_dim).reshape(1,-1)
+                X_tmp *= sqrt_scales
 
                 covariance_model = EmpiricalCovariance(assume_centered=True)
                 covariance_model.fit(X_tmp)
