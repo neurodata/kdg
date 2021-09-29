@@ -157,7 +157,7 @@ def experiment(task_id, folder, n_estimators=500, cv=5, reps=10):
 
 #%%
 folder = 'result_robust_cov'
-os.mkdir(folder)
+#os.mkdir(folder)
 cv = 5
 reps = 10
 n_estimators = 500
@@ -166,4 +166,23 @@ df = pd.DataFrame()
 #%%
 experiment(task_id, folder)
 
+# %%
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np 
+
+filename1 = 'result_robust_cov/openML_cc18_task_12.csv'
+filename2 = 'result_cov/openML_cc18_task_bic_12.csv'
+
+df_robust = pd.read_csv(filename1)
+df = pd.read_csv(filename2)
+
+del_kappa = np.array(df_robust['kappa_kdf'] - df['kappa_kdf'])
+samples = np.array(df['sample'])
+
+sns.set_context('talk')
+fig, ax = plt.subplots(1,1, figsize=(8,8))
+
+ax.plot(samples, del_kappa, c="k", label='del kappa')
 # %%
