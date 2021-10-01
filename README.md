@@ -23,13 +23,13 @@ You can manually download ``kdg`` by cloning the git repo master version and
 running the ``setup.py`` file. That is, unzip the compressed package folder
 and run the following from the top-level source directory using the Terminal::
 
-    $ git clone https://github.com/jdey4/kdg
+    $ git clone https://github.com/neurodata/kdg
     $ cd kdg
     $ python3 setup.py install
 
 Or, alternatively, you can use ``pip``::
 
-    $ git clone https://github.com/jdey4/kdg
+    $ git clone https://github.com/neurodata/kdg
     $ cd kdg
     $ pip install .
 
