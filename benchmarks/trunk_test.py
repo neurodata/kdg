@@ -7,7 +7,7 @@ import pandas as pd
 reps = 10
 n_train = 100
 n_test = 1000
-dimensions = range(1,1000,10)
+dimensions = range(1,2000,100)
 #%%
 err_kdf_med = []
 err_kdf_25_quantile = []
@@ -60,5 +60,5 @@ df['err_kdf_25_quantile'] = err_kdf_25_quantile
 df['err_kdf_75_quantile'] = err_kdf_75_quantile
 
 
-df.to_csv('trunk_res.csv')
+df.to_csv('sim_res/trunk_res2.csv')
 # %%
