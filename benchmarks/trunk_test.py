@@ -25,7 +25,7 @@ for dim in dimensions:
     for _ in range(reps):
         X, y = trunk_sim(n_train, p_star=dim, p=dim)
         X_test, y_test = trunk_sim(n_test, p_star=dim, p=dim)
-        model_kdf = kdf(kwargs={'n_estimators':500})
+        model_kdf = kdf(kwargs={'n_estimators':1})
         model_kdf.fit(X, y)
 
         err_kdf.append(
@@ -60,14 +60,14 @@ df['err_kdf_25_quantile'] = err_kdf_25_quantile
 df['err_kdf_75_quantile'] = err_kdf_75_quantile
 
 
-df.to_csv('sim_res/trunk_res2.csv')
+df.to_csv('sim_res/trunk_res_1tree.csv')
 # %%
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 
-df = pd.read_csv('sim_res/trunk_res2.csv')
-dimensions = range(1,2000,100)
+df = pd.read_csv('sim_res/trunk_res_1tree.csv')
+dimensions = range(1,652,10)
 
 sns.set_context('talk')
 fig, ax = plt.subplots(1,1, figsize=(8,8))
@@ -79,5 +79,5 @@ ax.fill_between(dimensions, df['err_rf_25_quantile'], df['err_rf_75_quantile'], 
 ax.plot(dimensions, df['err_rf_med'], c='k', lw=3, label='RF')
 
 plt.legend(frameon=False)
-plt.savefig('plots/trunk_res.pdf')
+plt.savefig('plots/trunk_res_1tree.pdf')
 # %%
