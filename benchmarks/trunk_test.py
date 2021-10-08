@@ -4,10 +4,10 @@ from kdg import kdf
 from kdg.utils import trunk_sim
 import pandas as pd
 # %%
-reps = 10
+reps = 100
 n_train = 100
 n_test = 1000
-dimensions = range(1,2000,100)
+dimensions = range(1,652,10)
 #%%
 err_kdf_med = []
 err_kdf_25_quantile = []
@@ -61,4 +61,23 @@ df['err_kdf_75_quantile'] = err_kdf_75_quantile
 
 
 df.to_csv('sim_res/trunk_res2.csv')
+# %%
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+
+df = pd.read_csv('sim_res/trunk_res2.csv')
+dimensions = range(1,2000,100)
+
+sns.set_context('talk')
+fig, ax = plt.subplots(1,1, figsize=(8,8))
+
+ax.fill_between(dimensions, df['err_kdf_25_quantile'], df['err_kdf_75_quantile'], facecolor='r', alpha=.3)
+ax.plot(dimensions, df['err_kdf_med'], c='r', lw=3, label='KDF')
+
+ax.fill_between(dimensions, df['err_rf_25_quantile'], df['err_rf_75_quantile'], facecolor='k', alpha=.3)
+ax.plot(dimensions, df['err_rf_med'], c='k', lw=3, label='RF')
+
+plt.legend(frameon=False)
+plt.savefig('plots/trunk_res.pdf')
 # %%
