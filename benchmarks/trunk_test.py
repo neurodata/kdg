@@ -4,8 +4,8 @@ from kdg import kdf, random_tree_ensemble
 from kdg.utils import trunk_sim
 import pandas as pd
 # %%
-reps = 30
-n_estimators = 100
+reps = 10
+n_estimators = 30
 n_train = 100
 n_test = 1000
 dimensions = range(1,652,10)
