@@ -12,7 +12,7 @@ class kdcnn(KernelDensityGraph):
 
     def __init__(self,
         network,
-        num_fc_layers, # number of fully connected layers
+        num_fc_layers,
         covariance_types = 'full', 
         criterion = None,
         compile_kwargs = {
@@ -21,7 +21,7 @@ class kdcnn(KernelDensityGraph):
             },
         fit_kwargs = {
             "epochs": 10,
-            "batch_size": 32,
+            "batch_size": 256,
             "verbose": True
             }
         ):
@@ -30,7 +30,7 @@ class kdcnn(KernelDensityGraph):
         self.polytope_cov = {}
         self.network = network
         self.num_fc_layers = num_fc_layers
-        self.encoder = None
+        self.encoder = None # convolutional encoder
         self.compile_kwargs = compile_kwargs
         self.fit_kwargs = fit_kwargs
         self.covariance_types = covariance_types
@@ -57,22 +57,28 @@ class kdcnn(KernelDensityGraph):
         polytope_memberships = []
         last_activations = X
         total_layers = len(self.network.layers)
-        fully_connected_layers = np.arange(total_layers-self.num_fc_layers, total_layers, 1) # get the layer IDs of the fully-connected layers
+        fully_connected_layers = np.arange(total_layers-self.num_fc_layers, total_layers, 1)
 
-        # Iterate through the fully connected layers, getting node activations at each step
+        # Iterate through neural network manually, getting node activations at each step
         for layer_id in fully_connected_layers:
             weights, bias = self.network.layers[layer_id].get_weights()
+            
             # Calculate new activations based on input to this layer
             preactivation = np.matmul(last_activations, weights) + bias
+            
             # get list of activated nodes in this layer
             if layer_id == total_layers - 1:
                 binary_preactivation = (preactivation > 0.5).astype('int')
             else:
                 binary_preactivation = (preactivation > 0).astype('int')
-            # append activation results to list
-            polytope_memberships.append(binary_preactivation)
+            
+            # determine the polytope memberships only based on the penultimate layer
+            if layer_id == total_layers - 2:
+              polytope_memberships.append(binary_preactivation)
+            
             # remove all nodes that were not activated
             last_activations = preactivation * binary_preactivation
+        
         #Concatenate all activations for given observation
         polytope_obs = np.concatenate(polytope_memberships, axis = 1)
         polytope_memberships = [np.tensordot(polytope_obs, 2 ** np.arange(0, np.shape(polytope_obs)[1]), axes = 1)]
@@ -101,7 +107,7 @@ class kdcnn(KernelDensityGraph):
         X = self.encoder.predict(X)
         
         for label in self.labels:
-            print(label)
+            print("label : ", label)
             self.polytope_means[label] = []
             self.polytope_cov[label] = []
             
@@ -110,13 +116,20 @@ class kdcnn(KernelDensityGraph):
             
             # Calculate polytope memberships for each observation in X_
             polytopes = self._get_polytopes(X_)[0]
+            unique_polytopes = np.unique(polytopes) # get the unique polytopes
+            print("Number of Polytopes : ", len(polytopes))
+            print("Number of Unique Polytopes : ", len(np.unique(polytopes)))
             
-            for polytope in polytopes:
+            num_polytopes = []
+            for polytope in unique_polytopes:
                 # find all other data with same polytopes
                 idx = np.where(polytopes==polytope)[0]
+                num_polytopes.append(len(idx))
                 
-                if len(idx) == 1:
-                    continue  #skip all calculations if there are no other matching polytopes
+                if len(idx) < 100:
+                    continue  #threshold the polytopes (don't fit a GMM unless the polytope contain T number of samples)
+
+                print("Number of Polytope members : ", len(idx))
                 
                 if self.criterion == None:
                     # Calculate single Gaussian over data in group
@@ -179,6 +192,9 @@ class kdcnn(KernelDensityGraph):
                     self.polytope_cov[label].append(
                         tmp_cov
                     )
+            plt.hist(num_polytopes, bins=30)
+            plt.xlabel("Number of Members")
+            plt.ylabel("Number of Polytopes")
 
     def _compute_pdf(self, X, label, polytope_idx):
         r"""
