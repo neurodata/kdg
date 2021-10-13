@@ -117,10 +117,10 @@ def experiment(task_id, folder, n_estimators=100, reps=30):
 
 #%%
 folder = 'ledoit_wolf'
-os.mkdir(folder)
+#os.mkdir(folder)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 
-Parallel(n_jobs=-1,verbose=1)(
+Parallel(n_jobs=4,verbose=1)(
         delayed(experiment)(
                 task_id,
                 folder
@@ -128,3 +128,4 @@ Parallel(n_jobs=-1,verbose=1)(
             )
 
         
+# %%
