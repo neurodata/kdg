@@ -120,7 +120,7 @@ folder = 'ledoit_wolf'
 #os.mkdir(folder)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 
-Parallel(n_jobs=4,verbose=1)(
+Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment)(
                 task_id,
                 folder
