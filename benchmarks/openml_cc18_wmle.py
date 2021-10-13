@@ -99,7 +99,7 @@ def experiment(task_id, folder, n_estimators=100, reps=30):
                 get_ece(proba_rf, predicted_label_rf, y[indx_to_take_test])
             )
             samples.append(
-                train_sample
+                train_sample*len(unique_classes)
             )
             mc_rep.append(rep)
 
@@ -111,7 +111,7 @@ def experiment(task_id, folder, n_estimators=100, reps=30):
     df['ece_kdf'] = ece
     df['ece_rf'] = ece_rf
     df['rep'] = mc_rep
-    df['samples'] = samples*len(unique_classes)
+    df['samples'] = samples
 
     df.to_csv(folder+'/'+'openML_cc18_'+str(task_id)+'.csv')
 
