@@ -10,8 +10,8 @@ from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 import os
 # %%
-def experiment(task_id, folder, n_estimators=100, reps=30):
-    task = openml.tasks.get_task(12)
+def experiment(task_id, folder, n_estimators=500, reps=30):
+    task = openml.tasks.get_task(task_id)
     X, y = task.get_X_and_y()
 
     if np.isnan(np.sum(y)):
@@ -41,7 +41,7 @@ def experiment(task_id, folder, n_estimators=100, reps=30):
         endpoint=True,
         dtype=int
         )
-
+    
     err = []
     err_rf = []
     ece = []
