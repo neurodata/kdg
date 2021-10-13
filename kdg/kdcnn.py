@@ -75,6 +75,9 @@ class kdcnn(KernelDensityGraph):
             # determine the polytope memberships only based on the penultimate layer
             if layer_id == total_layers - 2:
               polytope_memberships.append(binary_preactivation)
+
+            # # determine the polytope memberships only based on all the FC layers
+            # polytope_memberships.append(binary_preactivation)
             
             # remove all nodes that were not activated
             last_activations = preactivation * binary_preactivation
@@ -98,8 +101,8 @@ class kdcnn(KernelDensityGraph):
         
         self.labels = np.unique(y)
 
-        self.network.compile(**self.compile_kwargs)
-        self.network.fit(X, keras.utils.to_categorical(y), **self.fit_kwargs)
+        # self.network.compile(**self.compile_kwargs)
+        # self.network.fit(X, keras.utils.to_categorical(y), **self.fit_kwargs)
         feature_dim = X.shape[1]
 
         # get the encoder outputs
@@ -126,7 +129,7 @@ class kdcnn(KernelDensityGraph):
                 idx = np.where(polytopes==polytope)[0]
                 num_polytopes.append(len(idx))
                 
-                if len(idx) < 100:
+                if len(idx) == 1:
                     continue  #threshold the polytopes (don't fit a GMM unless the polytope contain T number of samples)
 
                 print("Number of Polytope members : ", len(idx))
@@ -195,6 +198,7 @@ class kdcnn(KernelDensityGraph):
             plt.hist(num_polytopes, bins=30)
             plt.xlabel("Number of Members")
             plt.ylabel("Number of Polytopes")
+            plt.show()
 
     def _compute_pdf(self, X, label, polytope_idx):
         r"""
