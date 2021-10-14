@@ -23,7 +23,7 @@ def experiment(task_id, folder, n_estimators=500, reps=30):
     total_sample = X.shape[0]
     unique_classes, counts = np.unique(y, return_counts=True)
 
-    test_sample = 100
+    test_sample = min(counts)//3
 
     indx = []
     for label in unique_classes:
