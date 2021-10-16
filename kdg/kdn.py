@@ -33,11 +33,10 @@ class kdn(KernelDensityGraph):
         self.criterion = criterion
 
         # compute the total number of FC neurons
-        total_num_neurons = 0
+        self.num_fc_neurons = 0
         for i in range(len(self.network.layers)):
-            total_num_neurons += self.network.layers[i].output_shape[1]
-        self.num_fc_neurons = total_num_neurons
-
+            self.num_fc_neurons += self.network.layers[i].output_shape[1]
+        
     def _get_polytope_memberships(self, X):
         polytope_memberships = []
         last_activations = X
@@ -93,9 +92,9 @@ class kdn(KernelDensityGraph):
                 # compute the weights
                 weights = []
                 for member in polytope_memberships:
-                    member_activation = np.binary_repr(member, width=num_fc_neurons)
+                    member_activation = np.binary_repr(member, width=self.num_fc_neurons)
                     weight = np.sum(np.array(list(current_polytope_activation))==np.array(list(member_activation)))/num_fc_neurons
-                    weight.append(weight)
+                    weights.append(weight)
                 weights = np.array(weights)
 
                 X_tmp = X_.copy()
