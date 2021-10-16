@@ -5,6 +5,7 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 import numpy as np
 from scipy.stats import multivariate_normal
 import warnings
+from sklearn.covariance import LedoitWolf
 
 class kdn(KernelDensityGraph):
 
@@ -31,7 +32,13 @@ class kdn(KernelDensityGraph):
         self.covariance_types = covariance_types
         self.criterion = criterion
 
-    def _get_polytopes(self, X):
+        # compute the total number of FC neurons
+        total_num_neurons = 0
+        for i in range(len(self.network.layers)):
+            total_num_neurons += self.network.layers[i].output_shape[1]
+        self.num_fc_neurons = total_num_neurons
+
+    def _get_polytope_memberships(self, X):
         polytope_memberships = []
         last_activations = X
         total_layers = len(self.network.layers)
@@ -71,68 +78,52 @@ class kdn(KernelDensityGraph):
             self.polytope_cov[label] = []
 
             X_ = X[np.where(y==label)[0]]
-            polytopes = self._get_polytopes(X_)[0]
+            polytope_memberships = self._get_polytope_memberships(X_)[0]
+            unique_polytopes = np.unique(polytope_memberships) # get the unique polytopes
             
-            for polytope in polytopes:
-                idx = np.where(polytopes==polytope)[0]
+            for polytope in unique_polytopes: # fit Gaussians for each unique non-singleton polytope
+                idx = np.where(polytope_memberships==polytope)[0] # collect the samples that belong to the current polytope
                 
-                if len(idx) == 1:
+                if len(idx) == 1: # don't fit a gaussian to singleton polytopes
                     continue
-                    
-                if self.criterion == None:
-                    gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types, reg_covar=1e-4).fit(X_[idx])
-                    self.polytope_means[label].append(
-                            gm.means_[0]
-                    )
-                    tmp_cov = gm.covariances_[0]
-                    if self.covariance_types == 'spherical':
-                        tmp_cov = np.eye(feature_dim)*tmp_cov
-                    elif self.covariance_types == 'diag':
-                        tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
 
-                    self.polytope_cov[label].append(
-                            tmp_cov
-                    )
-                else:
-                    min_val = np.inf
-                    tmp_means = np.mean(
-                        X_[idx],
-                        axis=0
-                    )
-                    tmp_cov = np.var(
-                        X_[idx],
-                        axis=0
-                    )
-                    tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
+                # get the activation pattern of the current polytope
+                current_polytope_activation = np.binary_repr(polytope, width=self.num_fc_neurons) 
 
-                    for cov_type in self.covariance_types:
-                        try:
-                            gm = GaussianMixture(n_components=1, covariance_type=cov_type, reg_covar=1e-3).fit(X_[idx])
-                        except:
-                            warnings.warn("Could not fit for cov_type "+cov_type)
-                        else:
-                            if self.criterion == 'aic':
-                                constraint = gm.aic(X_[idx])
-                            elif self.criterion == 'bic':
-                                constraint = gm.bic(X_[idx])
+                # compute the weights
+                weights = []
+                for member in polytope_memberships:
+                    member_activation = np.binary_repr(member, width=num_fc_neurons)
+                    weight = np.sum(np.array(list(current_polytope_activation))==np.array(list(member_activation)))/num_fc_neurons
+                    weight.append(weight)
+                weights = np.array(weights)
 
-                            if min_val > constraint:
-                                min_val = constraint
-                                tmp_cov = gm.covariances_[0]
-                                
-                                if cov_type == 'spherical':
-                                    tmp_cov = np.eye(feature_dim)*tmp_cov
-                                elif cov_type == 'diag':
-                                    tmp_cov = np.eye(len(tmp_cov)) * tmp_cov
+                X_tmp = X_.copy()
+                polytope_mean_ = np.average(X_tmp, axis=0, weights=weights) # compute the weighted average of the samples 
+                X_tmp -= polytope_mean_ # center the data
 
-                                tmp_means = gm.means_[0]
-                            
-                    self.polytope_means[label].append(
-                        tmp_means
-                    )
-                    self.polytope_cov[label].append(
-                        tmp_cov
-                    )
+                sqrt_weights = np.sqrt(weights).reshape(-1,1) @ np.ones(feature_dim).reshape(1,-1)
+                X_tmp *= sqrt_weights # scale the centered data with the square root of the weights
+
+                # compute the paramters of the Gaussian underlying the polytope
+                 
+                ## Gaussian Mixture Model
+                # gm = GaussianMixture(n_components=1, covariance_type=self.covariance_types, reg_covar=1e-4).fit(X_tmp)
+                # polytope_mean_ = gm.means_[0]
+                # polytope_cov_ = gm.covariances_[0]
+                
+                # LedoitWolf Estimator
+                covariance_model = LedoitWolf(assume_centered=True)
+                covariance_model.fit(X_tmp)
+                polytope_cov_ = covariance_model.covariance_
+
+                # store the mean and covariances
+                self.polytope_means[label].append(
+                        polytope_mean_
+                )
+                self.polytope_cov[label].append(
+                        polytope_cov_
+                )
 
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
