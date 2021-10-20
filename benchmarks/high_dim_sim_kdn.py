@@ -45,7 +45,7 @@ fit_kwargs = {
 # network architecture
 def getNN():
     network_base = keras.Sequential()
-    network_base.add(layers.Dense(5, activation='relu', input_shape=(20,)))
+    network_base.add(layers.Dense(10, activation='relu', input_shape=(20,)))
     network_base.add(layers.Dense(5, activation='relu'))
     network_base.add(layers.Dense(units=2, activation = 'softmax'))
     network_base.compile(**compile_kwargs)
@@ -97,7 +97,7 @@ df['reps'] = reps_list
 df['sample'] = sample_list
 
 # save the results (CHANGE HERE)
-df.to_csv('results_weighted_kdn/high_dim_kdn_gaussian_weighting_penultimate.csv')
+df.to_csv('results_weighted_kdn/high_dim_kdn_gaussian_weighting_allFC_LL.csv')
 
 # %% plot the result
 import pandas as pd
@@ -106,7 +106,7 @@ import matplotlib.pyplot as plt
 import numpy as np 
 
 # Specify which results to plot (CHANGE HERE)
-filename1 = 'results_weighted_kdn/high_dim_kdn_gaussian_weighting_penultimate.csv'
+filename1 = 'results_weighted_kdn/high_dim_kdn_gaussian_weighting_allFC_LL.csv'
 
 df = pd.read_csv(filename1)
 
@@ -194,6 +194,6 @@ ax.set_ylabel('error')
 ax.legend(frameon=False)
 
 # Specify the save path (CHANGE HERE)
-plt.savefig('plots/high_dim_gaussian_kdn_weighting_penultimate.pdf')
+plt.savefig('plots/high_dim_kdn_gaussian_weighting_allFC_LL.pdf')
 
 # %%
