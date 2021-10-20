@@ -40,12 +40,12 @@ class kdn(KernelDensityGraph):
             else:
                 binary_preactivation = (preactivation > 0).astype('int')
             
-            # determine the polytope memberships only based on the penultimate layer (uncomment )
-            if layer_id == total_layers - 2:
-              polytope_memberships.append(binary_preactivation)
+            # # determine the polytope memberships only based on the penultimate layer (uncomment )
+            # if layer_id == total_layers - 2:
+            #   polytope_memberships.append(binary_preactivation)
 
-            # # determine the polytope memberships only based on all the FC layers (uncomment)
-            # polytope_memberships.append(binary_preactivation)
+            # determine the polytope memberships only based on all the FC layers (uncomment)
+            polytope_memberships.append(binary_preactivation)
             
             # remove all nodes that were not activated
             last_activations = preactivation * binary_preactivation
@@ -88,30 +88,46 @@ class kdn(KernelDensityGraph):
                 idx = np.where(polytope_memberships==polytope)[0] # collect the samples that belong to the current polytope
                 polytope_member_count.append(len(idx))
 
-                if len(idx) < 10: # don't fit a gaussian to polytopes that has less members than the specified threshold
+                if len(idx) == 1: # don't fit a gaussian to polytopes that has less members than the specified threshold
                     continue
 
                 # get the activation pattern of the current polytope
-                current_polytope_activation = np.binary_repr(polytope, width=self.num_fc_neurons)[::-1] 
+                native_polytope_activation = np.binary_repr(polytope, width=self.num_fc_neurons)[::-1] 
+                a_native = np.array(list(native_polytope_activation)).astype('int')
 
                 # compute the weights
                 weights = []
                 for member in polytope_memberships:
                     member_activation = np.binary_repr(member, width=self.num_fc_neurons)[::-1]
+                    a_member = np.array(list(member_activation)).astype('int')
                     
+                    match_status = a_member == a_native
+                    match_status = match_status.astype('int')
+
                     # # weight based on the total number of matches (uncomment)
-                    # weight = np.sum(np.array(list(current_polytope_activation))==np.array(list(member_activation)))/self.num_fc_neurons
-                
-                    ## weight based on the first mistmatch (uncomment)
-                    match_status = np.array(list(current_polytope_activation))==np.array(list(member_activation))
-                    if len(np.where(match_status.astype('int')==0)[0]) == 0:
+                    # weight = np.sum(match_status)/self.num_fc_neurons
+
+                    # weight based on the first mistmatch (uncomment)
+                    if len(np.where(match_status==0)[0]) == 0:
                         weight = 1.0
                     else:
-                        first_mismatch_idx = np.where(match_status.astype('int')==0)[0][0]
+                        first_mismatch_idx = np.where(match_status==0)[0][0]
                         weight = first_mismatch_idx / self.num_fc_neurons
+
+                    # # layer-by-layer weights
+                    # total_layers = len(self.network.layers)
+                    # weight = 0
+                    # start = 0
+                    # for layer_id in range(total_layers):
+                    #     num_neurons = self.network.layers[layer_id].output_shape[-1]
+                    #     end = start + num_neurons
+                    #     weight += np.sum(match_status[start:end])/num_neurons
+                    #     start = end
+                    # weight /= total_layers
 
                     weights.append(weight)
                 weights = np.array(weights)
+                weights[weights < 1] = 0 # only use the data from the native polytope
 
                 X_tmp = X_.copy()
                 polytope_mean_ = np.average(X_tmp, axis=0, weights=weights) # compute the weighted average of the samples 
