@@ -1,4 +1,5 @@
 #%%
+# import modules
 import numpy as np
 from tensorflow import keras
 from keras import layers
@@ -6,8 +7,9 @@ from kdg.kdn import *
 from kdg.utils import gaussian_sparse_parity, trunk_sim
 import pandas as pd
 #%%
-p = 20
-p_star = 3
+# define the experimental setup
+p = 20 # total dimensions of the data vector
+p_star = 3 # number of signal dimensions of the data vector
 '''sample_size = np.logspace(
         np.log10(10),
         np.log10(5000),
@@ -15,9 +17,9 @@ p_star = 3
         endpoint=True,
         dtype=int
         )'''
-sample_size = [1000, 5000, 10000]
-n_test = 1000
-reps = 10
+sample_size = [1000, 5000, 10000] # sample size under consideration
+n_test = 1000 # test set size
+reps = 10 # number of replicates
 
 df = pd.DataFrame()
 reps_list = []
@@ -64,7 +66,7 @@ for sample in sample_size:
             p=p
         )
 
-        # train NN
+        # train Vanilla NN
         vanilla_nn = getNN()
         vanilla_nn.fit(X, keras.utils.to_categorical(y), **fit_kwargs)
 
@@ -94,6 +96,7 @@ df['accuracy nn'] = accuracy_nn
 df['reps'] = reps_list
 df['sample'] = sample_list
 
+# save the results (CHANGE HERE)
 df.to_csv('results_weighted_kdn/high_dim_kdn_gaussian_weighting_penultimate.csv')
 
 # %% plot the result
@@ -102,6 +105,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np 
 
+# Specify which results to plot (CHANGE HERE)
 filename1 = 'results_weighted_kdn/high_dim_kdn_gaussian_weighting_penultimate.csv'
 
 df = pd.read_csv(filename1)
@@ -189,6 +193,7 @@ ax.set_xlabel('Sample size')
 ax.set_ylabel('error')
 ax.legend(frameon=False)
 
+# Specify the save path (CHANGE HERE)
 plt.savefig('plots/high_dim_gaussian_kdn_weighting_penultimate.pdf')
 
 # %%
