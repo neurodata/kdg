@@ -22,11 +22,6 @@ class kdn(KernelDensityGraph):
         self.covariance_types = covariance_types
         self.criterion = criterion
 
-        # # compute the total number of FC neurons (redundant!)
-        # self.num_fc_neurons = 0
-        # for i in range(len(self.network.layers)):
-        #     self.num_fc_neurons += self.network.layers[i].output_shape[1]
-        
     def _get_polytope_memberships(self, X):
         polytope_memberships = []
         last_activations = X
@@ -58,7 +53,8 @@ class kdn(KernelDensityGraph):
         #Concatenate all activations for given observation
         polytope_obs = np.concatenate(polytope_memberships, axis = 1)
         polytope_memberships = [np.tensordot(polytope_obs, 2 ** np.arange(0, np.shape(polytope_obs)[1]), axes = 1)]
-        self.num_fc_neurons = polytope_obs.shape[1]
+        
+        self.num_fc_neurons = polytope_obs.shape[1] # get the number of total FC neurons under consideration
 
         return polytope_memberships
 
