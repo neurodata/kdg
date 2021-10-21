@@ -12,7 +12,7 @@ from sklearn.metrics import cohen_kappa_score
 import os
 
 # %%
-task = openml.tasks.get_task(6)
+task = openml.tasks.get_task(12)
 X, y = task.get_X_and_y()
 
 skf = StratifiedKFold(n_splits=5)
