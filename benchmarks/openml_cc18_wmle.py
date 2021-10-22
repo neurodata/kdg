@@ -116,8 +116,8 @@ def experiment(task_id, folder, n_estimators=500, reps=30):
     df.to_csv(folder+'/'+'openML_cc18_'+str(task_id)+'.csv')
 
 #%%
-folder = 'ledoit_wolf'
-#os.mkdir(folder)
+folder = 'autogmm'
+os.mkdir(folder)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 
 Parallel(n_jobs=-1,verbose=1)(

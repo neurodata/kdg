@@ -101,7 +101,7 @@ class kdf(KernelDensityGraph):
                 
                 polytope_mean_cov[label][0] += covariance_model.covariance_*len(idx)
                 scale_sum += sum(scales)
-
+            
             polytope_mean_cov[label][0] /= scale_sum
 
             # see the best fit according to the criterion     
@@ -112,7 +112,7 @@ class kdf(KernelDensityGraph):
                 constraint = self.bic(X_, label, total_polytopes_this_label*feature_dim*(feature_dim+1)/2)
 
             method = 'full'
-            print(constraint)
+            
             self.polytope_cov[label] = polytope_diag_cov[label]
             if self.criterion == 'aic':
                 constraint_ = self.aic(X_, label, total_polytopes_this_label*feature_dim)
@@ -122,7 +122,7 @@ class kdf(KernelDensityGraph):
             if constraint_ < constraint:
                 method = 'diag'
                 constraint = constraint_
-            print(constraint_)
+            
             self.polytope_cov[label] = polytope_mean_cov[label]
             if self.criterion == 'aic':
                 constraint_ = self.aic(X_, label, feature_dim*(feature_dim+1)/2)
@@ -132,7 +132,7 @@ class kdf(KernelDensityGraph):
             if constraint_ < constraint:
                 method = 'tied'
                 constraint = constraint_
-            print(constraint_)
+            
             if method == 'full':
                 self.polytope_cov[label] = polytope_full_cov[label]
             elif method == 'diag':
