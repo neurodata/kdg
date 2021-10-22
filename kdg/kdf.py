@@ -137,7 +137,7 @@ class kdf(KernelDensityGraph):
                 self.polytope_cov[label] = polytope_full_cov[label]
             elif method == 'diag':
                 self.polytope_cov[label] = polytope_diag_cov[label]
-                  
+                     
         self.is_fitted = True
         
             
@@ -193,7 +193,7 @@ class kdf(KernelDensityGraph):
             )
         )
 
-        return -2 * loglikelihood * X.shape[0] + 2 * n_parameters
+        return -2 * loglikelihood + 2 * n_parameters
 
     def bic(self, X, label, n_parameters):
         likelihood = self.score(X, label)
@@ -203,7 +203,7 @@ class kdf(KernelDensityGraph):
             )
         )
 
-        return -2 * loglikelihood * X.shape[0] + 2 * n_parameters*np.log(
+        return -2 * loglikelihood + 2 * n_parameters*np.log(
             X.shape[0]
         )
 
