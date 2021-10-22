@@ -139,7 +139,7 @@ class kdf(KernelDensityGraph):
                 self.polytope_cov[label] = polytope_diag_cov[label]
                      
         self.is_fitted = True
-        
+         
             
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
