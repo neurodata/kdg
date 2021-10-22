@@ -98,6 +98,7 @@ class kdf(KernelDensityGraph):
                         covariance_model.covariance_*len(idx)/sum(scales)
                     )
                 )
+                
                 polytope_mean_cov[label][0] += covariance_model.covariance_*len(idx)
                 scale_sum += sum(scales)
 
@@ -136,7 +137,7 @@ class kdf(KernelDensityGraph):
                 self.polytope_cov[label] = polytope_full_cov[label]
             elif method == 'diag':
                 self.polytope_cov[label] = polytope_diag_cov[label]
-                
+                  
         self.is_fitted = True
         
             
