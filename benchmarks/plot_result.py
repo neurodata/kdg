@@ -7,7 +7,7 @@ import openml
 from scipy.interpolate import interp1d
 from os import listdir, getcwd 
 
-folder = 'ledoit_wolf'
+folder = 'autogmm'
 current_dir = getcwd()
 files = listdir(current_dir+'/'+folder)
 
@@ -129,7 +129,7 @@ ax[1].plot(samples, np.nanmedian(ece_over_dataset, axis=0), c='r', lw=3)
 
 ax[0].text(50, 0.1, "kdf wins")
 ax[1].text(50, - 0.1, "kdf wins")
-plt.savefig('plots/openML_cc18_ledoit_wolf.pdf')
+plt.savefig('plots/openML_cc18_autogmm.pdf')
 #plt.show()
 
  # %%
