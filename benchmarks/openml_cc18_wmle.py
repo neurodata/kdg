@@ -14,6 +14,10 @@ def experiment(task_id, folder, n_estimators=500, reps=30):
     task = openml.tasks.get_task(task_id)
     X, y = task.get_X_and_y()
 
+    tmp_model = rf({'n_estimators':n_estimators}).fit(X, y)
+    one_feature = np.argmax(tmp_model.feature_importances_)
+    X = X[:,one_feature]
+
     if np.isnan(np.sum(y)):
         return
 
@@ -116,8 +120,8 @@ def experiment(task_id, folder, n_estimators=500, reps=30):
     df.to_csv(folder+'/'+'openML_cc18_'+str(task_id)+'.csv')
 
 #%%
-folder = 'ledoit_wolf'
-#os.mkdir(folder)
+folder = 'use_one_feature'
+os.mkdir(folder)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 
 Parallel(n_jobs=-1,verbose=1)(
