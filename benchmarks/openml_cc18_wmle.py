@@ -16,7 +16,7 @@ def experiment(task_id, folder, n_estimators=500, reps=30):
 
     tmp_model = rf(n_estimators=n_estimators).fit(X, y)
     one_feature = np.argmax(tmp_model.feature_importances_)
-    X = X[:,one_feature]
+    X = X[:,one_feature].reshape(-1, 1)
 
     if np.isnan(np.sum(y)):
         return
