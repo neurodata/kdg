@@ -185,7 +185,7 @@ class kdn(KernelDensityGraph):
                     # activation path-based weights
                     if self.weighting_method == 'AP':
                         path = activation_paths[n, :]
-                        path_match = path == native_path
+                        path_match = path == 1 & native_path == 1
                         weight = np.sum(path_match.astype(int)) / path_match.shape[0]
                     
                     weights.append(weight)
