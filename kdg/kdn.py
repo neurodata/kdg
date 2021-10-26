@@ -60,15 +60,52 @@ class kdn(KernelDensityGraph):
 
         #Concatenate all activations for given observation
         polytope_obs = np.concatenate(polytope_memberships, axis = 1)
-        polytope_memberships = [np.tensordot(polytope_obs, 2 ** np.arange(0, np.shape(polytope_obs)[1]), axes = 1)]
+        # get the number of total FC neurons under consideration
+        self.num_fc_neurons = polytope_obs.shape[1]
         
-        self.num_fc_neurons = polytope_obs.shape[1] # get the number of total FC neurons under consideration
-
-        return polytope_memberships
+        polytopes = [np.tensordot(polytope_obs, 2 ** np.arange(0, np.shape(polytope_obs)[1]), axes = 1)]
+        #return layer-by-layer raw polytope information
+        return polytopes[0], polytope_memberships
 
     def _get_activation_pattern(self, polytope_id):
         binary_string = np.binary_repr(polytope_id, width=self.num_fc_neurons)[::-1] 
         return np.array(list(binary_string)).astype('int')
+    
+    def _get_activation_paths(self, polytopes):
+        n_samples = polytopes[0].shape[0]
+        #reverse to save on calculation time using smaller later layers
+        polytope_r = polytopes[::-1]
+        place = [1]
+        for layer in polytope_r:
+            p = place[-1]
+            place.append(p*layer.shape[1])
+
+        #set error code
+        #this value ensures final output will be negative for all nodes and code will run
+        err = np.array([-place[-1]])
+        #get paths values
+        paths = [np.zeros(1, dtype=int) for n in range(n_samples)]
+        for i, layer in enumerate(polytope_r):
+            idx = layer*np.arange(layer.shape[1])*place[i]
+            temp_paths = [None for n in range(n_samples)]
+            for j in range(n_samples):
+                active_nodes = idx[j, layer[j,:]>0]
+                if len(active_nodes) == 0:
+                    temp_paths[j] = err
+                else: 
+                    temp_paths[j] = np.concatenate([p + active_nodes for p in paths[j]])
+
+            paths = temp_paths
+            #print(paths)
+
+        #convert to binary
+        activation_paths = np.zeros((n_samples, place[-1]))
+        for i, p in enumerate(paths):
+            #if error occured, return None
+            if any(p < 0): activation_paths[i] = -1
+            else: activation_paths[i, p] = 1
+
+        return activation_paths
 
     def fit(self, X, y):
         r"""
@@ -90,88 +127,66 @@ class kdn(KernelDensityGraph):
             self.polytope_cov[label] = []
 
             X_ = X[np.where(y==label)[0]]
-            polytope_memberships = self._get_polytope_memberships(X_)[0]
-            unique_polytope_ids = np.unique(polytope_memberships) # get the unique polytopes
+            polytopes, polytope_memberships = self._get_polytope_memberships(X_)
+            _, unique_idx = np.unique(polytopes, return_index = True) # get the unique polytopes
             
             if self.verbose:
-                print("Number of Polytopes : ", len(polytope_memberships))
-                print("Number of Unique Polytopes : ", len(unique_polytope_ids))
+                print("Number of Polytopes : ", len(polytopes))
+                print("Number of Unique Polytopes : ", len(unique_idx))
             
             polytope_member_count = [] # store the polytope member counts
-            for polytope_id in unique_polytope_ids: # fit Gaussians for each unique non-singleton polytope
-                idx = np.where(polytope_memberships==polytope_id)[0] # collect the samples that belong to the current polytope
+            
+            if self.weighting_method == 'AP':
+                activation_paths = self._get_activation_paths(polytope_memberships)
+
+            for polytope_idx in unique_idx: # fit Gaussians for each unique non-singleton polytope
+                polytope_id = polytopes[polytope_idx]
+                idx = np.where(polytopes==polytope_id)[0] # collect the samples that belong to the current polytope
                 polytope_member_count.append(len(idx))
 
                 if len(idx) < self.T: # don't fit a gaussian to polytopes that has less members than the specified threshold
                     continue
-
-                # get the activation pattern of the current polytope
-                a_native = self._get_activation_pattern(polytope_id)
-                
+                    
                 if self.weighting_method == 'AP':
-                    disregard_polytope = False
-                    start = 0
-                    A_native = []
-                    for layer_id in range(self.total_layers):
-                        layer_num_neurons = self.network.layers[layer_id].output_shape[-1]
-                        end = start + layer_num_neurons
-                        layer_a_ref = a_native[start:end]*np.arange(1, layer_num_neurons+1, 1)
-                        start = end
-                        if len(layer_a_ref[layer_a_ref!=0]) == 0:
-                            disregard_polytope = True
-                            break
-                        A_native.append(layer_a_ref[layer_a_ref!=0])
-                        
-                    if disregard_polytope:
-                        continue
-
-                    P_native = np.array([k for k in itertools.product(A_native[0], A_native[1], A_native[2])])
-                    P_native = np.array([str(P_native[l]) for l in range(len(P_native))])
-
+                    native_path = activation_paths[polytope_idx,:]
+                
                 # compute the weights
                 weights = []
-                for member_polytope_id in polytope_memberships:
-                    a_foreign = self._get_activation_pattern(member_polytope_id)
-                    
-                    match_status = a_foreign == a_native
-                    match_status = match_status.astype('int')
+
+                #iterate through all the polytopes
+                for n in range(len(polytopes)):    
+                    #calculate match
+                    match_status = []
+                    for layer_id in range(self.total_layers):
+                        layer_match = polytope_memberships[layer_id][n,:] == polytope_memberships[layer_id][polytope_idx,:]
+                        match_status.append(layer_match.astype("int"))
 
                     if self.weighting_method == 'TM' or self.weighting_method == None:
                         # weight based on the total number of matches (uncomment)
-                        weight = np.sum(match_status)/self.num_fc_neurons
+                        match_status = np.concatenate(match_status)
+                        weight = np.sum(match_status) / match_status.shape[0]
 
                     if self.weighting_method == 'FM':
-                        # weight based on the first mistmatch (uncomment)
+                        # weight based on the first mismatch (uncomment)
+                        match_status = np.concatenate(match_status)
                         if len(np.where(match_status==0)[0]) == 0:
                             weight = 1.0
                         else:
                             first_mismatch_idx = np.where(match_status==0)[0][0]
-                            weight = first_mismatch_idx / self.num_fc_neurons
+                            weight = first_mismatch_idx / match_status.shape[0]
 
                     if self.weighting_method == 'LL':
                         # layer-by-layer weights
                         weight = 0
-                        start = 0
-                        for layer_id in range(self.total_layers):
-                            num_neurons = self.network.layers[layer_id].output_shape[-1]
-                            end = start + num_neurons
-                            weight += np.sum(match_status[start:end])/num_neurons
-                            start = end
+                        for layer in match_status:
+                            weight += np.sum(layer)/layer.shape[0]
                         weight /= self.total_layers
 
                     # activation path-based weights
                     if self.weighting_method == 'AP':
-                        A_foreign = []
-                        start = 0
-                        for layer_id in range(self.total_layers):
-                            layer_num_neurons = self.network.layers[layer_id].output_shape[-1]
-                            end = start + layer_num_neurons
-                            layer_a_bar = a_foreign[start:end]*np.arange(1, layer_num_neurons+1, 1)
-                            A_foreign.append(layer_a_bar[layer_a_bar!=0])
-                            start = end
-                        P_foreign = np.array([k for k in itertools.product(A_foreign[0], A_foreign[1], A_foreign[2])])
-                        P_foreign = np.array([str(P_foreign[l]) for l in range(len(P_foreign))])
-                        weight = len(np.intersect1d(P_native, P_foreign))/len(np.union1d(P_native, P_foreign))
+                        path = activation_paths[n, :]
+                        path_match = path == native_path
+                        weight = np.sum(path_match.astype(int)) / path_match.shape[0]
                     
                     weights.append(weight)
                 weights = np.array(weights)
