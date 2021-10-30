@@ -181,6 +181,12 @@ class kdn(KernelDensityGraph):
                         for layer in match_status:
                             weight += np.sum(layer)/layer.shape[0]
                         weight /= self.total_layers
+                        
+                    if self.weighting_method == 'PAP':
+                        # layer-by-layer weights
+                        weight = 1
+                        for layer in match_status:
+                            weight *= np.sum(layer)/layer.shape[0]
 
                     # activation path-based weights
                     if self.weighting_method == 'AP':
