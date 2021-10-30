@@ -86,7 +86,7 @@ idx = rng.integers(0, sample_size)
 X_star = X[idx]
 
 #generate a bunch of points
-distances = np.logspace(-40, 10, num=51, base=10)
+distances = np.logspace(-10, 0, num=11, base=10)
 X_dist = {}
 for d in distances:
   #print(d)
@@ -94,6 +94,7 @@ for d in distances:
   rand_dist = np.sqrt(d*(rand_dist/np.sum(rand_dist, axis=1)[:,None]))
   noise = 2*rng.random((n_test,p-p_star))-1
   #noise = X_star[3:] + d*2*rng.random((n_test,p-p_star))-1
+  #noise = X_star[3:] + np.zeros((n_test, p-p_star))
   X_dist[d] = np.concatenate((X_star[:3] + rand_dist, noise), axis=1)
 
 # plot distance vs. weights
