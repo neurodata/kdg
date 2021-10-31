@@ -138,7 +138,7 @@ def pdf(x, cov_scale=0.25):
         np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
     )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
 
-    return np.max(p01,p02)/(p01+p02+p11+p12)
+    return np.max([p01,p02])/(p01+p02+p11+p12)
 
 def sparse_parity(
     n_samples,
