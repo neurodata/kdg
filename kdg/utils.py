@@ -124,17 +124,21 @@ def pdf(x, cov_scale=0.25):
     cov = cov_scale* np.eye(2)
     inv_cov = np.linalg.inv(cov) 
 
-    p0 = (
-        np.exp(-(x - mu01)@inv_cov@(x-mu01).T) 
-        + np.exp(-(x - mu02)@inv_cov@(x-mu02).T)
+    p01 = (
+        np.exp(-0.5*(x - mu01)@inv_cov@(x-mu01).T) 
+    )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+    p02 = (
+        np.exp(-0.5*(x - mu02)@inv_cov@(x-mu02).T)
+    )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+    p11 = (
+        np.exp(-0.5*(x - mu11)@inv_cov@(x-mu11).T) 
+        + np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
+    )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+    p12 = (
+        np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
     )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
 
-    p1 = (
-        np.exp(-(x - mu11)@inv_cov@(x-mu11).T) 
-        + np.exp(-(x - mu12)@inv_cov@(x-mu12).T)
-    )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
-
-    return p0/(p0+p1)
+    return np.max(p01,p02)/(p01+p02+p11+p12)
 
 def sparse_parity(
     n_samples,
