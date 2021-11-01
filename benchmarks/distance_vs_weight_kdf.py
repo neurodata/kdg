@@ -1,28 +1,14 @@
-#install libraries
-
-!rm -r kdg
-!git clone -b weighted_kdn https://github.com/NeuroDataDesign/kdg
-!ls
-!pip install kdg/.
-
 # import modules
 import numpy as np
 from numpy.random import default_rng
 from sklearn.ensemble import RandomForestClassifier as rf 
-from kdg.kdf import *
+from tensorflow import keras
+from keras import layers
+from kdg.kdn import *
 from kdg.utils import gaussian_sparse_parity, trunk_sim
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-distances = [0.01, 0.1, 1, 2, 5]
-n_test = 10
-for d in distances:
-  print(d)
-  rand_dist = rng.random((n_test, p_star))
-  rand_dist = np.sqrt(d**2*(rand_dist/np.sum(rand_dist, axis=1)[:,None]))
-  #print(rand_dist)
-  print(np.sqrt(np.sum(rand_dist**2, axis=1)))
 
 # define the experimental setup
 p = 20 # total dimensions of the data vector
@@ -37,8 +23,19 @@ p_star = 3 # number of signal dimensions of the data vector
 sample_size = 5000 # sample size under consideration
 n_test = 500 # test set size
 nTrees = 100
-compile_kwargs = {
+
+compile_kwargs_rf = {
     "n_estimators": nTrees
+    }
+
+compile_kwargs_nn = {
+    "loss": "binary_crossentropy",
+    "optimizer": keras.optimizers.Adam(3e-4)
+    }
+fit_kwargs = {
+    "epochs": 150,
+    "batch_size": 32,
+    "verbose": False
     }
 
 def get_kdf_weights(X_star, X_, forest):
@@ -64,6 +61,72 @@ def get_kdf_weights(X_star, X_, forest):
       
     return np.array(scale)
 
+def get_kdn_weights(X_star, X_, network, weighting_method="TM"):
+    X = np.concatenate((X_star.reshape((1, -1)), X_))
+
+    polytopes, polytope_memberships = network._get_polytope_memberships(X)
+
+    # compute the weights
+    weights = []
+
+    #iterate through all the polytopes
+    for n in range(len(polytopes)):    
+        #calculate match
+        match_status = []
+        n_nodes = 0
+        for layer_id in range(network.total_layers):
+            layer_match = polytope_memberships[layer_id][n,:] == polytope_memberships[layer_id][0,:]
+            match_status.append(layer_match.astype("int"))
+            n_nodes += layer_match.shape[0]
+
+        if weighting_method == 'TM':
+            # weight based on the total number of matches (uncomment)
+            match_status = np.concatenate(match_status)
+            weight = np.sum(match_status) / n_nodes
+
+        if weighting_method == 'FM':
+            # weight based on the first mismatch (uncomment)
+            match_status = np.concatenate(match_status)
+            if len(np.where(match_status==0)[0]) == 0:
+                weight = 1.0
+            else:
+                first_mismatch_idx = np.where(match_status==0)[0][0]
+                weight = first_mismatch_idx / n_nodes
+
+        if weighting_method == 'LL':
+            # layer-by-layer weights
+            weight = 0
+            for layer in match_status:
+                weight += np.sum(layer)/layer.shape[0]
+            weight /= network.total_layers
+            
+        if weighting_method == 'AP':
+            # activation path weights
+            weight = 1
+            for layer in match_status:
+                weight *= np.sum(layer)/layer.shape[0]
+        
+        if weighting_method == 'flat' or weighting_method == None:
+            # flat minimum weight
+            weight = 1
+            for layer in match_status:
+                weight *= 1/layer.shape[0]
+        
+        weights.append(weight)
+    
+    return np.array(weights)
+
+def getNN():
+    network_base = keras.Sequential()
+    network_base.add(layers.Dense(10, activation='relu', input_shape=(20,)))
+    network_base.add(layers.Dense(5, activation='relu'))
+    network_base.add(layers.Dense(5, activation='relu'))
+    network_base.add(layers.Dense(units=2, activation = 'softmax'))
+    network_base.compile(**compile_kwargs_nn)
+    return network_base
+
+# Generate experimental data
+
 X, y = gaussian_sparse_parity(
     sample_size,
     p_star=p_star,
@@ -76,18 +139,14 @@ X_test, y_test = gaussian_sparse_parity(
     p=p
 )
 
-#%%
-# train Vanilla RF
-vanilla_rf = rf(**compile_kwargs).fit(X, y)
-
 # pick a random point from testing data 
 rng = default_rng(0)
-idx = rng.integers(0, sample_size)
-X_star = X[idx]
+idx = rng.integers(0, n_test)
+X_star = X_test[idx]
 
 #generate a bunch of points
 #distances = np.logspace(-20, 1, num=22, base=10)
-distances = np.linspace(0, 10, num=100)
+distances = np.linspace(0, 1, num=101)
 X_dist_static = {}
 X_dist_noisy = {}
 for d in distances:
@@ -99,13 +158,22 @@ for d in distances:
   X_dist_static[d] = np.concatenate((X_star[:3] + rand_dist, static_noise), axis=1)
   X_dist_noisy[d] = np.concatenate((X_star[:3] + rand_dist, random_noise), axis=1)
 
-# plot distance vs. weights
-weights_s = [get_kdf_weights(X_star, X_dist_static[x], vanilla_rf) for x in X_dist]
+#%%
+# train Vanilla RF, NN
+vanilla_rf = rf(**compile_kwargs_rf).fit(X, y)
+
+vanilla_nn = getNN()
+vanilla_nn.fit(X, keras.utils.to_categorical(y), **fit_kwargs)
+
+model_kdn = kdn(network=vanilla_nn)
+
+# plot distance vs. weights for KDF
+weights_s = [get_kdf_weights(X_star, X_dist_static[d], vanilla_rf) for d in distances]
 weight_med_s = [np.median(w) for w in weights_s]
 weight_25q_s = [np.quantile(w, 0.25) for w in weights_s]
 weight_75q_s = [np.quantile(w, 0.75) for w in weights_s]
 
-weights_n = [get_kdf_weights(X_star, X_dist_noisy[x], vanilla_rf) for x in X_dist]
+weights_n = [get_kdf_weights(X_star, X_dist_noisy[d], vanilla_rf) for d in distances]
 weight_med_n = [np.median(w) for w in weights_n]
 weight_25q_n = [np.quantile(w, 0.25) for w in weights_n]
 weight_75q_n = [np.quantile(w, 0.75) for w in weights_n]
@@ -120,6 +188,38 @@ ax.fill_between(distances, weight_25q_s, weight_75q_s, facecolor='r', alpha=.3)
 ax.fill_between(distances, weight_25q_n, weight_75q_n, facecolor='k', alpha=.3)
 ax.legend()
 
-print(f"Mean number of samples per polytopes: {np.mean(RF_weight_sizes)} (range: {np.min(RF_weight_sizes)}, {np.max(RF_weight_sizes)})")
-print(f"Mean weight of samples in polytopes: {np.mean(RF_weight_mean):.4f}")
-print(f"Median weight of samples in polytopes: {np.median(RF_weight_median)}")
+methods = ["TM", "FM", "LL", "AP"]
+
+for method in methods:
+    # plot distance vs. weights for KDN
+    weights_s = [get_kdn_weights(X_star, X_dist_static[d], model_kdn, method) for d in distances]
+    weight_med_s = [np.median(w) for w in weights_s]
+    weight_25q_s = [np.quantile(w, 0.25) for w in weights_s]
+    weight_75q_s = [np.quantile(w, 0.75) for w in weights_s]
+
+    weights_n = [get_kdn_weights(X_star, X_dist_noisy[d], model_kdn, method) for d in distances]
+    weight_med_n = [np.median(w) for w in weights_n]
+    weight_25q_n = [np.quantile(w, 0.25) for w in weights_n]
+    weight_75q_n = [np.quantile(w, 0.75) for w in weights_n]
+
+    sns.set_context('talk')
+
+    fig, ax = plt.subplots(1,1, figsize=(8,8))
+    #ax.set_xscale("log")
+    ax.plot(distances, weight_med_s, c="r", label=f'KDN Static Noise: {method} match')
+    ax.plot(distances, weight_med_n, c="k", label=f'KDN Random Noise: {method} match')
+    ax.fill_between(distances, weight_25q_s, weight_75q_s, facecolor='r', alpha=.3)
+    ax.fill_between(distances, weight_25q_n, weight_75q_n, facecolor='k', alpha=.3)
+    ax.legend()
+
+distances = [0.01, 0.1, 1, 2, 5]
+n_test = 10
+for d in distances:
+  print(d)
+  rand_dist = rng.random((n_test, p_star))
+  rand_dist = np.sqrt(d**2*(rand_dist/np.sum(rand_dist, axis=1)[:,None]))
+  #print(rand_dist)
+  print(np.sqrt(np.sum(rand_dist**2, axis=1)))
+
+d = distances[50]
+get_kdn_weights(X_star, X_dist_static[d][0:5], model_kdn, "AP")
