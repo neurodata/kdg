@@ -15,7 +15,7 @@ class kdn(KernelDensityGraph):
         network,
         polytope_compute_method = 'all', # 'all': all the FC layers, 'pl': only the penultimate layer
         T=2, 
-        weighting_method = None, # 'TM', 'FM', 'LL', 'AP'
+        weighting_method = None, # 'TM', 'FM', 'LL', 'AP', 'PAP', 'EFM'
         verbose=True
         ):
         super().__init__()
@@ -107,6 +107,9 @@ class kdn(KernelDensityGraph):
 
         return activation_paths
 
+    def _nCr(n,r):
+        return math.factorial(n) / (math.factorial(r) / math.factorial(n-r))
+    
     def fit(self, X, y):
         r"""
         Fits the kernel density forest.
@@ -143,9 +146,6 @@ class kdn(KernelDensityGraph):
                 polytope_id = polytopes[polytope_idx]
                 idx = np.where(polytopes==polytope_id)[0] # collect the samples that belong to the current polytope
                 polytope_member_count.append(len(idx))
-
-                if len(idx) < self.T: # don't fit a gaussian to polytopes that has less members than the specified threshold
-                    continue
                     
                 if self.weighting_method == 'AP':
                     native_path = activation_paths[polytope_idx,:]
@@ -187,6 +187,23 @@ class kdn(KernelDensityGraph):
                         weight = 1
                         for layer in match_status:
                             weight *= np.sum(layer)/layer.shape[0]
+                    
+                    if self.weighting_method == 'EFM':
+                        #pseudo-ensembled first mismatch
+                        weight = 0
+                        for layer in match_status:
+                            n = layer.shape[0] #length of layer
+                            m = np.sum(layer) #matches
+                            #k = nodes drawn before mismatch occurs
+                            if m == n: #perfect match
+                                weight += n/n_nodes
+                            else: #imperfect match, add scaled layer weight and break
+                                layer_weight = 0
+                                for k in range(m+1):
+                                    prob_k = 1/(k+1)*(_nCr(m, k)*(n-m))/_nCr(n, k+1)
+                                    layer_weight += k/n*prob_k
+                                weight += layer_weight * n/n_nodes
+                                break
 
                     # activation path-based weights
                     if self.weighting_method == 'AP':
@@ -198,6 +215,8 @@ class kdn(KernelDensityGraph):
                 weights = np.array(weights)
                 if self.weighting_method == None:
                     weights[weights < 1] = 0 # only use the data from the native polytopes
+                if len(weights[weights > 0]) < self.T: # don't fit a gaussian to polytopes that has less members than the specified threshold
+                    continue
 
                 # apply weights to the data
                 X_tmp = X_.copy()
