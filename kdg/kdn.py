@@ -158,9 +158,11 @@ class kdn(KernelDensityGraph):
                 for n in range(len(polytopes)):    
                     #calculate match
                     match_status = []
+                    n_nodes = 0
                     for layer_id in range(self.total_layers):
                         layer_match = polytope_memberships[layer_id][n,:] == polytope_memberships[layer_id][polytope_idx,:]
                         match_status.append(layer_match.astype("int"))
+                        n_nodes += layer_match.shape[0]
 
                     if self.weighting_method == 'TM' or self.weighting_method == None:
                         # weight based on the total number of matches (uncomment)
