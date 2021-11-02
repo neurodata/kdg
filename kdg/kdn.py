@@ -107,7 +107,7 @@ class kdn(KernelDensityGraph):
 
         return activation_paths
 
-    def _nCr(n,r):
+    def _nCr(self, n, r):
         return math.factorial(n) / (math.factorial(r) / math.factorial(n-r))
     
     def fit(self, X, y):
