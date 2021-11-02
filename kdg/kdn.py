@@ -8,6 +8,7 @@ import warnings
 from sklearn.covariance import LedoitWolf
 import matplotlib.pyplot as plt
 import itertools
+import math
 
 class kdn(KernelDensityGraph):
 
