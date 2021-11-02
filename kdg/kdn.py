@@ -200,7 +200,7 @@ class kdn(KernelDensityGraph):
                             else: #imperfect match, add scaled layer weight and break
                                 layer_weight = 0
                                 for k in range(m+1):
-                                    prob_k = 1/(k+1)*(_nCr(m, k)*(n-m))/_nCr(n, k+1)
+                                    prob_k = 1/(k+1)*(self._nCr(m, k)*(n-m))/self._nCr(n, k+1)
                                     layer_weight += k/n*prob_k
                                 weight += layer_weight * n/n_nodes
                                 break
