@@ -146,7 +146,7 @@ class kdn(KernelDensityGraph):
             for polytope_idx in unique_idx: # fit Gaussians for each unique non-singleton polytope
                 polytope_id = polytopes[polytope_idx]
                 idx = np.where(polytopes==polytope_id)[0] # collect the samples that belong to the current polytope
-                polytope_member_count.append(len(idx))
+                #polytope_member_count.append(len(idx))
                     
                 if self.weighting_method == 'AP':
                     native_path = activation_paths[polytope_idx,:]
@@ -218,7 +218,11 @@ class kdn(KernelDensityGraph):
                 weights = np.array(weights)
                 if self.weighting_method == None:
                     weights[weights < 1] = 0 # only use the data from the native polytopes
-                if len(weights[weights > 0]) < self.T: # don't fit a gaussian to polytopes that has less members than the specified threshold
+                
+                polytope_size = len(weights[weights > 0])
+                polytope_member_count.append(polytope_size)
+                
+                if polytope_size < self.T: # don't fit a gaussian to polytopes that has less members than the specified threshold
                     continue
 
                 # apply weights to the data
