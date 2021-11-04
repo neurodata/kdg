@@ -98,7 +98,7 @@ ax.plot(dimensions, df['err_kdf_med'], c='r', lw=3, label='KDF')
 ax.fill_between(dimensions, df['err_rf_25_quantile'], df['err_rf_75_quantile'], facecolor='k', alpha=.3)
 ax.plot(dimensions, df['err_rf_med'], c='k', lw=3, label='RF')
 
-ax.fill_between(dimensions, df['err_random_25_quantile'], df['err_random_75_quantile'], facecolor='r', alpha=.3)
+ax.fill_between(dimensions, df['err_random_25_quantile'], df['err_random_75_quantile'], facecolor='b', alpha=.3)
 ax.plot(dimensions, df['err_random_med'], c='b', lw=3, label='Random')
 
 ax.set_ylabel('Generilation Error')
