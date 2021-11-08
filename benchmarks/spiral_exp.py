@@ -2,8 +2,8 @@
 from kdg.utils import generate_spirals
 from kdg import kdf
 # %%
-n_estimators = 500
-X, y = generate_spirals(500, n_class=3)
+n_estimators = 200
+X, y = generate_spirals(5000, noise=.8, n_class=2)
 
 model_kdf = kdf(kwargs={'n_estimators':n_estimators})
 model_kdf.fit(X, y)
@@ -36,19 +36,25 @@ data_rf = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':p
 data_rf = data_rf.pivot(index='x', columns='y', values='z')
 
 sns.set_context("talk")
-fig, ax = plt.subplots(1,2, figsize=(16,8))
+fig, ax = plt.subplots(2,2, figsize=(16,16))
 #cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax[0])
+ax1 = sns.heatmap(data, ax=ax[0][0])
 ax1.set_xticklabels(['-1','' , '', '', '', '', '','','','','0','','','','','','','','','1'])
 ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','','','','0','','','','','','','','','','','','','1'])
 #ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','' , '', '', '', '', '', '','','','','', '0','','' , '', '', '', '', '','','','','','','','','','','','','1'])
-ax[0].set_title('KDF',fontsize=24)
-ax[0].invert_yaxis()
+ax[0][0].set_title('KDF',fontsize=24)
+#ax[0][0].invert_yaxis()
 
-ax1 = sns.heatmap(data_rf, ax=ax[1])
+ax1 = sns.heatmap(data_rf, ax=ax[0][1])
 ax1.set_xticklabels(['-1','' , '', '', '', '', '','','','','0','','','','','','','','','1'])
 ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','','','','0','','','','','','','','','','','','','1'])
 #ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','' , '', '', '', '', '', '','','','','', '0','','' , '', '', '', '', '','','','','','','','','','','','','1'])
-ax[1].set_title('RF',fontsize=24)
-ax[1].invert_yaxis()
+ax[0][1].set_title('RF',fontsize=24)
+#ax[0][1].invert_yaxis()
+
+colors = sns.color_palette("Dark2", n_colors=2)
+clr = [colors[i] for i in y]
+ax[1][0].scatter(X[:, 0], X[:, 1], c=clr, s=50)
+
+#plt.savefig('plots/spiral_pdf.pdf')
 # %%
