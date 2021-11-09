@@ -109,7 +109,7 @@ class kdn(KernelDensityGraph):
         return activation_paths
 
     def _nCr(self, n, r):
-        return math.factorial(n) / (math.factorial(r) / math.factorial(n-r))
+        return math.factorial(n) / math.factorial(r) / math.factorial(n-r)
     
     def fit(self, X, y):
         r"""
@@ -204,6 +204,24 @@ class kdn(KernelDensityGraph):
                                 layer_weight = 0
                                 for k in range(m+1):
                                     prob_k = 1/(k+1)*(self._nCr(m, k)*(n-m))/self._nCr(n, k+1)
+                                    layer_weight += k/n*prob_k
+                                weight += layer_weight * n/n_nodes
+                                break
+                    if weighting_method == 'MOONWALK':
+                        #backwards first mismatch
+                        weight = 0
+                        n_nodes = n_nodes - polytope_memberships[-1][0:].shape[1]
+                        #print(n_nodes)
+                        for layer in reversed(match_status[0:-1]):
+                            n = layer.shape[0] #length of layer
+                            m = np.sum(layer) #matches
+                            #k = nodes drawn before mismatch occurs
+                            if m == n: #perfect match
+                                weight += n/n_nodes
+                            else: #imperfect match, add scaled layer weight and break
+                                layer_weight = 0
+                                for k in range(m+1):
+                                    prob_k = 1/(k+1)*(_nCr(m, k)*(n-m))/_nCr(n, k+1)
                                     layer_weight += k/n*prob_k
                                 weight += layer_weight * n/n_nodes
                                 break
