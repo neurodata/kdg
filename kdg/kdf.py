@@ -118,7 +118,7 @@ class kdf(KernelDensityGraph):
         for ii,label in enumerate(self.labels):
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
                 likelihoods[:,ii] += np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
-        likelihoods += 8e-2
+        likelihoods += 0.1
         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         return proba
 

@@ -116,8 +116,8 @@ df.to_csv('simulation_res.csv')
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-p = np.arange(-1,1,step=0.06)
-q = np.arange(-1,1,step=0.06)
+p = np.arange(-2,2,step=0.06)
+q = np.arange(-2,2,step=0.06)
 xx, yy = np.meshgrid(p,q)
 tmp = np.ones(xx.shape)
 
