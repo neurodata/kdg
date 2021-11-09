@@ -13,8 +13,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-p = np.arange(-1,1,step=0.006)
-q = np.arange(-1,1,step=0.006)
+p = np.arange(-2,2,step=0.006)
+q = np.arange(-2,2,step=0.006)
 xx, yy = np.meshgrid(p,q)
 tmp = np.ones(xx.shape)
 
@@ -37,15 +37,16 @@ data_rf = data_rf.pivot(index='x', columns='y', values='z')
 
 sns.set_context("talk")
 fig, ax = plt.subplots(2,2, figsize=(16,16))
-#cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax[0][0])
+cmap= sns.diverging_palette(240, 10, n=9)
+ax1 = sns.heatmap(data, ax=ax[0][0], vmin=0, vmax=1,cmap=cmap)
 ax1.set_xticklabels(['-1','' , '', '', '', '', '','','','','0','','','','','','','','','1'])
 ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','','','','0','','','','','','','','','','','','','1'])
 #ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','' , '', '', '', '', '', '','','','','', '0','','' , '', '', '', '', '','','','','','','','','','','','','1'])
 ax[0][0].set_title('KDF',fontsize=24)
 #ax[0][0].invert_yaxis()
 
-ax1 = sns.heatmap(data_rf, ax=ax[0][1])
+
+ax1 = sns.heatmap(data_rf, ax=ax[0][1], vmin=0, vmax=1,cmap=cmap)
 ax1.set_xticklabels(['-1','' , '', '', '', '', '','','','','0','','','','','','','','','1'])
 ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','','','','0','','','','','','','','','','','','','1'])
 #ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','' , '', '', '', '', '', '','','','','', '0','','' , '', '', '', '', '','','','','','','','','','','','','1'])
@@ -56,5 +57,5 @@ colors = sns.color_palette("Dark2", n_colors=2)
 clr = [colors[i] for i in y]
 ax[1][0].scatter(X[:, 0], X[:, 1], c=clr, s=50)
 
-#plt.savefig('plots/spiral_pdf.pdf')
+plt.savefig('plots/spiral_pdf.pdf')
 # %%
