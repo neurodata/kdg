@@ -14,6 +14,7 @@ import os
 # %%
 task = openml.tasks.get_task(6)
 X, y = task.get_X_and_y()
+#X = X[:,:50]
 
 skf = StratifiedKFold(n_splits=5)
 train_index, test_index = list(skf.split(X, y))[1]

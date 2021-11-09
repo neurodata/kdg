@@ -57,5 +57,5 @@ colors = sns.color_palette("Dark2", n_colors=2)
 clr = [colors[i] for i in y]
 ax[1][0].scatter(X[:, 0], X[:, 1], c=clr, s=50)
 
-plt.savefig('plots/spiral_pdf.pdf')
+#plt.savefig('plots/spiral_pdf.pdf')
 # %%
