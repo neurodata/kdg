@@ -93,7 +93,8 @@ class kdf(KernelDensityGraph):
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
                 likelihoods += np.nan_to_num(self._compute_pdf(X_, label, polytope_idx))
 
-            self.bias[label] = np.min(likelihoods)/10
+            likelihoods /= total_samples_this_label
+            self.bias[label] = np.min(likelihoods)/1e3
 
         self.is_fitted = True
         
@@ -127,8 +128,11 @@ class kdf(KernelDensityGraph):
         )
         
         for ii,label in enumerate(self.labels):
+            total_polytopes = len(self.polytope_means[label])
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
                 likelihoods[:,ii] += np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
+
+            likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
             likelihoods[:,ii] += self.bias[label]
 
         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
