@@ -207,7 +207,7 @@ class kdn(KernelDensityGraph):
                                     layer_weight += k/n*prob_k
                                 weight += layer_weight * n/n_nodes
                                 break
-                    if weighting_method == 'MOONWALK':
+                    if self.weighting_method == 'MOONWALK':
                         #backwards first mismatch
                         weight = 0
                         n_nodes = n_nodes - polytope_memberships[-1][0:].shape[1]
