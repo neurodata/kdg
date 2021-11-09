@@ -207,6 +207,7 @@ class kdn(KernelDensityGraph):
                                     layer_weight += k/n*prob_k
                                 weight += layer_weight * n/n_nodes
                                 break
+                                
                     if self.weighting_method == 'MOONWALK':
                         #backwards first mismatch
                         weight = 0
@@ -234,6 +235,7 @@ class kdn(KernelDensityGraph):
                     
                     weights.append(weight)
                 weights = np.array(weights)
+                
                 if self.weighting_method == None:
                     weights[weights < 1] = 0 # only use the data from the native polytopes
                 
