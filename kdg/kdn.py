@@ -1,9 +1,13 @@
+from functools import total_ordering
+
+from keras import layers
 from .base import KernelDensityGraph
 from sklearn.mixture import GaussianMixture
 from tensorflow import keras
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 import numpy as np
 from scipy.stats import multivariate_normal
+from scipy.special import comb
 import warnings
 from sklearn.covariance import LedoitWolf
 import matplotlib.pyplot as plt
@@ -29,6 +33,12 @@ class kdn(KernelDensityGraph):
         self.verbose = verbose
 
         self.total_layers = len(self.network.layers)
+
+        self.network_shape = []
+        for layer in network.layers:
+            self.network_shape.append(layer.output_shape[-1])
+
+        self.num_fc_neurons = sum(self.network_shape)
 
     def _get_polytope_memberships(self, X):
         polytope_memberships = []
@@ -109,7 +119,8 @@ class kdn(KernelDensityGraph):
         return activation_paths
 
     def _nCr(self, n, r):
-        return math.factorial(n) / (math.factorial(r) / math.factorial(n-r))
+        # return math.factorial(n) / (math.factorial(r) / math.factorial(n-r))
+        return comb(n, r)
     
     def fit(self, X, y):
         r"""
