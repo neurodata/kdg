@@ -131,7 +131,7 @@ for i in range(len(d)):
     distance_replicates[d[i]] = tmp_array
 
 # create the synthetic data
-weighting_methods = ['FM']
+weighting_methods = ['EFM']
 for method in weighting_methods:
     mean_weights = []
     quantile_25_weights = []
@@ -182,6 +182,32 @@ for method in weighting_methods:
                 A_foreign = np.matmul(a_bar[I_cart], 2**np.arange(0, len(model_kdn.network_shape), 1).T)
 
                 weight = sum(A_native == A_foreign) / len(A_native)
+
+            if method == 'EFM':
+                #pseudo-ensembled first mismatch
+                match_status_split = []
+                start = 0
+                for shape in model_kdn.network_shape:
+                    end = start + shape
+                    match_status_split.append(match_status[start:end])
+                    start = end
+                match_status_split = np.array(match_status_split)
+                weight = 0
+                layer_num = 1
+                for layer in match_status_split:
+                    n = layer.shape[0] #length of layer
+                    m = np.sum(layer) #matches
+                    #k = nodes drawn before mismatch occurs
+                    if m == n: #perfect match
+                        weight += n/model_kdn.num_fc_neurons
+                    else: #imperfect match, add scaled layer weight and break
+                        layer_weight = 0
+                        for k in range(m+1):
+                            prob_k = 1/(k+1)*(model_kdn._nCr(m, k)*(n-m))/model_kdn._nCr(n, k+1)
+                            layer_weight += k/n*prob_k
+                        weight += layer_weight * layer_num * n/model_kdn.num_fc_neurons
+                        layer_num += 1
+                        break
 
             weights_per_distance.append(weight)
 
