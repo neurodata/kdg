@@ -9,7 +9,7 @@ from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, kwargs={}):
+    def __init__(self, k = 1, kwargs={}):
         super().__init__()
 
         self.polytope_means = {}
@@ -18,6 +18,7 @@ class kdf(KernelDensityGraph):
         self.polytope_mean_cov = {}
         self.bias = {}
         self.kwargs = kwargs
+        self.k = k
         self.is_fitted = False
 
     def fit(self, X, y):
@@ -94,7 +95,7 @@ class kdf(KernelDensityGraph):
                 likelihoods += np.nan_to_num(self._compute_pdf(X_, label, polytope_idx))
 
             likelihoods /= total_samples_this_label
-            self.bias[label] = np.min(likelihoods)/1e3
+            self.bias[label] = np.min(likelihoods)/(self.k*total_samples_this_label)
 
         self.is_fitted = True
         

@@ -5,7 +5,7 @@ from kdg import kdf
 n_estimators = 200
 X, y = generate_spirals(5000, noise=.8, n_class=2)
 
-model_kdf = kdf(kwargs={'n_estimators':n_estimators})
+model_kdf = kdf(k=1/2.5, kwargs={'n_estimators':n_estimators})
 model_kdf.fit(X, y)
 # %%
 import seaborn as sns
