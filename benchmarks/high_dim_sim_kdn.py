@@ -10,13 +10,7 @@ import pandas as pd
 # define the experimental setup
 p = 20 # total dimensions of the data vector
 p_star = 3 # number of signal dimensions of the data vector
-'''sample_size = np.logspace(
-        np.log10(10),
-        np.log10(5000),
-        num=10,
-        endpoint=True,
-        dtype=int
-        )'''
+
 sample_size = [1000, 5000, 10000] # sample size under consideration
 n_test = 1000 # test set size
 reps = 10 # number of replicates
@@ -35,7 +29,7 @@ compile_kwargs = {
     "optimizer": keras.optimizers.Adam(3e-4)
     }
 fit_kwargs = {
-    "epochs": 150,
+    "epochs": 100,
     "batch_size": 32,
     "verbose": False
     }
@@ -45,8 +39,8 @@ fit_kwargs = {
 # network architecture
 def getNN():
     network_base = keras.Sequential()
-    network_base.add(layers.Dense(10, activation='relu', input_shape=(20,)))
-    network_base.add(layers.Dense(5, activation='relu'))
+    network_base.add(layers.Dense(3, activation='relu', input_shape=(3,)))
+    network_base.add(layers.Dense(3, activation='relu'))
     network_base.add(layers.Dense(units=2, activation = 'softmax'))
     network_base.compile(**compile_kwargs)
     return network_base
@@ -71,7 +65,10 @@ for sample in sample_size:
         vanilla_nn.fit(X, keras.utils.to_categorical(y), **fit_kwargs)
 
         # train KDN
-        model_kdn = kdn(network=vanilla_nn)
+        model_kdn = kdn(network=vanilla_nn, 
+                        polytope_compute_method='all', 
+                        weighting_method=None,
+                        verbose=False)
         model_kdn.fit(X, y)
 
         accuracy_kdn.append(
@@ -97,7 +94,8 @@ df['reps'] = reps_list
 df['sample'] = sample_list
 
 # save the results (CHANGE HERE)
-df.to_csv('results_weighted_kdn/high_dim_kdn_gaussian_weighting_allFC_LL.csv')
+df.to_csv('results_weighted_kdn/high_dim_kdn_gaussian_allFC_332.csv')
+
 
 # %% plot the result
 import pandas as pd
@@ -106,7 +104,7 @@ import matplotlib.pyplot as plt
 import numpy as np 
 
 # Specify which results to plot (CHANGE HERE)
-filename1 = 'results_weighted_kdn/high_dim_kdn_gaussian_weighting_allFC_LL.csv'
+filename1 = 'results_weighted_kdn/high_dim_kdn_gaussian_allFC_332.csv'
 
 df = pd.read_csv(filename1)
 
@@ -127,14 +125,10 @@ err_kdn_75_quantile = []
 err_kdn_med_ = []
 err_kdn_25_quantile_ = []
 err_kdn_75_quantile_ = []
-#clr = ["#e41a1c", "#f781bf", "#306998"]
-#c = sns.color_palette(clr, n_colors=3)
 
 for sample in sample_size:
     err_nn = 1 - df['accuracy nn'][df['sample']==sample]
-    #err_rf_ = 1 - df['feature selected rf'][df['sample']==sample]
     err_kdn = 1 - df['accuracy kdn'][df['sample']==sample]
-    #err_kdf_ = 1 - df['feature selected kdf'][df['sample']==sample]
 
     err_nn_med.append(np.median(err_nn))
     err_nn_25_quantile.append(
@@ -144,14 +138,6 @@ for sample in sample_size:
         np.quantile(err_nn,[.75])[0]
     )
 
-    #err_rf_med_.append(np.median(err_rf_))
-    #err_rf_25_quantile_.append(
-    #        np.quantile(err_rf_,[.25])[0]
-    #    )
-    #err_rf_75_quantile_.append(
-    #    np.quantile(err_rf_,[.75])[0]
-    #)
-
     err_kdn_med.append(np.median(err_kdn))
     err_kdn_25_quantile.append(
             np.quantile(err_kdn,[.25])[0]
@@ -160,28 +146,14 @@ for sample in sample_size:
         np.quantile(err_kdn,[.75])[0]
     )
 
-    #err_kdf_med_.append(np.median(err_kdf_))
-    #err_kdf_25_quantile_.append(
-    #        np.quantile(err_kdf_,[.25])[0]
-    #    )
-    #err_kdf_75_quantile_.append(
-    #    np.quantile(err_kdf_,[.75])[0]
-    #)
-
 sns.set_context('talk')
 fig, ax = plt.subplots(1,1, figsize=(8,8))
 
 ax.plot(sample_size, err_nn_med, c="k", label='NN')
 ax.fill_between(sample_size, err_nn_25_quantile, err_nn_75_quantile, facecolor='k', alpha=.3)
 
-#ax.plot(sample_size, err_rf_med_, c="g", label='RF (feature selected)')
-#ax.fill_between(sample_size, err_rf_25_quantile_, err_rf_75_quantile_, facecolor='g', alpha=.3)
-
 ax.plot(sample_size, err_kdn_med, c="r", label='KDN')
 ax.fill_between(sample_size, err_kdn_25_quantile, err_kdn_75_quantile, facecolor='r', alpha=.3)
-
-#ax.plot(sample_size, err_kdf_med_, c="b", label='KDF (feteaure selected)')
-#ax.fill_between(sample_size, err_kdf_25_quantile_, err_kdf_75_quantile_, facecolor='b', alpha=.3)
 
 right_side = ax.spines["right"]
 right_side.set_visible(False)
@@ -194,6 +166,6 @@ ax.set_ylabel('error')
 ax.legend(frameon=False)
 
 # Specify the save path (CHANGE HERE)
-plt.savefig('plots/high_dim_kdn_gaussian_weighting_allFC_LL.pdf')
+plt.savefig('plots/high_dim_kdn_gaussian_allFC_332.pdf')
 
 # %%
