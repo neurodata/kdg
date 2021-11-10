@@ -18,6 +18,7 @@ class kdn(KernelDensityGraph):
 
     def __init__(self,
         network,
+        k = 1,
         polytope_compute_method = 'all', # 'all': all the FC layers, 'pl': only the penultimate layer
         T=2, 
         weighting_method = None, # 'TM', 'FM', 'LL', 'AP', 'PAP', 'EFM'
@@ -27,9 +28,11 @@ class kdn(KernelDensityGraph):
         self.polytope_means = {}
         self.polytope_cov = {}
         self.network = network
+        self.k = k
         self.polytope_compute_method = polytope_compute_method
         self.T = T
         self.weighting_method = weighting_method
+        self.bias = {}
         self.verbose = verbose
 
         self.total_layers = len(self.network.layers)
@@ -280,6 +283,18 @@ class kdn(KernelDensityGraph):
                         polytope_cov_
                 )
 
+            ## calculate bias for each label
+            likelihoods = np.zeros(
+            (np.size(X_,0)),
+            dtype=float
+            )
+
+            for polytope_idx,_ in enumerate(self.polytope_means[label]):
+                likelihoods += np.nan_to_num(self._compute_pdf(X_, label, polytope_idx))
+
+            likelihoods /= X_.shape[0]
+            self.bias[label] = np.min(likelihoods)/(self.k*X_.shape[0])
+
             if self.verbose:
                 plt.hist(polytope_member_count, bins=30)
                 plt.xlabel("Number of Members")
@@ -315,10 +330,27 @@ class kdn(KernelDensityGraph):
         )
         
         for ii,label in enumerate(self.labels):
+            total_polytopes = len(self.polytope_means[label])
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
                 likelihoods[:,ii] += np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
-
+            
+            likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
+            likelihoods[:,ii] += self.bias[label]
+            
         proba = (likelihoods.T/(np.sum(likelihoods,axis=1)+1e-100)).T
+        return proba
+
+    def predict_proba_nn(self, X):
+        r"""
+        Calculate posteriors using the vanilla NN
+        Parameters
+        ----------
+        X : ndarray
+            Input data matrix.
+        """
+        X = check_array(X)
+
+        proba = self.network.predict(X)
         return proba
 
     def predict(self, X):
