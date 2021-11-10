@@ -218,6 +218,25 @@ class kdn(KernelDensityGraph):
                                     layer_weight += k/n*prob_k
                                 weight += layer_weight * n/n_nodes
                                 break
+                                
+                    if self.weighting_method == 'MOONWALK':
+                        #backwards first mismatch
+                        weight = 0
+                        n_nodes = n_nodes - polytope_memberships[-1][0:].shape[1]
+                        #print(n_nodes)
+                        for layer in reversed(match_status[0:-1]):
+                            n = layer.shape[0] #length of layer
+                            m = np.sum(layer) #matches
+                            #k = nodes drawn before mismatch occurs
+                            if m == n: #perfect match
+                                weight += n/n_nodes
+                            else: #imperfect match, add scaled layer weight and break
+                                layer_weight = 0
+                                for k in range(m+1):
+                                    prob_k = 1/(k+1)*(self._nCr(m, k)*(n-m))/self._nCr(n, k+1)
+                                    layer_weight += k/n*prob_k
+                                weight += layer_weight * n/n_nodes
+                                break
 
                     # activation path-based weights
                     if self.weighting_method == 'AP':
@@ -227,6 +246,7 @@ class kdn(KernelDensityGraph):
                     
                     weights.append(weight)
                 weights = np.array(weights)
+                
                 if self.weighting_method == None:
                     weights[weights < 1] = 0 # only use the data from the native polytopes
                 
