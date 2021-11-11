@@ -221,6 +221,22 @@ class kdn(KernelDensityGraph):
                                     layer_weight += k/n*prob_k
                                 weight += layer_weight * n/n_nodes
                                 break
+                    
+                    if self.weighting_method == 'EFM2':
+                        #pseudo-ensembled first mismatch - fast update
+                        weight = 0
+                        for layer in match_status:
+                            n = layer.shape[0] #length of layer
+                            m = np.sum(layer) #matches
+                            #k = nodes drawn before mismatch occurs
+                            if m == n: #perfect match
+                                weight += n/n_nodes
+                            elif m <= floor(x/2): #break if too few nodes match
+                                break
+                            else: #imperfect match, add scaled layer weight and break
+                                layer_weight = m/(n_nodes*(n-m+1))
+                                weight += layer_weight
+                                break
                                 
                     if self.weighting_method == 'MOONWALK':
                         #backwards first mismatch
