@@ -9,14 +9,16 @@ from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, kwargs={}):
+    def __init__(self, k = 1, kwargs={}):
         super().__init__()
 
         self.polytope_means = {}
         self.polytope_cov = {}
         self.polytope_cardinality = {}
         self.polytope_mean_cov = {}
+        self.bias = {}
         self.kwargs = kwargs
+        self.k = k
         self.is_fitted = False
 
     def fit(self, X, y):
@@ -83,7 +85,18 @@ class kdf(KernelDensityGraph):
                 self.polytope_cov[label].append(
                     covariance_model.covariance_*len(idx)/sum(scales)
                 )
-        
+
+            ## calculate bias for each label
+            likelihoods = np.zeros(
+                (np.size(X_,0)),
+                dtype=float
+            )
+            for polytope_idx,_ in enumerate(self.polytope_means[label]):
+                likelihoods += np.nan_to_num(self._compute_pdf(X_, label, polytope_idx))
+
+            likelihoods /= total_samples_this_label
+            self.bias[label] = np.min(likelihoods)/(self.k*total_samples_this_label)
+
         self.is_fitted = True
         
             
@@ -116,10 +129,14 @@ class kdf(KernelDensityGraph):
         )
         
         for ii,label in enumerate(self.labels):
+            total_polytopes = len(self.polytope_means[label])
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
                 likelihoods[:,ii] += np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
 
-        proba = (likelihoods.T/(np.sum(likelihoods,axis=1)+1e-100)).T
+            likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
+            likelihoods[:,ii] += self.bias[label]
+
+        proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         return proba
 
     def predict(self, X):
