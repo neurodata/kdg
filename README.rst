@@ -1,4 +1,4 @@
-`kdg` (Kernel Density Graph) is a package for exploring and using kernel density algorithms developed by the [neurodata group](https://neurodata.io).
+`kdg` (Kernel Density Graph) is a package for exploring and using kernel density algorithms developed by the `neurodata group <https://neurodata.io>`_.
 
 Install
 =======
@@ -14,7 +14,7 @@ at
 
 First, make sure you have the latest version of ``pip`` (the Python package
 manager) installed. If you do not, refer to the `Pip documentation
-<https://pip.pypa.io/en/stable/installing/>`_ and install ``pip`` first.
+<https://pip.pypa.io/en/stable/installation/>`_ and install ``pip`` first.
 
 
 Install from Github
@@ -38,7 +38,7 @@ Python package dependencies
 ``kdg`` requires the following packages:
 
 - scikit-learn>=0.22.0
-- scipy==1.4.1
+- scipy>=1.4.1
 - numpy==1.19.2
 
 Hardware requirements
