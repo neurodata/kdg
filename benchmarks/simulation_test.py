@@ -116,21 +116,22 @@ df.to_csv('simulation_res.csv')
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-p = np.arange(-1,1,step=0.06)
-q = np.arange(-1,1,step=0.06)
+p = np.arange(-2,2,step=0.06)
+q = np.arange(-2,2,step=0.06)
 xx, yy = np.meshgrid(p,q)
 tmp = np.ones(xx.shape)
 
 grid_samples = np.concatenate(
             (
                 xx.reshape(-1,1),
-                yy.reshape(-1,1),
-                tmp.reshape(-1,1),
+                yy.reshape(-1,1)
             ),
             axis=1
     ) 
-#model_kdf = kdf(covariance_types = {'diag', 'full', 'spherical'}, criterion='bic', kwargs={'n_estimators':500})
-#model_kdf.fit(X, y)
+    
+X, y = generate_gaussian_parity(1000)
+model_kdf = kdf(kwargs={'n_estimators':500})
+model_kdf.fit(X, y)
 proba_kdf = model_kdf.predict_proba(grid_samples)
 
 data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':proba_kdf[:,0]})

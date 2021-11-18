@@ -7,11 +7,11 @@ import openml
 from scipy.interpolate import interp1d
 from os import listdir, getcwd 
 
-folder = 'result_cov'
+folder = 'ledoit_wolf'
 current_dir = getcwd()
 files = listdir(current_dir+'/'+folder)
 
-reps = 5
+reps = 30
 samples = []
 samples_normalized = []
 delta_kappas = []
@@ -29,14 +29,14 @@ fig, ax = plt.subplots(1,2, figsize=(16,8))
 
 for file_ in files:
     df = pd.read_csv(current_dir+'/'+folder+'/'+file_)
-    sample_ = list(np.unique(df['sample']))
+    sample_ = list(np.unique(df['samples']))
     samples.extend(sample_)
 
 samples = np.sort(np.unique(samples))
 
 for file_ in files:
     df = pd.read_csv(current_dir+'/'+folder+'/'+file_)
-    sample_ = list(np.unique(df['sample']))
+    sample_ = list(np.unique(df['samples']))
 
     kappa_kdf = np.zeros((len(sample_),reps), dtype=float)
     kappa_rf = np.zeros((len(sample_),reps), dtype=float)
@@ -46,8 +46,8 @@ for file_ in files:
     ece_rf = np.zeros((len(sample_),reps), dtype=float)
 
     for ii in range(reps):
-        kappa_kdf[:,ii] = df['kappa_kdf'][df['fold']==ii]
-        kappa_rf[:,ii] = df['kappa_rf'][df['fold']==ii]
+        kappa_kdf[:,ii] = df['kappa_kdf'][df['rep']==ii]
+        kappa_rf[:,ii] = df['kappa_rf'][df['rep']==ii]
         delta_kappa[:,ii] = kappa_kdf[:,ii] - kappa_rf[:,ii]
 
         #ax[0].plot(sample_size, delta_kappa[:,ii], c='k', alpha=0.5, lw=1)
@@ -78,8 +78,8 @@ for file_ in files:
 
 
     for ii in range(reps):
-        ece_kdf[:,ii] = df['ece_kdf'][df['fold']==ii]
-        ece_rf[:,ii] = df['ece_rf'][df['fold']==ii]
+        ece_kdf[:,ii] = df['ece_kdf'][df['rep']==ii]
+        ece_rf[:,ii] = df['ece_rf'][df['rep']==ii]
         delta_ece[:,ii] = ece_kdf[:,ii] - ece_rf[:,ii]
 
         #ax[1].plot(sample_size, ece_kdf[:,ii], c='r', alpha=0.5, lw=1)
@@ -129,7 +129,7 @@ ax[1].plot(samples, np.nanmedian(ece_over_dataset, axis=0), c='r', lw=3)
 
 ax[0].text(50, 0.1, "kdf wins")
 ax[1].text(50, - 0.1, "kdf wins")
-plt.savefig('plots/openML_cc18_all_bic.pdf')
+plt.savefig('plots/openML_cc18_ledoit_wolf.pdf')
 #plt.show()
 
- # %%
+# %%
