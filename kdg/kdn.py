@@ -166,7 +166,7 @@ class kdn(KernelDensityGraph):
                             elif m <= math.floor(n / 2):  # break if too few nodes match
                                 break
                             else:  # imperfect match, add scaled layer weight and break
-                                layer_weight = m / (n_nodes * (n - m + 1))
+                                layer_weight = (2*m-n)/(n_nodes*(n-m+1))
                                 weight += layer_weight
                                 break
 
