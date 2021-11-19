@@ -120,16 +120,17 @@ def experiment(task_id, folder, n_estimators=500, reps=30):
     df.to_csv(folder+'/'+'openML_cc18_'+str(task_id)+'.csv')
 
 #%%
-folder = 'use_one_feature'
-#os.mkdir(folder)
+folder = 'ledoit_wolf'
+os.mkdir(folder)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 
-Parallel(n_jobs=-1,verbose=1)(
+'''Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment)(
                 task_id,
                 folder
                 ) for task_id in benchmark_suite.tasks
-            )
+            )'''
 
-        
+for task_id in benchmark_suite.tasks:
+    experiment(task_id,folder)
 # %%
