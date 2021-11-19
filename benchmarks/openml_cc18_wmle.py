@@ -9,6 +9,7 @@ from sklearn.ensemble import RandomForestClassifier as rf
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 import os
+from os import listdir, getcwd 
 # %%
 def experiment(task_id, folder, n_estimators=500, reps=30):
     task = openml.tasks.get_task(task_id)
@@ -123,14 +124,18 @@ def experiment(task_id, folder, n_estimators=500, reps=30):
 folder = 'ledoit_wolf'
 #os.mkdir(folder)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
-
-Parallel(n_jobs=10,verbose=1)(
+current_dir = getcwd()
+files = listdir(current_dir+'/'+folder)
+'''Parallel(n_jobs=10,verbose=1)(
         delayed(experiment)(
                 task_id,
                 folder
                 ) for task_id in benchmark_suite.tasks
-            )
+            )'''
 
-'''for task_id in benchmark_suite.tasks:
-    experiment(task_id,folder)'''
+for task_id in benchmark_suite.tasks:
+    filename = 'openML_cc18_' + str(task_id) + '.csv'
+
+    if filename not in files:
+        experiment(task_id,folder)
 # %%
