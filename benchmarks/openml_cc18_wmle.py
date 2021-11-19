@@ -15,10 +15,6 @@ def experiment(task_id, folder, n_estimators=500, reps=30):
     task = openml.tasks.get_task(task_id)
     X, y = task.get_X_and_y()
 
-    tmp_model = rf(n_estimators=n_estimators).fit(X, y)
-    one_feature = np.argmax(tmp_model.feature_importances_)
-    X = X[:,one_feature].reshape(-1, 1)
-
     if np.isnan(np.sum(y)):
         return
 
@@ -137,5 +133,6 @@ for task_id in benchmark_suite.tasks:
     filename = 'openML_cc18_' + str(task_id) + '.csv'
 
     if filename not in files:
+        print(filename)
         experiment(task_id,folder)
 # %%
