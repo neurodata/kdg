@@ -134,5 +134,10 @@ for task_id in benchmark_suite.tasks:
 
     if filename not in files:
         print(filename)
-        experiment(task_id,folder)
+        try:
+            experiment(task_id,folder)
+        except:
+            print("couldn't run!")
+        else:
+            print("Ran successfully!")
 # %%
