@@ -9,14 +9,11 @@ from sklearn.ensemble import RandomForestClassifier as rf
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 import os
+from os import listdir, getcwd 
 # %%
 def experiment(task_id, folder, n_estimators=500, reps=30):
     task = openml.tasks.get_task(task_id)
     X, y = task.get_X_and_y()
-
-    tmp_model = rf(n_estimators=n_estimators).fit(X, y)
-    one_feature = np.argmax(tmp_model.feature_importances_)
-    X = X[:,one_feature].reshape(-1, 1)
 
     if np.isnan(np.sum(y)):
         return
@@ -120,16 +117,27 @@ def experiment(task_id, folder, n_estimators=500, reps=30):
     df.to_csv(folder+'/'+'openML_cc18_'+str(task_id)+'.csv')
 
 #%%
-folder = 'use_one_feature'
+folder = 'ledoit_wolf'
 #os.mkdir(folder)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
-
-Parallel(n_jobs=-1,verbose=1)(
+current_dir = getcwd()
+files = listdir(current_dir+'/'+folder)
+'''Parallel(n_jobs=10,verbose=1)(
         delayed(experiment)(
                 task_id,
                 folder
                 ) for task_id in benchmark_suite.tasks
-            )
+            )'''
 
-        
+for task_id in benchmark_suite.tasks:
+    filename = 'openML_cc18_' + str(task_id) + '.csv'
+
+    if filename not in files:
+        print(filename)
+        try:
+            experiment(task_id,folder)
+        except:
+            print("couldn't run!")
+        else:
+            print("Ran successfully!")
 # %%
