@@ -2,6 +2,16 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+from tensorflow import keras
+from keras import layers
+
+def getNN(dense_size, input_size):
+    network_base = keras.Sequential()
+    network_base.add(layers.Dense(dense_size, activation='relu', input_shape=(input_size,)))
+    network_base.add(layers.Dense(dense_size, activation='relu'))
+    network_base.add(layers.Dense(units=2, activation = 'softmax'))
+    network_base.compile(**compile_kwargs)
+    return network_base
 
 def _nCr(n, r):
     return math.factorial(n) / math.factorial(r) / math.factorial(n - r)
