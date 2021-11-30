@@ -6,6 +6,10 @@ from tensorflow import keras
 from keras import layers
 
 def getNN(dense_size, input_size):
+    compile_kwargs = {
+    "loss": "binary_crossentropy",
+    "optimizer": keras.optimizers.Adam(3e-4)
+    }
     network_base = keras.Sequential()
     network_base.add(layers.Dense(dense_size, activation='relu', input_shape=(input_size,)))
     network_base.add(layers.Dense(dense_size, activation='relu'))
