@@ -5,16 +5,12 @@ import math
 from tensorflow import keras
 from keras import layers
 
-def getNN(dense_size, input_size):
-    compile_kwargs = {
-    "loss": "binary_crossentropy",
-    "optimizer": keras.optimizers.Adam(3e-4)
-    }
+def getNN(dense_size, input_size, **kwargs):
     network_base = keras.Sequential()
     network_base.add(layers.Dense(dense_size, activation='relu', input_shape=(input_size,)))
     network_base.add(layers.Dense(dense_size, activation='relu'))
     network_base.add(layers.Dense(units=2, activation = 'softmax'))
-    network_base.compile(**compile_kwargs)
+    network_base.compile(**kwargs)
     return network_base
 
 def _nCr(n, r):
