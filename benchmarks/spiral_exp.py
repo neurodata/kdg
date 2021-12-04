@@ -1,5 +1,5 @@
 #%%
-from kdg.utils import generate_spirals, generate_gaussian_parity
+from kdg.utils import generate_spirals, generate_gaussian_parity, spiral_pdf
 from kdg import kdf,kdn
 from keras import layers
 import keras
@@ -72,4 +72,31 @@ ax[1][0].scatter(X[:, 0], X[:, 1], c=clr, s=50)
 
 plt.savefig('plots/spiral_pdf_kdn.pdf')
 plt.show()
+# %%
+import seaborn as sns
+import pandas as pd 
+import numpy as np
+import matplotlib.pyplot as plt
+
+sns.set_context("talk")
+p = np.arange(-2,2,step=0.006)
+q = np.arange(-2,2,step=0.006)
+xx, yy = np.meshgrid(p,q)
+
+grid_samples = np.concatenate(
+            (
+                xx.reshape(-1,1),
+                yy.reshape(-1,1)
+            ),
+            axis=1
+    )
+pdf = spiral_pdf(grid_samples, 1000)
+data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':pdf})
+fig, ax = plt.subplots(1,1, figsize=(16,16))
+cmap= sns.diverging_palette(240, 10, n=9)
+ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1, cmap=cmap)
+ax1.set_xticklabels(['-2','' , '', '', '', '', '','','','','0','','','','','','','','','2'])
+ax1.set_yticklabels(['-2','' , '', '', '', '', '','','','','','','0','','','','','','','','','','','','','2'])
+#ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','' , '', '', '', '', '', '','','','','', '0','','' , '', '', '', '', '','','','','','','','','','','','','1'])
+ax.set_title('KDF',fontsize=24)
 # %%

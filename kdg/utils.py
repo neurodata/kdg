@@ -1,7 +1,8 @@
+#%%
 import numpy as np 
 from sklearn.datasets import make_blobs
 from numpy.random import uniform, normal
-
+#%%
 def get_ece(predicted_posterior, predicted_label, true_label, num_bins=40):
     poba_hist = []
     accuracy_hist = []
@@ -116,7 +117,7 @@ def generate_gaussian_parity(
 
     return X, y.astype(int)
 
-def pdf(x, cov_scale=0.25):
+def gaussian_xor_pdf(x, cov_scale=0.25):
     mu01 = np.array([-0.5,0.5])
     mu02 = np.array([0.5,-0.5])
     mu11 = np.array([0.5,0.5])
@@ -132,7 +133,6 @@ def pdf(x, cov_scale=0.25):
     )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
     p11 = (
         np.exp(-0.5*(x - mu11)@inv_cov@(x-mu11).T) 
-        + np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
     )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
     p12 = (
         np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
@@ -314,3 +314,31 @@ def generate_spirals(
             y += [j - 1] * int(mvt[j - 1])
 
     return np.vstack(X), np.array(y).astype(int)
+
+def spiral_pdf(X, n_samples, n_class=2, noise=0.3):
+
+    if n_class == 2:
+        turns = 2
+    elif n_class == 3:
+        turns = 2.5
+    elif n_class == 5:
+        turns = 3.5
+    elif n_class == 7:
+        turns = 4.5
+    else:
+        raise ValueError("sorry, can't currently surpport %s classes " % n_class)
+
+    theta = np.linspace(
+            0, np.pi * 4 * turns / n_class, int(n_samples / n_class)
+        ) 
+
+    likelihood = 0
+    x, y = X[:,0], X[:,1]
+    theta_ = np.arccos(x/np.sqrt(x**2 + y**2))
+    for t in theta:
+        likelihood += np.exp(
+            - (theta_ - t)**2/(2*noise)
+            )
+
+    return likelihood/(np.sqrt(2*np.pi)*noise)
+# %%
