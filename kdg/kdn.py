@@ -1,6 +1,6 @@
 from .base import KernelDensityGraph
 from sklearn.mixture import GaussianMixture
-import keras
+from tensorflow import keras
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 import numpy as np
 from scipy.stats import multivariate_normal
@@ -14,7 +14,7 @@ class kdn(KernelDensityGraph):
         criterion=None,
         complie_kwargs = {
             "loss": "categorical_crossentropy",
-            "optimizer": tf.keras.optimizers.Adam(3e-4)
+            "optimizer": keras.optimizers.Adam(3e-4)
             },
         fit_kwargs = {
             "epochs": 100,
