@@ -1,10 +1,11 @@
 #
 # Created on Thu Dec 09 2021 6:04:08 AM
 # Author: Ashwin De Silva (ldesilv2@jhu.edu)
-# Objective: Gaussian Parity Experiment
+# Objective: Spiral Experiment
 #
 
-#%% 
+#%%
+
 # import standard libraries
 import numpy as np
 from tensorflow import keras
@@ -120,6 +121,7 @@ ax[2].set_title('KDN')
 ax[2].set_aspect('equal')
 fig.colorbar(ax2, ax=ax[2], fraction=0.046, pad=0.04)
 
+fig.savefig('plots/spiral.pdf')
 plt.show()
 
 # %%
