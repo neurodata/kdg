@@ -117,4 +117,5 @@ ax[2].set_title('KDN')
 ax[2].set_aspect('equal')
 fig.colorbar(ax2, ax=ax[2], fraction=0.046, pad=0.04)
 
+fig.savefig('plots/gaussian_parity.pdf')
 plt.show()
