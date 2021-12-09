@@ -1,42 +1,42 @@
-import numpy as np 
+import numpy as np
 from sklearn.datasets import make_blobs
-from numpy.random import uniform, normal
+from numpy.random import uniform, normal, shuffle
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 def get_ece(predicted_posterior, predicted_label, true_label, num_bins=40):
     poba_hist = []
     accuracy_hist = []
-    bin_size = 1/num_bins
+    bin_size = 1 / num_bins
     total_sample = len(true_label)
     posteriors = predicted_posterior.max(axis=1)
 
     score = 0
     for bin in range(num_bins):
         indx = np.where(
-            (posteriors>bin*bin_size) & (posteriors<=(bin+1)*bin_size)
+            (posteriors > bin * bin_size) & (posteriors <= (bin + 1) * bin_size)
         )[0]
-        
-        acc = np.nan_to_num(
-            np.mean(
-            predicted_label[indx] == true_label[indx]
+
+        acc = (
+            np.nan_to_num(np.mean(predicted_label[indx] == true_label[indx]))
+            if indx.size != 0
+            else 0
         )
-        ) if indx.size!=0 else 0
-        conf = np.nan_to_num(
-            np.mean(
-            posteriors[indx]
-        )
-        ) if indx.size!=0 else 0
-        score += len(indx)*np.abs(
-            acc - conf
-        )
-    
+        conf = np.nan_to_num(np.mean(posteriors[indx])) if indx.size != 0 else 0
+        score += len(indx) * np.abs(acc - conf)
+
     score /= total_sample
     return score
 
+
 def hellinger(p, q):
     """Hellinger distance between two discrete distributions.
-       Same as original version but without list comprehension
+    Same as original version but without list comprehension
     """
-    return np.mean(np.sqrt(np.sum((np.sqrt(p) - np.sqrt(q)) ** 2, axis = 1)) / np.sqrt(2))
+    return np.mean(np.sqrt(np.sum((np.sqrt(p) - np.sqrt(q)) ** 2, axis=1)) / np.sqrt(2))
+
 
 def _generate_2d_rotation(theta=0):
     R = np.array([[np.cos(theta), np.sin(theta)], [-np.sin(theta), np.cos(theta)]])
@@ -44,12 +44,43 @@ def _generate_2d_rotation(theta=0):
     return R
 
 
+def _clean_Xy(X, y):
+    """
+    Remove first junk index from X and y and randomly shuffle the entries.
+    Parameters
+    ----------
+    X : array of shape [n_samples+1, x]
+        The generated samples.
+    y : array of shape [n_samples+1]
+        The integer labels for cluster membership of each sample.
+    Returns
+    -------
+    X : array of shape [n_samples, x]
+        The generated samples.
+    y : array of shape [n_samples]
+        The integer labels for cluster membership of each sample.
+    """
+    index = np.arange(1, y.size)
+    shuffle(index)
+    return (X[index, :], y[index])
+
+
+def _length(x):
+    """
+    length function with error catching for ints/floats.
+    """
+    try:
+        return len(x)
+    except TypeError:
+        return 1
+
+
 def generate_gaussian_parity(
     n_samples,
     centers=None,
     class_label=None,
     cluster_std=0.25,
-    center_box=(-1.0,1.0),
+    center_box=(-1.0, 1.0),
     angle_params=None,
     random_state=None,
 ):
@@ -104,7 +135,7 @@ def generate_gaussian_parity(
         n_features=2,
         centers=centers,
         cluster_std=cluster_std,
-        center_box=center_box
+        center_box=center_box,
     )
 
     for blob in range(blob_num):
@@ -116,49 +147,48 @@ def generate_gaussian_parity(
 
     return X, y.astype(int)
 
+
 def pdf(x, cov_scale=0.25):
-    mu01 = np.array([-0.5,0.5])
-    mu02 = np.array([0.5,-0.5])
-    mu11 = np.array([0.5,0.5])
-    mu12 = np.array([-0.5,-0.5])
-    cov = cov_scale* np.eye(2)
-    inv_cov = np.linalg.inv(cov) 
+    mu01 = np.array([-0.5, 0.5])
+    mu02 = np.array([0.5, -0.5])
+    mu11 = np.array([0.5, 0.5])
+    mu12 = np.array([-0.5, -0.5])
+    cov = cov_scale * np.eye(2)
+    inv_cov = np.linalg.inv(cov)
 
-    p01 = (
-        np.exp(-0.5*(x - mu01)@inv_cov@(x-mu01).T) 
-    )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
-    p02 = (
-        np.exp(-0.5*(x - mu02)@inv_cov@(x-mu02).T)
-    )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+    p01 = (np.exp(-0.5 * (x - mu01) @ inv_cov @ (x - mu01).T)) / (
+        2 * np.pi * np.sqrt(np.linalg.det(cov))
+    )
+    p02 = (np.exp(-0.5 * (x - mu02) @ inv_cov @ (x - mu02).T)) / (
+        2 * np.pi * np.sqrt(np.linalg.det(cov))
+    )
     p11 = (
-        np.exp(-0.5*(x - mu11)@inv_cov@(x-mu11).T) 
-        + np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
-    )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
-    p12 = (
-        np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
-    )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+        np.exp(-0.5 * (x - mu11) @ inv_cov @ (x - mu11).T)
+        + np.exp(-0.5 * (x - mu12) @ inv_cov @ (x - mu12).T)
+    ) / (2 * np.pi * np.sqrt(np.linalg.det(cov)))
+    p12 = (np.exp(-0.5 * (x - mu12) @ inv_cov @ (x - mu12).T)) / (
+        2 * np.pi * np.sqrt(np.linalg.det(cov))
+    )
 
-    return np.max([p01,p02])/(p01+p02+p11+p12)
+    return np.max([p01, p02]) / (p01 + p02 + p11 + p12)
 
-def sparse_parity(
-    n_samples,
-    p_star = 3,
-    p = 20
-):
-    X = np.random.uniform(low=-1,high=1,size=(n_samples,p))
-    y = np.sum(X[:,:p_star]>0, axis=1)%2
+
+def sparse_parity(n_samples, p_star=3, p=20):
+    X = np.random.uniform(low=-1, high=1, size=(n_samples, p))
+    y = np.sum(X[:, :p_star] > 0, axis=1) % 2
 
     return X, y.astype(int)
+
 
 def gaussian_sparse_parity(
     n_samples,
     centers=None,
     class_label=None,
-    p_star = 3,
-    p = 20,
-    cluster_std = 0.25,
-    center_box=(-1.0,1.0),
-    random_state = None
+    p_star=3,
+    p=20,
+    cluster_std=0.25,
+    center_box=(-1.0, 1.0),
+    random_state=None,
 ):
     if random_state != None:
         np.random.seed(random_state)
@@ -168,69 +198,76 @@ def gaussian_sparse_parity(
             centers = np.array([(-0.5, 0.5), (0.5, 0.5), (-0.5, -0.5), (0.5, -0.5)])
         else:
             centers = np.array(
-                [(0.5, 0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, -0.5, 0.5), (0.5, 0.5, -0.5), (0.5, -0.5, -0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, -0.5), (-0.5, -0.5, -0.5)]
-                )
+                [
+                    (0.5, 0.5, 0.5),
+                    (-0.5, 0.5, 0.5),
+                    (0.5, -0.5, 0.5),
+                    (0.5, 0.5, -0.5),
+                    (0.5, -0.5, -0.5),
+                    (-0.5, -0.5, 0.5),
+                    (-0.5, 0.5, -0.5),
+                    (-0.5, -0.5, -0.5),
+                ]
+            )
 
     if class_label == None:
-        class_label = 1 - np.sum(centers[:,:p_star]>0, axis=1)%2
-    
+        class_label = 1 - np.sum(centers[:, :p_star] > 0, axis=1) % 2
+
     blob_num = len(class_label)
 
     # get the number of samples in each blob with equal probability
     samples_per_blob = np.random.multinomial(
         n_samples, 1 / blob_num * np.ones(blob_num)
     )
-    
+
     X, y = make_blobs(
         n_samples=samples_per_blob,
         n_features=p_star,
         centers=centers,
         cluster_std=cluster_std,
-        center_box=center_box
+        center_box=center_box,
     )
 
     for blob in range(blob_num):
         y[np.where(y == blob)] = class_label[blob]
 
     if p > p_star:
-        X_noise = np.random.uniform(low=center_box[0],high=center_box[1],size=(n_samples,p-p_star))
+        X_noise = np.random.uniform(
+            low=center_box[0], high=center_box[1], size=(n_samples, p - p_star)
+        )
         X = np.concatenate((X, X_noise), axis=1)
 
     return X, y.astype(int)
 
-def trunk_sim(
-    n_samples,
-    p_star=3,
-    p=3,
-    center_box=(-1.0,1.0),
-    random_state = None
-):
-    samples_per_class = np.random.multinomial(
-        n_samples, 1 / 2 * np.ones(2)
-    )
 
-    mean = 1./np.sqrt(np.arange(1,p_star+1,1))
+def trunk_sim(n_samples, p_star=3, p=3, center_box=(-1.0, 1.0), random_state=None):
+    samples_per_class = np.random.multinomial(n_samples, 1 / 2 * np.ones(2))
+
+    mean = 1.0 / np.sqrt(np.arange(1, p_star + 1, 1))
 
     X = np.concatenate(
         (
-            np.random.multivariate_normal(mean, np.eye(p_star), size=samples_per_class[0]),
-            np.random.multivariate_normal(-mean, np.eye(p_star), size=samples_per_class[1])
+            np.random.multivariate_normal(
+                mean, np.eye(p_star), size=samples_per_class[0]
+            ),
+            np.random.multivariate_normal(
+                -mean, np.eye(p_star), size=samples_per_class[1]
+            ),
         ),
-        axis=0
+        axis=0,
     )
     y = np.concatenate(
-        (
-            np.zeros(samples_per_class[0]),
-            np.ones(samples_per_class[1])
-        ),
-        axis=0
+        (np.zeros(samples_per_class[0]), np.ones(samples_per_class[1])), axis=0
     )
 
     if p > p_star:
-        X_noise = np.random.uniform(low=center_box[0],high=center_box[1],size=(n_samples,p-p_star))
+        X_noise = np.random.uniform(
+            low=center_box[0], high=center_box[1], size=(n_samples, p - p_star)
+        )
         X = np.concatenate((X, X_noise), axis=1)
 
     return X, y.astype(int)
+
 
 def generate_spirals(
     n_samples,
@@ -239,14 +276,11 @@ def generate_spirals(
     random_state=None,
 ):
     """
-    Generate 2-dimensional Gaussian XOR distribution.
-    (Classic XOR problem but each point is the
-    center of a Gaussian blob distribution)
+    Generate 2-dimensional spiral simulation
     Parameters
     ----------
     n_samples : int
-        Total number of points divided among the four
-        clusters with equal probability.
+        Total number of points divided among the individual spirals.
     n_class : array of shape [n_centers], optional (default=2)
         Number of class for the spiral simulation.
     noise : float, optional (default=0.3)
@@ -277,7 +311,7 @@ def generate_spirals(
     elif n_class == 7:
         turns = 4.5
     else:
-        raise ValueError("sorry, can't currently surpport %s classes " % n_class)
+        raise ValueError("sorry, can't currently support %s classes " % n_class)
 
     mvt = np.random.multinomial(n_samples, 1 / n_class * np.ones(n_class))
 
@@ -314,3 +348,321 @@ def generate_spirals(
             y += [j - 1] * int(mvt[j - 1])
 
     return np.vstack(X), np.array(y).astype(int)
+
+
+def generate_ellipse(
+    n_samples,
+    width=(1, 0.75),
+    height=None,
+    offsets=None,
+    sigma=0.1,
+    random_state=None,
+):
+    """
+    Generate axis-aligned ellipse simulation.
+    (Categorization between ellipses)
+    Parameters
+    ----------
+    n_samples : int
+        Total number of points in simulation, evenly divided between ellipses.
+    width : ndarray-like of shape [n_ellipses, 2], optional (default=(1, 0.75))
+        Width of ellipses, measured from the origin to right bound.
+        width and height must be able to be broadcasted to the same size.
+    height : ndarray-like of shape [n_ellipses, 2], optional (default=None)
+        Height of ellipses, measured from the origin to upper bound.
+        width and height must be able to be broadcasted to the same size.
+        If None, height=width(concentric circles simulation)
+    offsets : ndarray-like of shape [n_ellipses, 2], optional (default=None)
+        Centers of the ellipses.
+        If None, all ellipses are centered at (0, 0)
+    sigma : float, optional (default=0.1)
+        Parameter controlling the width of the shapes.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+    Returns
+    -------
+    X : array of shape [n_samples, 2]
+        The generated samples.
+    y : array of shape [n_samples]
+        The integer labels for cluster membership of each sample.
+    """
+    if random_state is None:
+        np.random.seed(random_state)
+
+    width = np.asarray(width)
+    if height is None:
+        height = width
+    elif type(height) == int or type(height) == float:
+        height = np.ones_like(width) * height
+    else:
+        height = np.asarray(height)
+    if offsets is not None:
+        offsets = np.asarray(offsets)
+
+    n_ellipses = width.size
+
+    X = np.empty((1, 2))
+    y = np.array(1)
+    for n in range(n_ellipses):
+        size = n_samples / n_ellipses
+        if type(size) == float:
+            size = int(size)
+            if n == n_ellipses:
+                size = size + 1
+
+        t = uniform(0, 2 * np.pi, size)
+        a = width[n] + normal(0, sigma, size)
+        b = height[n] + normal(0, sigma, size)
+
+        xn = np.column_stack((a * np.cos(t), b * np.sin(t)))
+        if offsets is not None:
+            xn = xn + offsets[n, :]
+
+        X = np.append(X, xn, axis=0)
+        y = np.append(y, np.ones(size, dtype=int) * n)
+
+    X, y = _clean_Xy(X, y)
+    return (X, y)
+
+
+def generate_sinewave(
+    n_samples,
+    offsets=(0, 0.5),
+    height=None,
+    n_peaks=2,
+    sigma=0.1,
+    random_state=None,
+):
+    """
+    Generate sinewave simulation.
+    (Categorization between offset/scaled sine waves)
+    Parameters
+    ----------
+    n_samples : int
+        Total number of points divided between sine waves.
+    offsets : ndarray-like of shape [n_waves], optional (default: (0, 0.5))
+        Horizontal offsets for the waves, as multiples of pi.
+    height : ndarray-like of shape [n_waves], optional (default=None)
+        Peak height of sine waves.
+        If None, all waves will have a height of 1.
+    n_peaks : int, optional (default=2)
+        Number of peaks for each sine wave.
+    sigma : float, optional (default=0.1)
+        Parameter controlling the width of the shapes.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+    Returns
+    -------
+    X : array of shape [n_samples, 2]
+        The generated samples.
+    y : array of shape [n_samples]
+        The integer labels for cluster membership of each sample.
+    """
+    if random_state != None:
+        np.random.seed(random_state)
+
+    n_waves = len(offsets)
+    if height is None:
+        height = np.ones(n_waves)
+
+    X = np.empty((1, 2))
+    y = np.array(1)
+    for n in range(n_waves):
+        size = n_samples / n_waves
+        if type(size) == float:
+            size = int(size)
+            if n == n_waves:
+                size = size + 1
+
+        t_n = uniform(0, 2 * n_peaks * np.pi, size)
+        y_n = height[n] * np.sin(t_n + offsets[n] * np.pi) + normal(0, sigma, size)
+        xn = np.column_stack((t_n, y_n))
+
+        X = np.append(X, xn, axis=0)
+        y = np.append(y, np.ones(size, dtype=int) * n)
+
+    X, y = _clean_Xy(X, y)
+    return (X, y)
+
+
+def generate_steps(
+    n_samples,
+    step_start=(0, 0.25),
+    n_steps=2,
+    step_height=0.25,
+    sigma=0.1,
+    random_state=None,
+):
+    """
+    Generate stepped simulation.
+    (Categorization between noisy stepped distributions)
+    Parameters
+    ----------
+    n_samples : int
+        Total number of points in the simulation.
+    step_start : ndarray-like (default=(0, 0.1))
+        starting points for each series of steps.
+    n_steps : int, optional (default=2)
+        Number of steps per line to include in the simulation.
+    step_height : float, optional (default=0.25)
+        distance between steps
+    sigma : float, optional (default=0.1)
+        Parameter controlling the width of the shapes.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+    Returns
+    -------
+    X : array of shape [n_samples, 2]
+        The generated samples.
+    y : array of shape [n_samples]
+        The integer labels for cluster membership of each sample.
+    """
+    if random_state != None:
+        np.random.seed(random_state)
+
+    if step_height is None:
+        height = np.ones_like(step_start)
+    elif type(step_height) == int or type(step_height) == float:
+        height = np.ones_like(step_start) * step_height
+    else:
+        height = np.asarray(step_height)
+
+    X = np.empty((1, 2))
+    y = np.array(1)
+
+    n_waves = len(step_start)
+
+    for n in range(n_waves):
+        size = n_samples / n_waves
+        if type(size) == float:
+            size = int(size)
+            if n == n_waves:
+                size = size + 1
+
+        t_n = uniform(0, n_steps, size)
+        y_n = step_start[n] + height[n] * np.floor(t_n) + normal(0, sigma, size)
+        xn = np.column_stack((t_n, y_n))
+
+        X = np.append(X, xn, axis=0)
+        y = np.append(y, np.ones(size, dtype=int) * n)
+
+    X, y = _clean_Xy(X, y)
+    return (X, y)
+
+
+def generate_polynomial(
+    n_samples,
+    m=1.0,
+    a=1.0,
+    b=0.0,
+    sigma=0.1,
+    random_state=None,
+):
+    """
+    Generate simulations of the form y = m(x^a)+b.
+    (Categorization between equations)
+    Parameters
+    ----------
+    n_samples : int
+        Total number of points divided between ellipse boundary and noise
+    m: float or ndarray-like (default=1.0)
+        Coefficient of equations.
+    a: float or ndarray-like (default=1.0)
+        Exponent of equations.
+    b: float or ndarray-like (default=0.0)
+        Intercepts of equations.
+    sigma : float, optional (default=0.1)
+        Parameter controlling the width of the shapes.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+    Returns
+    -------
+    X : array of shape [n_samples, 2]
+        The generated samples.
+    y : array of shape [n_samples]
+        The integer labels for cluster membership of each sample.
+    """
+    if random_state != None:
+        np.random.seed(random_state)
+
+    n_lines = max(_length(m), _length(a), _length(b))
+
+    if type(m) == int or type(m) == float:
+        m = np.ones(n_lines) * m
+    else:
+        m = np.asarray(m)
+
+    if type(a) == int or type(a) == float:
+        a = np.ones(n_lines) * a
+    else:
+        a = np.asarray(a)
+
+    if type(b) == int or type(b) == float:
+        b = np.ones(n_lines) * b
+    else:
+        b = np.asarray(b)
+
+    X = np.empty((1, 2))
+    y = np.array(1)
+
+    for n in range(n_lines):
+        size = n_samples / n_lines
+        if type(size) == float:
+            size = int(size)
+            if n == n_lines:
+                size = size + 1
+        t_n = uniform(-1, 1, size)
+        if a[n] < 1:
+            y_n = m[n] * np.power(abs(t_n), a[n])
+        else:
+            y_n = m[n] * np.power(t_n, a[n])
+        y_n = y_n + b[n] + normal(0, sigma, size)
+
+        xn = np.column_stack((t_n, y_n))
+
+        X = np.append(X, xn, axis=0)
+        y = np.append(y, np.ones(size, dtype=int) * n)
+
+    X, y = _clean_Xy(X, y)
+    return (X, y)
+
+
+def plot_2dsim(X, y, square_plot=False, ax=None):
+    """
+    Plot 2d simulations.
+    Parameters
+    ----------
+    X : array of shape [n_samples, 2]
+        The generated samples. Other dimensions will be ignored.
+    y : array of shape [n_samples]
+        The integer labels for cluster membership of each sample.
+    square_plot : boolean (default: False)
+        If plot should be forced to have square bounds, with (0, 0) at the center
+    ax : matplotlib axes object (default: None)
+        Axis to plot on. If None, a new axis object will be created.
+    Returns
+    -------
+    ax : matplotlib axes object
+        Plot of simulation data.
+    """
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+
+    samples = np.unique(y)
+
+    if square_plot:
+        floor = max(-np.rint(np.amin(X)), np.rint(np.amax(X)))
+        print(floor)
+        lim = [-floor, floor]
+        ax.set_xlim(lim)
+        ax.set_ylim(lim)
+
+    colors = sns.color_palette("colorblind")
+    for s in samples:
+        ax.plot(X[y == s, 0], X[y == s, 1], marker=".", color=colors[s], linestyle="")
+
+    return ax
