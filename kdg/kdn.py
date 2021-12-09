@@ -14,7 +14,7 @@ class kdn(KernelDensityGraph):
         criterion=None,
         complie_kwargs = {
             "loss": "categorical_crossentropy",
-            "optimizer": keras.optimizers.Adam(3e-4)
+            "optimizer": tf.keras.optimizers.Adam(3e-4)
             },
         fit_kwargs = {
             "epochs": 100,
