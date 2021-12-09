@@ -1,3 +1,10 @@
+#
+# Created on Thu Dec 09 2021 5:59:36 AM
+# Author: Ashwin De Silva (ldesilv2@jhu.edu)
+# Objective: Implements the KDN class
+#
+
+# import standard libraries
 from .base import KernelDensityGraph
 from sklearn.utils.validation import check_array, check_X_y
 import numpy as np
@@ -229,13 +236,14 @@ class kdn(KernelDensityGraph):
                     weights = np.array(weights)
                 ########### FM (will be depricated) ################
                 else:
-                    weights = np.ones((X_.shape[0], ))
+                    weights = np.zeros((X_.shape[0], ))
+                    weights[polytope_memberships == polytope_id] = 1
                 
                 weights[weights < 1e-3] = 0 # set very small weights to zero
                 
                 idx = np.where(weights > 0)[0]
 
-                polytope_size = len (idx)
+                polytope_size = len(idx)
                 polytope_member_count.append(polytope_size)
                 
                 if polytope_size < self.T: # eliminate polytopes with too few samples within
