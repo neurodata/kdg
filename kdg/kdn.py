@@ -1,9 +1,9 @@
 from functools import total_ordering
 
-from keras import layers
 from .base import KernelDensityGraph
 from sklearn.mixture import GaussianMixture
 from tensorflow import keras
+from tensorflow.keras import layers
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 import numpy as np
 from scipy.stats import multivariate_normal
