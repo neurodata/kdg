@@ -79,8 +79,7 @@ n_samples = 10000
 
 err_kdn = []
 err_nn = []
-proportions = [0.1, 0.2, 0.3, 0.4]
-# proportions = [0.4]
+proportions = [0, 0.1, 0.2, 0.3, 0.4]
 proportion_list = []
 reps_list = []
 
@@ -121,6 +120,8 @@ for p in proportions:
     err_nn_25_quantile.append(np.quantile(curr_nn, [0.25])[0])
     err_nn_75_quantile.append(np.quantile(curr_nn, [0.75])[0])
 
+#%%
+
 # Plotting
 sns.set_context("talk")
 fig, ax = plt.subplots(1, 1, figsize=(8, 8))
@@ -140,7 +141,7 @@ top_side.set_visible(False)
 
 ax.set_xlabel("Label Noise Proportion")
 ax.set_ylabel("Error")
-plt.title("Gaussian XOR Label Noise")
+plt.title("Spiral Label Noise")
 ax.legend(frameon=False)
 plt.tight_layout()
 plt.savefig("plots/label_noise_spiral_10000.pdf")
