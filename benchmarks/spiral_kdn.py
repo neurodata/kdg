@@ -3,7 +3,7 @@ from kdg.utils import generate_spirals
 from kdg import kdn
 import numpy as np
 from tensorflow import keras
-from keras import layers
+from tensorflow.keras import layers
 from kdg.kdn import *
 import pandas as pd
 # %%
