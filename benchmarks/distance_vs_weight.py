@@ -3,7 +3,7 @@ import numpy as np
 from numpy.random import default_rng
 from sklearn.ensemble import RandomForestClassifier as rf 
 from tensorflow import keras
-from keras import layers
+from tensorflow.keras import layers
 from kdg.kdn import *
 from kdg.utils import gaussian_sparse_parity, trunk_sim
 import pandas as pd
