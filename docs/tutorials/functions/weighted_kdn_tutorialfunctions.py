@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 from tensorflow import keras
-from keras import layers
+from tensorflow.keras import layers
 
 def getNN(dense_size, input_size, **kwargs):
     network_base = keras.Sequential()
