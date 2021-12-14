@@ -7,8 +7,6 @@ import seaborn as sns
 
 
 def get_ece(predicted_posterior, predicted_label, true_label, num_bins=40):
-    poba_hist = []
-    accuracy_hist = []
     bin_size = 1 / num_bins
     total_sample = len(true_label)
     posteriors = predicted_posterior.max(axis=1)
