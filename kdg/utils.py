@@ -666,3 +666,27 @@ def plot_2dsim(X, y, square_plot=False, ax=None):
         ax.plot(X[y == s, 0], X[y == s, 1], marker=".", color=colors[s], linestyle="")
 
     return ax
+
+  
+def spiral_pdf(X, n_samples, n_class=2, noise=0.3):
+
+    if n_class == 2:
+        turns = 2
+    elif n_class == 3:
+        turns = 2.5
+    elif n_class == 5:
+        turns = 3.5
+    elif n_class == 7:
+        turns = 4.5
+    else:
+        raise ValueError("sorry, can't currently surpport %s classes " % n_class)
+
+    theta = np.linspace(0, np.pi * 4 * turns / n_class, int(n_samples / n_class))
+
+    likelihood = 0
+    x, y = X[:, 0], X[:, 1]
+    theta_ = np.arccos(x / np.sqrt(x ** 2 + y ** 2))
+    for t in theta:
+        likelihood += np.exp(-((theta_ - t) ** 2) / (2 * noise))
+
+    return likelihood / (np.sqrt(2 * np.pi) * noise)
