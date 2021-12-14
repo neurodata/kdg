@@ -3,7 +3,7 @@
 from matplotlib.pyplot import xlabel, ylabel
 import numpy as np
 from tensorflow import keras
-from keras import layers
+from tensorflow.keras import layers
 from kdg.kdn import *
 from kdg.utils import gaussian_sparse_parity, trunk_sim
 import pandas as pd
