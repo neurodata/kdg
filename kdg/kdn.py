@@ -27,8 +27,8 @@ class kdn(KernelDensityGraph):
         super().__init__()
         self.polytope_means = {}
         self.polytope_cov = {}
-        self.network = network #fitted neural network used as input
-        self.k = k #bias scaling parameter
+        self.network = network  # fitted neural network used as input
+        self.k = k  # bias scaling parameter
         self.polytope_compute_method = polytope_compute_method
         self.weighted = weighted
         self.bias = {}
@@ -45,12 +45,12 @@ class kdn(KernelDensityGraph):
     def _get_polytope_memberships(self, X):
         r"""
         Get the polytopes (neural network activation paths) for a given set of observations.
-        
+
         Parameters
         ----------
         X : ndarray
             Input data matrix.
-            
+
         Returns
         -------
         polytopes            : numerical id corresponding with individual polytopes
@@ -166,7 +166,7 @@ class kdn(KernelDensityGraph):
                             elif m <= math.floor(n / 2):  # break if too few nodes match
                                 break
                             else:  # imperfect match, add scaled layer weight and break
-                                layer_weight = (2*m-n)/(n_nodes*(n-m+1))
+                                layer_weight = (2 * m - n) / (n_nodes * (n - m + 1))
                                 weight += layer_weight
                                 break
 
