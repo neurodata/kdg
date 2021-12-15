@@ -52,5 +52,5 @@ def plot_accuracy(sample_size, pct_errs, labels):
 
     ax.set_xscale("log")
     ax.set_xlabel("Sample size")
-    ax.set_ylabel("Accuracy")
+    ax.set_ylabel("Percent Error")
     ax.legend(frameon=False)
