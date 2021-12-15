@@ -126,3 +126,4 @@ fig.colorbar(ax2, ax=ax[2], fraction=0.046, pad=0.04)
 
 fig.savefig("plots/gaussian_parity.pdf")
 plt.show()
+
