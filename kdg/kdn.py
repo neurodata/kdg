@@ -223,7 +223,7 @@ class kdn(KernelDensityGraph):
             for (
                 polytope_id
             ) in (
-                unique_polytope_ids
+                polytope_memberships
             ):  # fit Gaussians for each unique non-singleton polytopes
 
                 if self.weighting_method == "lin":
