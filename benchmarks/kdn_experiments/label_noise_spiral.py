@@ -1,4 +1,9 @@
-# %%
+#
+# Created on Wed Dec 15 2021 10:49:28 AM
+# Author: Ashwin De Silva (ldesilv2@jhu.edu)
+# Objective: Label noise experiment for KDN on Spiral datset
+#
+
 
 # import external libraries
 import numpy as np
@@ -12,7 +17,6 @@ from tensorflow import keras
 from kdg.kdn import *
 from kdg.utils import generate_spirals
 
-# %%
 def label_noise_trial(n_samples, p=0.10):
     """Single label noise trial with proportion p of flipped labels."""
     X, y = generate_spirals(n_samples, noise=0.8, n_class=2)
@@ -56,7 +60,7 @@ def label_noise_trial(n_samples, p=0.10):
     # train KDN
     model_kdn = kdn(
         network=vanilla_nn,
-        k=1e-5,
+        k=1e-6,
         polytope_compute_method="all",
         weighting_method="lin",
         T=2,
@@ -70,16 +74,14 @@ def label_noise_trial(n_samples, p=0.10):
 
     return error_kdn, error_nn
 
-# %%
-
 ### Run the experiment with varying proportion of label noise
 df = pd.DataFrame()
 reps = 10
-n_samples = 10000
+n_samples = 5000
 
 err_kdn = []
 err_nn = []
-proportions = [0, 0.1, 0.2, 0.3, 0.4]
+proportions = [0.0, 0.1, 0.2, 0.4]
 proportion_list = []
 reps_list = []
 
@@ -120,8 +122,6 @@ for p in proportions:
     err_nn_25_quantile.append(np.quantile(curr_nn, [0.25])[0])
     err_nn_75_quantile.append(np.quantile(curr_nn, [0.75])[0])
 
-#%%
-
 # Plotting
 sns.set_context("talk")
 fig, ax = plt.subplots(1, 1, figsize=(8, 8))
@@ -144,7 +144,5 @@ ax.set_ylabel("Error")
 plt.title("Spiral Label Noise")
 ax.legend(frameon=False)
 plt.tight_layout()
-plt.savefig("plots/label_noise_spiral_10000.pdf")
+plt.savefig("plots/label_noise_spiral_5000.pdf")
 plt.show()
-
-# %%

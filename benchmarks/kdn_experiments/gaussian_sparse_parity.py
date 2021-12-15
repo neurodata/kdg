@@ -7,7 +7,6 @@
 # import standard libraries
 import numpy as np
 from tensorflow import keras
-from keras import layers
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -20,7 +19,7 @@ from kdg.kdn import *
 p = 20  # total dimensions of the data vector
 p_star = 3  # number of signal dimensions of the data vector
 
-sample_size = [1000, 5000, 10000, 50000]  # sample size under consideration
+sample_size = [500, 1000, 5000, 10000]  # sample size under consideration
 n_test = 1000  # test set size
 reps = 5  # number of replicates
 
@@ -37,12 +36,12 @@ X_val, y_val = gaussian_sparse_parity(1000)
 # NN params
 compile_kwargs = {
     "loss": "binary_crossentropy",
-    "optimizer": keras.optimizers.Adam(3e-4),
+    "optimizer": keras.optimizers.Adam(1e-3),
 }
 callback = keras.callbacks.EarlyStopping(monitor="val_loss", patience=10, verbose=False)
 fit_kwargs = {
     "epochs": 200,
-    "batch_size": 64,
+    "batch_size": 32,
     "verbose": False,
     "validation_data": (X_val, keras.utils.to_categorical(y_val)),
     "callbacks": [callback],
@@ -50,10 +49,11 @@ fit_kwargs = {
 
 # network architecture
 def getNN():
+    initializer = keras.initializers.GlorotNormal(seed=0)
     network_base = keras.Sequential()
-    network_base.add(layers.Dense(5, activation="relu", input_shape=(20,)))
-    network_base.add(layers.Dense(5, activation="relu"))
-    network_base.add(layers.Dense(units=2, activation="softmax"))
+    network_base.add(keras.layers.Dense(5, activation="relu", kernel_initializer=initializer, input_shape=(20,)))
+    network_base.add(keras.layers.Dense(5, activation="relu", kernel_initializer=initializer))
+    network_base.add(keras.layers.Dense(units=2, activation="softmax", kernel_initializer=initializer))
     network_base.compile(**compile_kwargs)
     return network_base
 
@@ -76,7 +76,7 @@ for sample in sample_size:
             k=1e-6,
             weighting_method="lin",
             T=2,
-            c=2,
+            c=1,
             verbose=False,
         )
         model_kdn.fit(X, y)
@@ -104,7 +104,7 @@ filename = "results/gsp.csv"
 
 df = pd.read_csv(filename)
 
-sample_size = [1000, 5000, 10000, 50000]
+sample_size = [500, 1000, 5000, 10000]
 
 err_nn_med = []
 err_nn_25_quantile = []

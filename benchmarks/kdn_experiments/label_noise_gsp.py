@@ -1,4 +1,9 @@
-# %%
+#
+# Created on Wed Dec 15 2021 10:47:16 AM
+# Author: Ashwin De Silva (ldesilv2@jhu.edu)
+# Objective: Label noise experiment for KDN on Gaussian Sparse Parity Dataset
+#
+
 
 # import external libraries
 import numpy as np
@@ -34,10 +39,11 @@ def sparse_parity_noise_trial(n_samples, noise_p=0.0, p_star=3, p=20):
 
     # network architecture
     def getNN():
+        initializer = keras.initializers.GlorotNormal(seed=0)
         network_base = keras.Sequential()
-        network_base.add(keras.layers.Dense(5, activation="relu", input_shape=(X.shape[-1],)))
-        network_base.add(keras.layers.Dense(5, activation="relu"))
-        network_base.add(keras.layers.Dense(units=2, activation="softmax"))
+        network_base.add(keras.layers.Dense(5, activation="relu", kernel_initializer=initializer, input_shape=(X.shape[-1],)))
+        network_base.add(keras.layers.Dense(5, activation="relu", kernel_initializer=initializer))
+        network_base.add(keras.layers.Dense(units=2, activation="softmax", kernel_initializer=initializer))
         network_base.compile(**compile_kwargs)
         return network_base
 
@@ -67,12 +73,10 @@ def sparse_parity_noise_trial(n_samples, noise_p=0.0, p_star=3, p=20):
 
     return error_kdn, error_nn
 
-# %%
-
 ### Run experiment with varying proportion of label noise
 df = pd.DataFrame()
 reps = 10
-n_samples = 10000
+n_samples = 5000
 noise_p = 0.30
 
 err_kdn = []
@@ -139,7 +143,5 @@ ax.set_xlabel("Dimension")
 ax.set_ylabel("Error")
 plt.title("Gaussian Sparse Parity 30% Label Noise")
 ax.legend(frameon=False)
-plt.savefig("plots/label_noise_sparse_parity_30noise.pdf")
+plt.savefig("plots/label_noise_sparse_parity_30noise_5000.pdf")
 plt.show()
-
-# %%

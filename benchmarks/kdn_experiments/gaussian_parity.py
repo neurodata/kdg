@@ -7,8 +7,6 @@
 # import standard libraries
 import numpy as np
 from tensorflow import keras
-from keras import layers
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -37,9 +35,9 @@ fit_kwargs = {
 # network architecture
 def getNN():
     network_base = keras.Sequential()
-    network_base.add(layers.Dense(5, activation="relu", input_shape=(2,)))
-    network_base.add(layers.Dense(5, activation="relu"))
-    network_base.add(layers.Dense(units=2, activation="softmax"))
+    network_base.add(keras.layers.Dense(5, activation="relu", input_shape=(2,)))
+    network_base.add(keras.layers.Dense(5, activation="relu"))
+    network_base.add(keras.layers.Dense(units=2, activation="softmax"))
     network_base.compile(**compile_kwargs)
     return network_base
 
@@ -80,8 +78,8 @@ print("KDN accuracy : ", accuracy_kdn)
 # plot
 
 # define the grid
-p = np.arange(-4, 4, step=0.005)
-q = np.arange(-4, 4, step=0.005)
+p = np.arange(-2, 2, step=0.005)
+q = np.arange(-2, 2, step=0.005)
 xx, yy = np.meshgrid(p, q)
 tmp = np.ones(xx.shape)
 grid_samples = np.concatenate((xx.reshape(-1, 1), yy.reshape(-1, 1)), axis=1)
@@ -97,11 +95,11 @@ clr = [colors[i] for i in y]
 ax[0].scatter(X[:, 0], X[:, 1], c=clr, s=20)
 ax[0].set_xlim(-2, 2)
 ax[0].set_ylim(-2, 2)
-ax[0].set_title("Data")
+ax[0].set_title("Data", fontsize=24)
 ax[0].set_aspect("equal")
 
 ax1 = ax[1].imshow(
-    proba_nn[:, 0].reshape(1600, 1600).T,
+    proba_nn[:, 0].reshape(800, 800).T,
     extent=[xx.min(), xx.max(), yy.min(), yy.max()],
     cmap="bwr",
     vmin=0,
@@ -109,12 +107,12 @@ ax1 = ax[1].imshow(
     interpolation="nearest",
     aspect="auto",
 )
-ax[1].set_title("NN")
+ax[1].set_title("NN", fontsize=24)
 ax[1].set_aspect("equal")
 fig.colorbar(ax1, ax=ax[1], fraction=0.046, pad=0.04)
 
 ax2 = ax[2].imshow(
-    proba_kdn[:, 0].reshape(1600, 1600).T,
+    proba_kdn[:, 0].reshape(800, 800).T,
     extent=[xx.min(), xx.max(), yy.min(), yy.max()],
     cmap="bwr",
     vmin=0,
@@ -122,7 +120,7 @@ ax2 = ax[2].imshow(
     interpolation="nearest",
     aspect="auto",
 )
-ax[2].set_title("KDN")
+ax[2].set_title("KDN", fontsize=24)
 ax[2].set_aspect("equal")
 fig.colorbar(ax2, ax=ax[2], fraction=0.046, pad=0.04)
 

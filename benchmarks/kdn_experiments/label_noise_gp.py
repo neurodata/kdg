@@ -1,4 +1,9 @@
-# %%
+#
+# Created on Wed Dec 15 2021 10:48:38 AM
+# Author: Ashwin De Silva (ldesilv2@jhu.edu)
+# Objective: Label noise experiment for KDN on Gaussian Parity Dataset
+#
+
 
 # import external libraries
 import numpy as np
@@ -12,17 +17,16 @@ from tensorflow import keras
 from kdg.kdn import *
 from kdg.utils import generate_gaussian_parity
 
-# %%
 def label_noise_trial(n_samples, p=0.10):
     """Single label noise trial with proportion p of flipped labels."""
-    X, y = generate_gaussian_parity(n_samples, cluster_std=0.5)
-    X_test, y_test = generate_gaussian_parity(1000, cluster_std=0.5)
-    X_val, y_val = generate_gaussian_parity(500, cluster_std=0.5)
+    X, y = generate_gaussian_parity(n_samples, cluster_std=0.25)
+    X_test, y_test = generate_gaussian_parity(1000, cluster_std=0.25)
+    X_val, y_val = generate_gaussian_parity(500, cluster_std=0.25)
 
     # NN params
     compile_kwargs = {
         "loss": "binary_crossentropy",
-        "optimizer": keras.optimizers.Adam(3e-4),
+        "optimizer": keras.optimizers.Adam(1e-3),
     }
     callback = keras.callbacks.EarlyStopping(monitor="val_loss", patience=10, verbose=False)
     fit_kwargs = {
@@ -35,10 +39,11 @@ def label_noise_trial(n_samples, p=0.10):
 
     # network architecture
     def getNN():
+        initializer = keras.initializers.GlorotNormal(seed=0)
         network_base = keras.Sequential()
-        network_base.add(keras.layers.Dense(5, activation="relu", input_shape=(2,)))
-        network_base.add(keras.layers.Dense(5, activation="relu"))
-        network_base.add(keras.layers.Dense(units=2, activation="softmax"))
+        network_base.add(keras.layers.Dense(5, activation="relu", kernel_initializer=initializer, input_shape=(2,)))
+        network_base.add(keras.layers.Dense(5, activation="relu", kernel_initializer=initializer))
+        network_base.add(keras.layers.Dense(units=2, activation="softmax", kernel_initializer=initializer))
         network_base.compile(**compile_kwargs)
         return network_base
 
@@ -68,16 +73,14 @@ def label_noise_trial(n_samples, p=0.10):
 
     return error_kdn, error_nn
 
-# %%
-
 ### Run the experiment with varying proportion of label noise
 df = pd.DataFrame()
 reps = 10
-n_samples = 5000
+n_samples = 1000
 
 err_kdn = []
 err_nn = []
-proportions = [0, 0.1, 0.2, 0.3]
+proportions =  [0.0, 0.1, 0.2, 0.3, 0.4]
 proportion_list = []
 reps_list = []
 
@@ -140,7 +143,5 @@ ax.set_ylabel("Error")
 plt.title("Gaussian XOR Label Noise")
 ax.legend(frameon=False)
 plt.tight_layout()
-plt.savefig("plots/label_noise_gp_10000.pdf")
+plt.savefig("plots/label_noise_gp_1000.pdf")
 plt.show()
-
-# %%
