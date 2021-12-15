@@ -1,4 +1,3 @@
-#%%
 # import modules
 import numpy as np
 from tensorflow import keras
@@ -7,7 +6,6 @@ from kdg.kdn import *
 from kdg.utils import gaussian_sparse_parity, trunk_sim
 import pandas as pd
 
-#%%
 # define the experimental setup
 p = 20  # total dimensions of the data vector
 p_star = 3  # number of signal dimensions of the data vector
@@ -31,8 +29,6 @@ compile_kwargs = {
 }
 fit_kwargs = {"epochs": 100, "batch_size": 32, "verbose": False}
 
-#%%
-
 # network architecture
 def getNN():
     network_base = keras.Sequential()
@@ -42,8 +38,6 @@ def getNN():
     network_base.compile(**compile_kwargs)
     return network_base
 
-
-# %%
 for sample in sample_size:
     print("Doing sample %d" % sample)
     for ii in range(reps):
@@ -83,7 +77,7 @@ df["sample"] = sample_list
 df.to_csv("results_weighted_kdn/high_dim_kdn_gaussian_allFC_332.csv")
 
 
-# %% plot the result
+# plot the result
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -149,5 +143,3 @@ ax.legend(frameon=False)
 
 # Specify the save path (CHANGE HERE)
 plt.savefig("plots/high_dim_kdn_gaussian_allFC_332.pdf")
-
-# %%

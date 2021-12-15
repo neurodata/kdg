@@ -53,9 +53,6 @@ def getNN(dense_size=5):
     network_base.compile(**compile_kwargs)
     return network_base
 
-
-# %%
-
 for sample in sample_size:
     print("Doing sample %d" % sample)
     for ii in range(reps):
@@ -96,8 +93,6 @@ df["sample"] = sample_list
 
 # save the results (CHANGE HERE)
 df.to_csv("results_EFM/high_dim_kdn_gaussian_weighting_allFC_EFM_samplesize.csv")
-
-# %%
 
 sample = 2000
 
@@ -148,7 +143,7 @@ df2["sample"] = sample_list
 # save the results (CHANGE HERE)
 df2.to_csv("results_EFM/high_dim_kdn_gaussian_weighting_allFC_EFM_networksize.csv")
 
-# %% plot the result
+# plot the result
 import pandas as pd
 
 # Specify which results to plot (CHANGE HERE)
@@ -168,28 +163,15 @@ err_efm_med = []
 err_efm_25_quantile = []
 err_efm_75_quantile = []
 
-# clr = ["#e41a1c", "#f781bf", "#306998"]
-# c = sns.color_palette(clr, n_colors=3)
-
 for sample in network_size:
     print(sample)
     err_nn = 1 - df["accuracy nn"][df["sample"] == sample]
-    # err_rf_ = 1 - df['feature selected rf'][df['sample']==sample]
     err_kdn = 1 - df["accuracy unweighted"][df["sample"] == sample]
-    # err_kdf_ = 1 - df['feature selected kdf'][df['sample']==sample]
     err_efm = 1 - df["accuracy efm"][df["sample"] == sample]
 
     err_nn_med.append(np.median(err_nn))
     err_nn_25_quantile.append(np.quantile(err_nn, [0.25])[0])
     err_nn_75_quantile.append(np.quantile(err_nn, [0.75])[0])
-
-    # err_rf_med_.append(np.median(err_rf_))
-    # err_rf_25_quantile_.append(
-    #        np.quantile(err_rf_,[.25])[0]
-    #    )
-    # err_rf_75_quantile_.append(
-    #    np.quantile(err_rf_,[.75])[0]
-    # )
 
     err_kdn_med.append(np.median(err_kdn))
     err_kdn_25_quantile.append(np.quantile(err_kdn, [0.25])[0])
@@ -198,14 +180,6 @@ for sample in network_size:
     err_efm_med.append(np.median(err_efm))
     err_efm_25_quantile.append(np.quantile(err_efm, [0.25])[0])
     err_efm_75_quantile.append(np.quantile(err_efm, [0.75])[0])
-
-    # err_kdf_med_.append(np.median(err_kdf_))
-    # err_kdf_25_quantile_.append(
-    #        np.quantile(err_kdf_,[.25])[0]
-    #    )
-    # err_kdf_75_quantile_.append(
-    #    np.quantile(err_kdf_,[.75])[0]
-    # )
 
 sns.set_context("talk")
 fig, ax = plt.subplots(1, 1, figsize=(8, 8))
@@ -224,7 +198,6 @@ ax.plot(sample_size, err_efm_med, c="r", label="KDN-EFM")
 ax.fill_between(
     sample_size, err_efm_25_quantile, err_efm_75_quantile, facecolor="r", alpha=0.3
 )
-
 
 right_side = ax.spines["right"]
 right_side.set_visible(False)

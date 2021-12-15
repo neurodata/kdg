@@ -24,7 +24,6 @@ def hypergeom_weight(n, m):
         weight = 0
         for k in range(m + 1):
             prob_k = 1 / (k + 1) * (_nCr(m, k) * (n - m)) / _nCr(n, k + 1)
-            # print(k/n, 1/(k+1), _nCr(m, k), n-m, _nCr(n, k+1))
             weight += k / n * prob_k
     return weight
 

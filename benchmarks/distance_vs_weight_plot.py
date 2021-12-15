@@ -1,4 +1,3 @@
-#%%
 # import modules
 import numpy as np
 from tensorflow import keras
@@ -11,7 +10,6 @@ import seaborn as sns
 
 sns.set_context("talk")
 
-#%%
 # define the experimental setup
 p = 20  # total dimensions of the data vector
 p_star = 3  # number of signal dimensions of the data vector
@@ -41,7 +39,6 @@ compile_kwargs = {
 }
 fit_kwargs = {"epochs": 150, "batch_size": 32, "verbose": False}
 
-#%%
 # network architecture (don't change the network)
 def getNN():
     network_base = keras.Sequential()
@@ -51,11 +48,9 @@ def getNN():
     network_base.compile(**compile_kwargs)
     return network_base
 
-
-# %%
 X, y = gaussian_sparse_parity(sample_size, p_star=p_star, p=p)
 X_test, y_test = gaussian_sparse_parity(n_test, p_star=p_star, p=p)
-#%%
+
 # train Vanilla NN
 vanilla_nn = getNN()
 vanilla_nn.fit(X, keras.utils.to_categorical(y), **fit_kwargs)
@@ -75,9 +70,6 @@ accuracy_nn.append(np.mean(np.argmax(vanilla_nn.predict(X_test), axis=1) == y_te
 
 print("NN Accuracy:", accuracy_nn)
 print("KDN Accuracy:", accuracy_kdn)
-
-
-# %%
 
 X_0 = X[y == 0]  # data that belong to class 0
 
@@ -238,5 +230,3 @@ for method in weighting_methods:
     ax.set_ylabel("Weight")
     ax.set_ylim(0, 1)
     ax.legend(frameon=True)
-
-# %%

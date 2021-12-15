@@ -1,11 +1,9 @@
-#%%
 import numpy as np
 from kdg import kdf
 from kdg.utils import gaussian_sparse_parity, trunk_sim
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier as rf
 
-#%%
 p = 20
 p_star = 3
 """sample_size = np.logspace(
@@ -27,7 +25,7 @@ accuracy_kdf_ = []
 accuracy_rf = []
 accuracy_rf_ = []
 sample_list = []
-# %%
+
 for sample in sample_size:
     print("Doing sample %d" % sample)
     for ii in range(reps):
@@ -47,14 +45,12 @@ for sample in sample_size:
 
 
 df["accuracy kdf"] = accuracy_kdf
-# df['feature selected kdf'] = accuracy_kdf_
 df["accuracy rf"] = accuracy_rf
-# df['feature selected rf'] = accuracy_rf_
 df["reps"] = reps_list
 df["sample"] = sample_list
 
 df.to_csv("high_dim_res_kdf_gaussian_treeAvg.csv")
-# %% plot the result
+# plot the result
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -81,40 +77,19 @@ err_kdf_75_quantile = []
 err_kdf_med_ = []
 err_kdf_25_quantile_ = []
 err_kdf_75_quantile_ = []
-# clr = ["#e41a1c", "#f781bf", "#306998"]
-# c = sns.color_palette(clr, n_colors=3)
-
 
 for sample in sample_size:
     err_rf = 1 - df["accuracy rf"][df["sample"] == sample]
-    # err_rf_ = 1 - df['feature selected rf'][df['sample']==sample]
     err_kdf = 1 - df["accuracy kdf"][df["sample"] == sample]
-    # err_kdf_ = 1 - df['feature selected kdf'][df['sample']==sample]
 
     err_rf_med.append(np.median(err_rf))
     err_rf_25_quantile.append(np.quantile(err_rf, [0.25])[0])
     err_rf_75_quantile.append(np.quantile(err_rf, [0.75])[0])
 
-    # err_rf_med_.append(np.median(err_rf_))
-    # err_rf_25_quantile_.append(
-    #        np.quantile(err_rf_,[.25])[0]
-    #    )
-    # err_rf_75_quantile_.append(
-    #    np.quantile(err_rf_,[.75])[0]
-    # )
-
     err_kdf_med.append(np.median(err_kdf))
     err_kdf_25_quantile.append(np.quantile(err_kdf, [0.25])[0])
     err_kdf_75_quantile.append(np.quantile(err_kdf, [0.75])[0])
-
-    # err_kdf_med_.append(np.median(err_kdf_))
-    # err_kdf_25_quantile_.append(
-    #        np.quantile(err_kdf_,[.25])[0]
-    #    )
-    # err_kdf_75_quantile_.append(
-    #    np.quantile(err_kdf_,[.75])[0]
-    # )
-
+    
 sns.set_context("talk")
 fig, ax = plt.subplots(1, 1, figsize=(8, 8))
 
@@ -123,16 +98,10 @@ ax.fill_between(
     sample_size, err_rf_25_quantile, err_rf_75_quantile, facecolor="k", alpha=0.3
 )
 
-# ax.plot(sample_size, err_rf_med_, c="g", label='RF (feature selected)')
-# ax.fill_between(sample_size, err_rf_25_quantile_, err_rf_75_quantile_, facecolor='g', alpha=.3)
-
 ax.plot(sample_size, err_kdf_med, c="r", label="KDF")
 ax.fill_between(
     sample_size, err_kdf_25_quantile, err_kdf_75_quantile, facecolor="r", alpha=0.3
 )
-
-# ax.plot(sample_size, err_kdf_med_, c="b", label='KDF (feteaure selected)')
-# ax.fill_between(sample_size, err_kdf_25_quantile_, err_kdf_75_quantile_, facecolor='b', alpha=.3)
 
 right_side = ax.spines["right"]
 right_side.set_visible(False)
@@ -145,5 +114,3 @@ ax.set_ylabel("error")
 ax.legend(frameon=False)
 
 plt.savefig("plots/high_dim_gaussian_treeAvg.pdf")
-
-# %%

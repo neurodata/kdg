@@ -1,4 +1,3 @@
-#%%
 from kdg.utils import generate_spirals
 from kdg import kdn
 import numpy as np
@@ -7,7 +6,6 @@ from tensorflow.keras import layers
 from kdg.kdn import *
 import pandas as pd
 
-# %%
 X, y = generate_spirals(10000, noise=0.8, n_class=2)
 
 # NN params
@@ -17,7 +15,6 @@ compile_kwargs = {
 }
 fit_kwargs = {"epochs": 100, "batch_size": 32, "verbose": False}
 
-# %%
 # network architecture
 def getNN():
     network_base = keras.Sequential()
@@ -26,9 +23,6 @@ def getNN():
     network_base.add(layers.Dense(units=2, activation="softmax"))
     network_base.compile(**compile_kwargs)
     return network_base
-
-
-# %%
 
 # train Vanilla NN
 vanilla_nn = getNN()
@@ -44,7 +38,6 @@ model_kdn = kdn(
 )
 model_kdn.fit(X, y)
 
-# %%
 import seaborn as sns
 import pandas as pd
 import numpy as np
@@ -76,21 +69,13 @@ cmap = sns.diverging_palette(240, 10, n=9)
 ax1 = sns.heatmap(data, ax=ax[0][0], vmin=0, vmax=1, cmap=cmap)
 ax1.set_xticklabels([])
 ax1.set_yticklabels([])
-# ax1.set_xticklabels(['-2','' , '', '', '', '', '','','','','0','','','','','','','','','2'])
-# ax1.set_yticklabels(['-2','' , '', '', '', '', '','','','','','','0','','','','','','','','','','','','','2'])
-# ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','' , '', '', '', '', '', '','','','','', '0','','' , '', '', '', '', '','','','','','','','','','','','','1'])
-ax[0][0].set_title("KDN", fontsize=24)
-# ax[0][0].invert_yaxis()
 
+ax[0][0].set_title("KDN", fontsize=24)
 
 ax1 = sns.heatmap(data_rf, ax=ax[0][1], vmin=0, vmax=1, cmap=cmap)
-# ax1.set_xticklabels(['-2','' , '', '', '', '', '','','','','0','','','','','','','','','2'])
-# ax1.set_yticklabels(['-2','' , '', '', '', '', '','','','','','','0','','','','','','','','','','','','','2'])
 ax1.set_xticklabels([])
 ax1.set_yticklabels([])
-# ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','' , '', '', '', '', '', '','','','','', '0','','' , '', '', '', '', '','','','','','','','','','','','','1'])
 ax[0][1].set_title("NN", fontsize=24)
-# ax[0][1].invert_yaxis()
 
 colors = sns.color_palette("Dark2", n_colors=2)
 clr = [colors[i] for i in y]
@@ -98,4 +83,3 @@ ax[1][0].scatter(X[:, 0], X[:, 1], c=clr, s=50)
 
 plt.savefig("plots/spiral_pdf.pdf")
 plt.show()
-# %%

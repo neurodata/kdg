@@ -40,8 +40,6 @@ compile_kwargs = {
 }
 fit_kwargs = {"epochs": 150, "batch_size": 32, "verbose": False}
 
-#%%
-
 # network architecture
 def getNN():
     network_base = keras.Sequential()
@@ -51,8 +49,6 @@ def getNN():
     network_base.compile(**compile_kwargs)
     return network_base
 
-
-# %%
 for sample in sample_size:
     print("Doing sample %d" % sample)
     for ii in range(reps):
@@ -86,7 +82,7 @@ df["sample"] = sample_list
 # save the results (CHANGE HERE)
 df.to_csv("results_AP/high_dim_kdn_gaussian_weighting_allFC_AP.csv")
 
-# %% plot the result
+# plot the result
 
 # Specify which results to plot (CHANGE HERE)
 filename1 = "results_AP/high_dim_kdn_gaussian_weighting_allFC_AP.csv"
@@ -110,38 +106,18 @@ err_kdn_75_quantile = []
 err_kdn_med_ = []
 err_kdn_25_quantile_ = []
 err_kdn_75_quantile_ = []
-# clr = ["#e41a1c", "#f781bf", "#306998"]
-# c = sns.color_palette(clr, n_colors=3)
 
 for sample in sample_size:
     err_nn = 1 - df["accuracy nn"][df["sample"] == sample]
-    # err_rf_ = 1 - df['feature selected rf'][df['sample']==sample]
     err_kdn = 1 - df["accuracy kdn"][df["sample"] == sample]
-    # err_kdf_ = 1 - df['feature selected kdf'][df['sample']==sample]
 
     err_nn_med.append(np.median(err_nn))
     err_nn_25_quantile.append(np.quantile(err_nn, [0.25])[0])
     err_nn_75_quantile.append(np.quantile(err_nn, [0.75])[0])
 
-    # err_rf_med_.append(np.median(err_rf_))
-    # err_rf_25_quantile_.append(
-    #        np.quantile(err_rf_,[.25])[0]
-    #    )
-    # err_rf_75_quantile_.append(
-    #    np.quantile(err_rf_,[.75])[0]
-    # )
-
     err_kdn_med.append(np.median(err_kdn))
     err_kdn_25_quantile.append(np.quantile(err_kdn, [0.25])[0])
     err_kdn_75_quantile.append(np.quantile(err_kdn, [0.75])[0])
-
-    # err_kdf_med_.append(np.median(err_kdf_))
-    # err_kdf_25_quantile_.append(
-    #        np.quantile(err_kdf_,[.25])[0]
-    #    )
-    # err_kdf_75_quantile_.append(
-    #    np.quantile(err_kdf_,[.75])[0]
-    # )
 
 sns.set_context("talk")
 fig, ax = plt.subplots(1, 1, figsize=(8, 8))
@@ -151,16 +127,10 @@ ax.fill_between(
     sample_size, err_nn_25_quantile, err_nn_75_quantile, facecolor="k", alpha=0.3
 )
 
-# ax.plot(sample_size, err_rf_med_, c="g", label='RF (feature selected)')
-# ax.fill_between(sample_size, err_rf_25_quantile_, err_rf_75_quantile_, facecolor='g', alpha=.3)
-
 ax.plot(sample_size, err_kdn_med, c="r", label="KDN")
 ax.fill_between(
     sample_size, err_kdn_25_quantile, err_kdn_75_quantile, facecolor="r", alpha=0.3
 )
-
-# ax.plot(sample_size, err_kdf_med_, c="b", label='KDF (feteaure selected)')
-# ax.fill_between(sample_size, err_kdf_25_quantile_, err_kdf_75_quantile_, facecolor='b', alpha=.3)
 
 right_side = ax.spines["right"]
 right_side.set_visible(False)

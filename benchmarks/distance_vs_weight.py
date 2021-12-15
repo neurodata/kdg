@@ -38,16 +38,13 @@ def get_kdf_weights(X_star, X_, forest):
     polytope_star = np.array(
         [tree.apply(X_star.reshape(1, -1)) for tree in forest.estimators_]
     ).T
-    # print(polytope_star.shape)
     predicted_leaf_ids_across_trees = np.array(
         [tree.apply(X_) for tree in forest.estimators_]
     ).T
 
     matched_samples = np.sum(predicted_leaf_ids_across_trees == polytope_star, axis=1)
-    # print(matched_samples)
     idx = np.where(matched_samples > 0)[0]
 
-    # X_star isn't included in X_ so need to scale this manually
     scale = matched_samples[idx] / polytope_star.shape[1]
 
     return np.array(scale)
@@ -75,12 +72,12 @@ def get_kdn_weights(X_star, X_, network, weighting_method="TM"):
             n_nodes += layer_match.shape[0]
 
         if weighting_method == "TM":
-            # weight based on the total number of matches (uncomment)
+            # weight based on the total number of matches
             match_status = np.concatenate(match_status)
             weight = np.sum(match_status) / n_nodes
 
         if weighting_method == "FM":
-            # weight based on the first mismatch (uncomment)
+            # weight based on the first mismatch
             match_status = np.concatenate(match_status)
             if len(np.where(match_status == 0)[0]) == 0:
                 weight = 1.0
@@ -179,7 +176,6 @@ for d in distances:
     X_dist_static[d] = np.concatenate((X_star[:3] + rand_dist, static_noise), axis=1)
     X_dist_noisy[d] = np.concatenate((X_star[:3] + rand_dist, random_noise), axis=1)
 
-#%%
 # train Vanilla RF, NN
 vanilla_rf = rf(**compile_kwargs_rf).fit(X, y)
 
@@ -202,7 +198,6 @@ weight_75q_n = [np.quantile(w, 0.75) for w in weights_n]
 sns.set_context("talk")
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 8))
-# ax.set_xscale("log")
 ax.plot(distances, weight_med_s, c="r", label="KDF Static Noise")
 ax.plot(distances, weight_med_n, c="k", label="KDF Random Noise")
 ax.fill_between(distances, weight_25q_s, weight_75q_s, facecolor="r", alpha=0.3)
@@ -210,7 +205,6 @@ ax.fill_between(distances, weight_25q_n, weight_75q_n, facecolor="k", alpha=0.3)
 ax.legend()
 
 methods = ["TM", "FM", "LL", "AP", "EFM"]
-# methods = ["FM", "AP", "EFM"]
 
 for method in methods:
     # plot distance vs. weights for KDN
@@ -231,7 +225,6 @@ for method in methods:
     sns.set_context("talk")
 
     fig, ax = plt.subplots(1, 1, figsize=(8, 8))
-    # ax.set_xscale("log")
     ax.plot(distances, weight_med_s, c="r", label=f"KDN Static Noise: {method} match")
     ax.plot(distances, weight_med_n, c="k", label=f"KDN Random Noise: {method} match")
     ax.fill_between(distances, weight_25q_s, weight_75q_s, facecolor="r", alpha=0.3)
@@ -245,7 +238,6 @@ for d in distances:
     print(d)
     rand_dist = rng.random((n_test, p_star))
     rand_dist = np.sqrt(d ** 2 * (rand_dist / np.sum(rand_dist, axis=1)[:, None]))
-    # print(rand_dist)
     print(np.sqrt(np.sum(rand_dist ** 2, axis=1)))
 
 import math
@@ -258,11 +250,8 @@ n = 5
 for m in range(n):
     weight = 0
     for k in range(m + 1):
-        # print(f"k = {k}")
         prob_k = 1 / (k + 1) * (nCr(m, k) * (n - m)) / nCr(n, k + 1)
-        # print(prob_k)
         add = k / n * prob_k
-        # print(f"add {add:.3f}")
         weight += add
 
     print(f"matches = {m}")

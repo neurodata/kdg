@@ -137,7 +137,6 @@ class kdn(KernelDensityGraph):
                 idx = np.where(polytopes == polytope_id)[
                     0
                 ]  # collect the samples that belong to the current polytope
-                # polytope_member_count.append(len(idx))
 
                 # compute the weights
                 weights = []
