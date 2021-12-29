@@ -22,6 +22,7 @@ def inject_label_noise(y, per):
 mc_reps = 100
 n_estimators = 500
 n = 141643
+n_class = 94
 n_test = 10000
 per = np.arange(0, .6, step = .1)
 err_rf_med = []
@@ -36,9 +37,9 @@ for p in per:
     res_kdf = []
     res_rf = []
     for rep in range(mc_reps):
-        X, y = multiclass_guassian(n)
+        X, y = multiclass_guassian(n, k=n_class)
         y = inject_label_noise(y, p)
-        X_test, y_test = multiclass_guassian(n_test)
+        X_test, y_test = multiclass_guassian(n_test, k=n_class)
 
         model_kdf = kdf(kwargs={'n_estimators':n_estimators})
         model_kdf.fit(X, y)
