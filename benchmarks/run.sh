@@ -1,3 +1,3 @@
 # !/bin/sh
-python3 openml_cc18_wmle.py 
+python3 ceps_exp.py 
 sudo shutdown now
