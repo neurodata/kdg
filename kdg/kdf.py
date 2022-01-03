@@ -9,7 +9,7 @@ from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, k = 1, kwargs={}):
+    def __init__(self, k = 1, **kwargs):
         super().__init__()
 
         self.polytope_means = {}
