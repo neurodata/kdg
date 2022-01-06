@@ -99,3 +99,28 @@ ax.legend(frameon=False)
 plt.savefig('plots/label_noise_cep.pdf')
 
 # %%
+import matplotlib.pyplot as plt
+import tensorflow as tf
+import tensorflow.keras as keras
+import seaborn as sns
+from kdg.utils import multiclass_guassian
+# %%
+def get_colors(colors, inds):
+    c = [colors[i] for i in inds]
+    return c
+
+#%%
+k = 94
+n = 141643
+colors = sns.color_palette("Paired", n_colors=k)
+X, Y = multiclass_guassian(n, k=k)
+
+fig = plt.figure(constrained_layout=True, figsize=(25, 25))
+gs = fig.add_gridspec(25, 25)
+
+ax = fig.add_subplot(gs[:,:])
+ax.scatter(X[:, 0], X[:, 1], c=get_colors(colors, Y), s=10)
+ax.set_xticks([])
+ax.set_yticks([])
+plt.savefig("plots/cep_sim.pdf")
+# %%
