@@ -6,8 +6,8 @@ import seaborn as sns
 from joblib import Parallel, delayed
 from kdg.utils import generate_gaussian_parity
 # %%
-p = np.arange(-1,1,step=0.06)
-q = np.arange(-1,1,step=0.06)
+p = np.arange(-1,1,step=0.01)
+q = np.arange(-1,1,step=0.01)
 xx, yy = np.meshgrid(p,q)
 tmp = np.ones(xx.shape)
 
