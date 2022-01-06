@@ -1,3 +1,3 @@
 # !/bin/sh
-python3 ceps_exp.py 
+python3 true_posterior.py 
 sudo shutdown now
