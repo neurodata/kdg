@@ -20,10 +20,10 @@ grid_samples = np.concatenate(
     ) 
 total_grid_points = grid_samples.shape[0]    
 # %%
-N = 10000
+N = 1000
 epsilon = 1e-2
 # %%
-mc_reps = 10000
+mc_reps = 100
 
 def posterior_calc(N, total_grid_points):
     posterior = np.zeros(total_grid_points, dtype=float)
