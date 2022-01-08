@@ -58,8 +58,8 @@ print(posterior.shape, grid_samples.shape)
 posterior = np.mean(posterior, axis=1)
 df = pd.DataFrame()
 df['posterior'] = posterior
-df['X1'] = grid_samples[:,0]
-df['X2'] = grid_samples[:,1]
+#df['X1'] = grid_samples[:,0]
+#df['X2'] = grid_samples[:,1]
 df.to_csv('Gaussian_xor_pdf.csv')
 # %%
 '''data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':posterior})
