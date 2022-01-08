@@ -54,7 +54,7 @@ posterior = Parallel(n_jobs=-1,verbose=1)(
                     ) for _ in range(mc_reps)
                 )
 
-print(posterior)
+print(posterior.shape, grid_samples.shape)
 posterior = np.mean(posterior, axis=1)
 df = pd.DataFrame()
 df['posterior'] = posterior
