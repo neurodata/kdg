@@ -44,7 +44,9 @@ def posterior_calc(N, total_grid_points):
         else:
             posterior[jj] = class1/points
 
-    
+    return posterior
+
+##########################################
 posterior = Parallel(n_jobs=-1,verbose=1)(
             delayed(posterior_calc)(
                     N,
