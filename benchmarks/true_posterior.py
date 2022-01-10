@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from joblib import Parallel, delayed
-from kdg.utils import generate_gaussian_parity
+from kdg.utils import generate_gaussian_parity, generate_spirals
 # %%
 p = np.arange(-1,1,step=0.01)
 q = np.arange(-1,1,step=0.01)
@@ -27,7 +27,7 @@ mc_reps = 1000
 
 def posterior_calc(N, total_grid_points):
     posterior = np.zeros(total_grid_points, dtype=float)
-    X, y = generate_gaussian_parity(N)
+    X, y = generate_spirals(N)
     
     for jj in range(total_grid_points):
         points = 0
@@ -56,13 +56,18 @@ posterior = Parallel(n_jobs=-1,verbose=1)(
 
 #print(posterior.shape, grid_samples.shape)
 posterior = np.mean(posterior, axis=0)
+#%%
 df = pd.DataFrame()
 df['posterior'] = posterior
 df['X1'] = grid_samples[:,0]
 df['X2'] = grid_samples[:,1]
-df.to_csv('Gaussian_xor_pdf.csv')
+df.to_csv('true_posterior/spiral_pdf.csv')
 # %%
-'''data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':posterior})
+'''df = pd.read_csv('Gaussian_xor_pdf.csv')
+grid_samples0 = df['X1']
+grid_samples1 = df['X2']
+posterior = df['posterior']
+data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':posterior})
 data = data.pivot(index='x', columns='y', values='z')
 
 
