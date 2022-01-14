@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from joblib import Parallel, delayed
-from kdg.utils import generate_gaussian_parity, generate_spirals, generate_ellipse
+from kdg.utils import generate_gaussian_parity, generate_spirals, generate_ellipse, generate_sinewave
 # %%
 p = np.arange(-1,1,step=0.01)
 q = np.arange(-1,1,step=0.01)
@@ -27,7 +27,7 @@ mc_reps = 1000
 
 def posterior_calc(N, total_grid_points):
     posterior = np.zeros(total_grid_points, dtype=float)
-    X, y = generate_ellipse(N)
+    X, y = generate_sinewave(N)
     
     for jj in range(total_grid_points):
         points = 0
@@ -61,7 +61,7 @@ df = pd.DataFrame()
 df['posterior'] = posterior
 df['X1'] = grid_samples[:,0]
 df['X2'] = grid_samples[:,1]
-df.to_csv('true_posterior/ellipse_pdf.csv')
+df.to_csv('true_posterior/sinewave_pdf.csv')
 # %%
 '''df = pd.read_csv('Gaussian_xor_pdf.csv')
 grid_samples0 = df['X1']
