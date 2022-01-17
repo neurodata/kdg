@@ -367,6 +367,7 @@ def generate_ellipse(
     height=None,
     offsets=None,
     sigma=0.1,
+    bounding_box = (-1.0,1.0),
     random_state=None,
 ):
     """
@@ -388,6 +389,8 @@ def generate_ellipse(
         If None, all ellipses are centered at (0, 0)
     sigma : float, optional (default=0.1)
         Parameter controlling the width of the shapes.
+    bounding_box : tuple of float (min, max), default=(-1.0, 1.0)
+        The bounding box within which the samples are drawn.
     random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
@@ -421,15 +424,21 @@ def generate_ellipse(
             size = int(size)
             if n == n_ellipses:
                 size = size + 1
-
-        t = uniform(0, 2 * np.pi, size)
-        a = width[n] + normal(0, sigma, size)
-        b = height[n] + normal(0, sigma, size)
+        
+        t = uniform(0, 2 * np.pi, 10*size)
+        a = width[n] + normal(0, sigma, 10*size)
+        b = height[n] + normal(0, sigma, 10*size)
 
         xn = np.column_stack((a * np.cos(t), b * np.sin(t)))
+
         if offsets is not None:
             xn = xn + offsets[n, :]
 
+        col1 = (xn[:,0] > bounding_box[0]) & (xn[:,0] < bounding_box[1])
+        col2 = (xn[:,1] > bounding_box[0]) & (xn[:,1] < bounding_box[1])
+        xn = xn[col1 & col2]
+        xn = xn[:size]
+        
         X = np.append(X, xn, axis=0)
         y = np.append(y, np.ones(size, dtype=int) * n)
 
