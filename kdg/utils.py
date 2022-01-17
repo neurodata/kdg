@@ -279,6 +279,7 @@ def generate_spirals(
     n_samples,
     n_class=2,
     noise=0.3,
+    bounding_box = (-1.0,1.0),
     random_state=None,
 ):
     """
@@ -291,6 +292,9 @@ def generate_spirals(
         Number of class for the spiral simulation.
     noise : float, optional (default=0.3)
         Parameter controlling the spread of each class.
+    bounding_box : tuple of float (min, max), default=(-1.0, 1.0)
+        The bounding box within which the samples are drawn. (currently works
+        for only 2 classes)
     random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
@@ -322,7 +326,8 @@ def generate_spirals(
     mvt = np.random.multinomial(n_samples, 1 / n_class * np.ones(n_class))
 
     if n_class == 2:
-        r = np.random.uniform(0, 1, size=int(n_samples / n_class))
+        lim = max(np.abs(bounding_box[0]), np.abs(bounding_box[1]))
+        r = np.random.uniform(0, lim, size=int(n_samples / n_class))
         r = np.sort(r)
         t = np.linspace(
             0, np.pi * 4 * turns / n_class, int(n_samples / n_class)
