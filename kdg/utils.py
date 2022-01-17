@@ -78,7 +78,7 @@ def generate_gaussian_parity(
     centers=None,
     class_label=None,
     cluster_std=0.25,
-    center_box=(-1.0, 1.0),
+    bounding_box=(-1.0, 1.0),
     angle_params=None,
     random_state=None,
 ):
@@ -128,16 +128,24 @@ def generate_gaussian_parity(
         n_samples, 1 / blob_num * np.ones(blob_num)
     )
 
-    X, y = make_blobs(
-        n_samples=samples_per_blob,
-        n_features=2,
-        centers=centers,
-        cluster_std=cluster_std,
-        center_box=center_box,
-    )
-
-    for blob in range(blob_num):
-        y[np.where(y == blob)] = class_label[blob]
+    X = []
+    y = []
+    ii = 0
+    for center, sample in enumerate(zip(centers, samples_per_blob)):
+        X_, _ = make_blobs(
+            n_samples=[sample*10],
+            n_features=2,
+            centers=center,
+            cluster_std=cluster_std
+        )
+        col1 = (X_[:,0] > bounding_box[0]) & (X_[:,0] < bounding_box[1])
+        col2 = (X_[:,1] > bounding_box[0]) & (X_[:,1] < bounding_box[1])
+        X_ = X_[col1 & col2]
+        X.append(X_[:sample,:])
+        y.append([class_label[ii]]*sample)
+        ii += 1
+        
+    X, y = np.array(X), np.array(y)
 
     if angle_params != None:
         R = _generate_2d_rotation(angle_params)
@@ -222,8 +230,7 @@ def gaussian_sparse_parity(
         n_samples=samples_per_blob,
         n_features=p_star,
         centers=centers,
-        cluster_std=cluster_std,
-        center_box=center_box,
+        cluster_std=cluster_std
     )
 
     for blob in range(blob_num):
