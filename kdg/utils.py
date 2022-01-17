@@ -97,8 +97,8 @@ def generate_gaussian_parity(
         class label for each blob.
     cluster_std : float, optional (default=1)
         The standard deviation of the blobs.
-    center_box : tuple of float (min, max), default=(-1.0, 1.0)
-        The bounding box for each cluster center when centers are generated at random.
+    bounding_box : tuple of float (min, max), default=(-1.0, 1.0)
+        The bounding box within which the samples are drawn.
     angle_params: float, optional (default=None)
         Number of radians to rotate the distribution by.
     random_state : int, RandomState instance, default=None
@@ -128,24 +128,25 @@ def generate_gaussian_parity(
         n_samples, 1 / blob_num * np.ones(blob_num)
     )
 
-    X = []
-    y = []
+    X = np.zeros((1,2), dtype=float)
+    y = np.zeros((1), dtype=float)
     ii = 0
-    for center, sample in enumerate(zip(centers, samples_per_blob)):
+    for center, sample in zip(centers, samples_per_blob):
         X_, _ = make_blobs(
-            n_samples=[sample*10],
+            n_samples=sample*10,
             n_features=2,
-            centers=center,
+            centers=[center],
             cluster_std=cluster_std
         )
         col1 = (X_[:,0] > bounding_box[0]) & (X_[:,0] < bounding_box[1])
         col2 = (X_[:,1] > bounding_box[0]) & (X_[:,1] < bounding_box[1])
         X_ = X_[col1 & col2]
-        X.append(X_[:sample,:])
-        y.append([class_label[ii]]*sample)
+        X = np.concatenate((X,X_[:sample,:]), axis=0)
+        y_ = np.array([class_label[ii]]*sample)
+        y = np.concatenate((y, y_), axis=0)
         ii += 1
-        
-    X, y = np.array(X), np.array(y)
+
+    X, y = X[1:], y[1:]
 
     if angle_params != None:
         R = _generate_2d_rotation(angle_params)
