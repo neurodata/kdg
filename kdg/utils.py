@@ -438,7 +438,7 @@ def generate_ellipse(
         col2 = (xn[:,1] > bounding_box[0]) & (xn[:,1] < bounding_box[1])
         xn = xn[col1 & col2]
         xn = xn[:size]
-        
+
         X = np.append(X, xn, axis=0)
         y = np.append(y, np.ones(size, dtype=int) * n)
 
@@ -496,8 +496,8 @@ def generate_sinewave(
             if n == n_waves:
                 size = size + 1
 
-        t_n = uniform(0, 2 * n_peaks * np.pi, size)
-        y_n = height[n] * np.sin(t_n + offsets[n] * np.pi) + normal(0, sigma, size)
+        t_n = uniform(-1, 1, size)
+        y_n = height[n] * np.sin(t_n*n_peaks*2 + offsets[n] * np.pi) + normal(0, sigma, size)
         xn = np.column_stack((t_n, y_n))
 
         X = np.append(X, xn, axis=0)
