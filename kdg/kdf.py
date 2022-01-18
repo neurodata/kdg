@@ -17,6 +17,7 @@ class kdf(KernelDensityGraph):
         self.polytope_cardinality = {}
         self.polytope_mean_cov = {}
         self.bias = {}
+        self.global_bias = 0
         self.kwargs = kwargs
         self.k = k
         self.is_fitted = False
@@ -97,6 +98,7 @@ class kdf(KernelDensityGraph):
             likelihoods /= total_samples_this_label
             self.bias[label] = np.min(likelihoods)/(self.k*total_samples_this_label)
 
+        self.global_bias = min(self.bias.values())
         self.is_fitted = True
         
             
@@ -134,7 +136,7 @@ class kdf(KernelDensityGraph):
                 likelihoods[:,ii] += np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
 
             likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
-            likelihoods[:,ii] += self.bias[label]
+            likelihoods[:,ii] += self.global_bias
 
         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         return proba
