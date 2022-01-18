@@ -63,7 +63,7 @@ df['X1'] = grid_samples[:,0]
 df['X2'] = grid_samples[:,1]
 df.to_csv('true_posterior/sinewave_pdf.csv')
 # %%
-'''df = pd.read_csv('Gaussian_xor_pdf.csv')
+'''df = pd.read_csv('true_posterior/sinewave_pdf.csv')
 grid_samples0 = df['X1']
 grid_samples1 = df['X2']
 posterior = df['posterior']
@@ -79,6 +79,6 @@ ax1.set_xticklabels(['-1','' , '', '', '', '', '','','','','0','','','','','',''
 ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','','','','0','','','','','','','','','','','','','1'])
 #ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','' , '', '', '', '', '', '','','','','', '0','','' , '', '', '', '', '','','','','','','','','','','','','1'])
 #ax.set_title('Estimated PDF of xor-nxor simulation data',fontsize=24)
-ax.invert_yaxis()'''
-
+ax.invert_yaxis()
+'''
 # %%
