@@ -20,14 +20,14 @@ grid_samples = np.concatenate(
     ) 
 total_grid_points = grid_samples.shape[0]    
 # %%
-N = 100000
-epsilon = 1e-2
+N = 1000000
+epsilon = 5e-2
 # %%
 mc_reps = 1000
 
 def posterior_calc(N, total_grid_points):
     posterior = np.zeros(total_grid_points, dtype=float)
-    X, y = generate_sinewave(N)
+    X, y = generate_gaussian_parity(N)
     
     for jj in range(total_grid_points):
         points = 0
@@ -61,9 +61,9 @@ df = pd.DataFrame()
 df['posterior'] = posterior
 df['X1'] = grid_samples[:,0]
 df['X2'] = grid_samples[:,1]
-df.to_csv('true_posterior/sinewave_pdf.csv')
+df.to_csv('true_posterior/Gaussian_xor_pdf.csv')
 # %%
-'''df = pd.read_csv('true_posterior/sinewave_pdf.csv')
+'''df = pd.read_csv('true_posterior/Gaussian_xor_pdf.csv')
 grid_samples0 = df['X1']
 grid_samples1 = df['X2']
 posterior = df['posterior']
@@ -79,6 +79,6 @@ ax1.set_xticklabels(['-1','' , '', '', '', '', '','','','','0','','','','','',''
 ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','','','','0','','','','','','','','','','','','','1'])
 #ax1.set_yticklabels(['-1','' , '', '', '', '', '','','','' , '', '', '', '', '', '','','','','', '0','','' , '', '', '', '', '','','','','','','','','','','','','1'])
 #ax.set_title('Estimated PDF of xor-nxor simulation data',fontsize=24)
-ax.invert_yaxis()
-'''
+ax.invert_yaxis()'''
+
 # %%
