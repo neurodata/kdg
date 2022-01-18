@@ -452,6 +452,7 @@ def generate_sinewave(
     height=None,
     n_peaks=2,
     sigma=0.1,
+    bounding_box=(-1.0,1.0),
     random_state=None,
 ):
     """
@@ -470,6 +471,8 @@ def generate_sinewave(
         Number of peaks for each sine wave.
     sigma : float, optional (default=0.1)
         Parameter controlling the width of the shapes.
+    bounding_box : tuple of float (min, max), default=(-1.0, 1.0)
+        The bounding box within which the samples are drawn.
     random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
@@ -485,7 +488,8 @@ def generate_sinewave(
 
     n_waves = len(offsets)
     if height is None:
-        height = np.ones(n_waves)
+        mul = max(np.abs(bounding_box[0]), np.abs(bounding_box[1]))
+        height = mul*np.ones(n_waves)
 
     X = np.empty((1, 2))
     y = np.array(1)
@@ -496,9 +500,13 @@ def generate_sinewave(
             if n == n_waves:
                 size = size + 1
 
-        t_n = uniform(-1, 1, size)
-        y_n = height[n] * np.sin(t_n*n_peaks*2 + offsets[n] * np.pi) + normal(0, sigma, size)
+        t_n = uniform(bounding_box[0], bounding_box[1], 10*size)
+        y_n = height[n] * np.sin(t_n*n_peaks*2 + offsets[n] * np.pi) + normal(0, sigma, 10*size)
         xn = np.column_stack((t_n, y_n))
+        col1 = (xn[:,0] > bounding_box[0]) & (xn[:,0] < bounding_box[1])
+        col2 = (xn[:,1] > bounding_box[0]) & (xn[:,1] < bounding_box[1])
+        xn = xn[col1 & col2]
+        xn = xn[:size]
 
         X = np.append(X, xn, axis=0)
         y = np.append(y, np.ones(size, dtype=int) * n)
@@ -579,6 +587,7 @@ def generate_polynomial(
     a=1.0,
     b=0.0,
     sigma=0.1,
+    bounding_box = (-1.0,1.0),
     random_state=None,
 ):
     """
@@ -596,6 +605,8 @@ def generate_polynomial(
         Intercepts of equations.
     sigma : float, optional (default=0.1)
         Parameter controlling the width of the shapes.
+    bounding_box : tuple of float (min, max), default=(-1.0, 1.0)
+        The bounding box within which the samples are drawn.
     random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
@@ -635,14 +646,18 @@ def generate_polynomial(
             size = int(size)
             if n == n_lines:
                 size = size + 1
-        t_n = uniform(-1, 1, size)
+        t_n = uniform(-1, 1, 10*size)
         if a[n] < 1:
             y_n = m[n] * np.power(abs(t_n), a[n])
         else:
             y_n = m[n] * np.power(t_n, a[n])
-        y_n = y_n + b[n] + normal(0, sigma, size)
+        y_n = y_n + b[n] + normal(0, sigma, 10*size)
 
         xn = np.column_stack((t_n, y_n))
+        col1 = (xn[:,0] > bounding_box[0]) & (xn[:,0] < bounding_box[1])
+        col2 = (xn[:,1] > bounding_box[0]) & (xn[:,1] < bounding_box[1])
+        xn = xn[col1 & col2]
+        xn = xn[:size]
 
         X = np.append(X, xn, axis=0)
         y = np.append(y, np.ones(size, dtype=int) * n)
