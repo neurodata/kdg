@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd 
 # %%
-n_samples = 1e5
+n_samples = 1e4
 n_estimators = 500
 X, y = {}, {}
 models  = {}
@@ -50,8 +50,8 @@ fig = plt.figure(constrained_layout=True,figsize=(24,30))
 gs = fig.add_gridspec(30, 24)
 
 sns.set_context("talk")
-p = np.arange(-2,2,step=0.01)
-q = np.arange(-2,2,step=0.01)
+p = np.arange(-2,2,step=0.1)
+q = np.arange(-2,2,step=0.1)
 xx, yy = np.meshgrid(p,q)
 
 grid_samples = np.concatenate(
@@ -227,3 +227,4 @@ data = data.pivot(index='x', columns='y', values='z')
 cmap= sns.diverging_palette(240, 10, n=9)
 ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
 #ax.set_title('KDF Posterior',fontsize=24)
+# %%
