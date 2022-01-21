@@ -115,7 +115,7 @@ class kdf(KernelDensityGraph):
         likelihood = var.pdf(X)
         return likelihood
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, return_likelihood=False):
         r"""
         Calculate posteriors using the kernel density forest.
         Parameters
@@ -139,7 +139,11 @@ class kdf(KernelDensityGraph):
             likelihoods[:,ii] += self.global_bias
 
         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
-        return proba
+        
+        if return_likelihood:
+            return proba, likelihoods
+        else:
+            return proba 
 
     def predict(self, X):
         r"""
