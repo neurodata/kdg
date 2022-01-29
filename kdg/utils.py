@@ -730,3 +730,19 @@ def multiclass_guassian(n_samples, k=98):
     )
 
     return X, y
+
+def generate_ood_samples(n, inbound=[1, -1], outbound=[5, -5]):
+    Xood = []
+    i = 0
+    while True:
+        x1 = (outbound[0] - outbound[1])*np.random.random_sample() - outbound[0]
+        x2 = (outbound[0] - outbound[1])*np.random.random_sample() - outbound[0]
+        if (-inbound[0] < x1 < inbound[1]) and (-inbound[0] < x2 < inbound[1]):
+            continue
+        else:
+            Xood.append([x1, x2])
+            i += 1
+        if i >= n:
+            break
+    Xood = np.array(Xood)
+    return Xood
