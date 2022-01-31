@@ -517,7 +517,7 @@ ax[5][4].set_xticks([-2,-1,0,1,2])
 
 #plt.savefig('plots/simulations.pdf')
 # %%
-def calc_stat(a, reps=5):
+def calc_stat(a, reps=45):
     a_med = []
     a_25 = []
     a_75 = []
