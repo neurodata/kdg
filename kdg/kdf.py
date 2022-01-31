@@ -19,6 +19,8 @@ class kdf(KernelDensityGraph):
         self.prior = {}
         self.bias = {}
         self.global_bias = 0
+        self.min_likelihood = np.inf
+        self.max_likelihood = 0
         self.kwargs = kwargs
         self.k = k
         self.is_fitted = False
@@ -95,9 +97,19 @@ class kdf(KernelDensityGraph):
                 dtype=float
             )
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
-                likelihoods += np.nan_to_num(self._compute_pdf(X_, label, polytope_idx))
+                tmp = np.nan_to_num(self._compute_pdf(X_, label, polytope_idx))
+                log_lk = np.sum(np.log(tmp))/X_.shape[0]
 
-            likelihoods /= total_samples_this_label
+                if log_lk < self.min_likelihood:
+                    self.min_likelihood = log_lk
+
+                if log_lk > self.max_likelihood:
+                    self.max_likelihood = log_lk
+
+                likelihoods += tmp
+
+            likelihoods /= total_samples_this_label   
+
             self.bias[label] = np.min(likelihoods)/(self.k*total_samples_this_label)
 
         self.global_bias = min(self.bias.values())
