@@ -78,7 +78,7 @@ def generate_gaussian_parity(
     centers=None,
     class_label=None,
     cluster_std=0.25,
-    center_box=(-1.0, 1.0),
+    bounding_box=(-1.0, 1.0),
     angle_params=None,
     random_state=None,
 ):
@@ -97,8 +97,8 @@ def generate_gaussian_parity(
         class label for each blob.
     cluster_std : float, optional (default=1)
         The standard deviation of the blobs.
-    center_box : tuple of float (min, max), default=(-1.0, 1.0)
-        The bounding box for each cluster center when centers are generated at random.
+    bounding_box : tuple of float (min, max), default=(-1.0, 1.0)
+        The bounding box within which the samples are drawn.
     angle_params: float, optional (default=None)
         Number of radians to rotate the distribution by.
     random_state : int, RandomState instance, default=None
@@ -128,16 +128,25 @@ def generate_gaussian_parity(
         n_samples, 1 / blob_num * np.ones(blob_num)
     )
 
-    X, y = make_blobs(
-        n_samples=samples_per_blob,
-        n_features=2,
-        centers=centers,
-        cluster_std=cluster_std,
-        center_box=center_box,
-    )
+    X = np.zeros((1,2), dtype=float)
+    y = np.zeros((1), dtype=float)
+    ii = 0
+    for center, sample in zip(centers, samples_per_blob):
+        X_, _ = make_blobs(
+            n_samples=sample*10,
+            n_features=2,
+            centers=[center],
+            cluster_std=cluster_std
+        )
+        col1 = (X_[:,0] > bounding_box[0]) & (X_[:,0] < bounding_box[1])
+        col2 = (X_[:,1] > bounding_box[0]) & (X_[:,1] < bounding_box[1])
+        X_ = X_[col1 & col2]
+        X = np.concatenate((X,X_[:sample,:]), axis=0)
+        y_ = np.array([class_label[ii]]*sample)
+        y = np.concatenate((y, y_), axis=0)
+        ii += 1
 
-    for blob in range(blob_num):
-        y[np.where(y == blob)] = class_label[blob]
+    X, y = X[1:], y[1:]
 
     if angle_params != None:
         R = _generate_2d_rotation(angle_params)
@@ -222,8 +231,7 @@ def gaussian_sparse_parity(
         n_samples=samples_per_blob,
         n_features=p_star,
         centers=centers,
-        cluster_std=cluster_std,
-        center_box=center_box,
+        cluster_std=cluster_std
     )
 
     for blob in range(blob_num):
@@ -271,6 +279,7 @@ def generate_spirals(
     n_samples,
     n_class=2,
     noise=0.3,
+    bounding_box = (-1.0,1.0),
     random_state=None,
 ):
     """
@@ -283,6 +292,9 @@ def generate_spirals(
         Number of class for the spiral simulation.
     noise : float, optional (default=0.3)
         Parameter controlling the spread of each class.
+    bounding_box : tuple of float (min, max), default=(-1.0, 1.0)
+        The bounding box within which the samples are drawn. (currently works
+        for only 2 classes)
     random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
@@ -314,7 +326,8 @@ def generate_spirals(
     mvt = np.random.multinomial(n_samples, 1 / n_class * np.ones(n_class))
 
     if n_class == 2:
-        r = np.random.uniform(0, 1, size=int(n_samples / n_class))
+        lim = max(np.abs(bounding_box[0]), np.abs(bounding_box[1]))
+        r = np.random.uniform(0, lim, size=int(n_samples / n_class))
         r = np.sort(r)
         t = np.linspace(
             0, np.pi * 4 * turns / n_class, int(n_samples / n_class)
@@ -354,6 +367,7 @@ def generate_ellipse(
     height=None,
     offsets=None,
     sigma=0.1,
+    bounding_box = (-1.0,1.0),
     random_state=None,
 ):
     """
@@ -375,6 +389,8 @@ def generate_ellipse(
         If None, all ellipses are centered at (0, 0)
     sigma : float, optional (default=0.1)
         Parameter controlling the width of the shapes.
+    bounding_box : tuple of float (min, max), default=(-1.0, 1.0)
+        The bounding box within which the samples are drawn.
     random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
@@ -408,14 +424,20 @@ def generate_ellipse(
             size = int(size)
             if n == n_ellipses:
                 size = size + 1
-
-        t = uniform(0, 2 * np.pi, size)
-        a = width[n] + normal(0, sigma, size)
-        b = height[n] + normal(0, sigma, size)
+        
+        t = uniform(0, 2 * np.pi, 10*size)
+        a = width[n] + normal(0, sigma, 10*size)
+        b = height[n] + normal(0, sigma, 10*size)
 
         xn = np.column_stack((a * np.cos(t), b * np.sin(t)))
+
         if offsets is not None:
             xn = xn + offsets[n, :]
+
+        col1 = (xn[:,0] > bounding_box[0]) & (xn[:,0] < bounding_box[1])
+        col2 = (xn[:,1] > bounding_box[0]) & (xn[:,1] < bounding_box[1])
+        xn = xn[col1 & col2]
+        xn = xn[:size]
 
         X = np.append(X, xn, axis=0)
         y = np.append(y, np.ones(size, dtype=int) * n)
@@ -430,6 +452,7 @@ def generate_sinewave(
     height=None,
     n_peaks=2,
     sigma=0.1,
+    bounding_box=(-1.0,1.0),
     random_state=None,
 ):
     """
@@ -448,6 +471,8 @@ def generate_sinewave(
         Number of peaks for each sine wave.
     sigma : float, optional (default=0.1)
         Parameter controlling the width of the shapes.
+    bounding_box : tuple of float (min, max), default=(-1.0, 1.0)
+        The bounding box within which the samples are drawn.
     random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
@@ -463,7 +488,8 @@ def generate_sinewave(
 
     n_waves = len(offsets)
     if height is None:
-        height = np.ones(n_waves)
+        mul = max(np.abs(bounding_box[0]), np.abs(bounding_box[1]))
+        height = mul*np.ones(n_waves)
 
     X = np.empty((1, 2))
     y = np.array(1)
@@ -474,9 +500,13 @@ def generate_sinewave(
             if n == n_waves:
                 size = size + 1
 
-        t_n = uniform(0, 2 * n_peaks * np.pi, size)
-        y_n = height[n] * np.sin(t_n + offsets[n] * np.pi) + normal(0, sigma, size)
+        t_n = uniform(bounding_box[0], bounding_box[1], 10*size)
+        y_n = height[n] * np.sin(t_n*n_peaks*2 + offsets[n] * np.pi) + normal(0, sigma, 10*size)
         xn = np.column_stack((t_n, y_n))
+        col1 = (xn[:,0] > bounding_box[0]) & (xn[:,0] < bounding_box[1])
+        col2 = (xn[:,1] > bounding_box[0]) & (xn[:,1] < bounding_box[1])
+        xn = xn[col1 & col2]
+        xn = xn[:size]
 
         X = np.append(X, xn, axis=0)
         y = np.append(y, np.ones(size, dtype=int) * n)
@@ -557,6 +587,7 @@ def generate_polynomial(
     a=1.0,
     b=0.0,
     sigma=0.1,
+    bounding_box = (-1.0,1.0),
     random_state=None,
 ):
     """
@@ -574,6 +605,8 @@ def generate_polynomial(
         Intercepts of equations.
     sigma : float, optional (default=0.1)
         Parameter controlling the width of the shapes.
+    bounding_box : tuple of float (min, max), default=(-1.0, 1.0)
+        The bounding box within which the samples are drawn.
     random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
@@ -613,14 +646,18 @@ def generate_polynomial(
             size = int(size)
             if n == n_lines:
                 size = size + 1
-        t_n = uniform(-1, 1, size)
+        t_n = uniform(-1, 1, 10*size)
         if a[n] < 1:
             y_n = m[n] * np.power(abs(t_n), a[n])
         else:
             y_n = m[n] * np.power(t_n, a[n])
-        y_n = y_n + b[n] + normal(0, sigma, size)
+        y_n = y_n + b[n] + normal(0, sigma, 10*size)
 
         xn = np.column_stack((t_n, y_n))
+        col1 = (xn[:,0] > bounding_box[0]) & (xn[:,0] < bounding_box[1])
+        col2 = (xn[:,1] > bounding_box[0]) & (xn[:,1] < bounding_box[1])
+        xn = xn[col1 & col2]
+        xn = xn[:size]
 
         X = np.append(X, xn, axis=0)
         y = np.append(y, np.ones(size, dtype=int) * n)
@@ -665,26 +702,47 @@ def plot_2dsim(X, y, square_plot=False, ax=None):
 
     return ax
 
-  
-def spiral_pdf(X, n_samples, n_class=2, noise=0.3):
 
-    if n_class == 2:
-        turns = 2
-    elif n_class == 3:
-        turns = 2.5
-    elif n_class == 5:
-        turns = 3.5
-    elif n_class == 7:
-        turns = 4.5
-    else:
-        raise ValueError("sorry, can't currently surpport %s classes " % n_class)
+def multiclass_guassian(n_samples, k=98):
+    samples_per_blob = np.random.multinomial(
+        n_samples, 1 / k * np.ones(k)
+    )
+    sqrt_cls = np.ceil(np.sqrt(k))
 
-    theta = np.linspace(0, np.pi * 4 * turns / n_class, int(n_samples / n_class))
+    center_x = np.arange(0,sqrt_cls*.5,step=.5)
+    center_y = np.arange(0,sqrt_cls*.5,step=.5)
+    center_x, center_y = np.meshgrid(center_x, center_y)
 
-    likelihood = 0
-    x, y = X[:, 0], X[:, 1]
-    theta_ = np.arccos(x / np.sqrt(x ** 2 + y ** 2))
-    for t in theta:
-        likelihood += np.exp(-((theta_ - t) ** 2) / (2 * noise))
+    grid_samples = np.concatenate(
+            (
+                center_x.reshape(-1,1),
+                center_y.reshape(-1,1)
+            ),
+            axis=1
+    ) 
+    centers = grid_samples[:k]
 
-    return likelihood / (np.sqrt(2 * np.pi) * noise)
+    X, y = make_blobs(
+        n_samples=samples_per_blob,
+        n_features=2,
+        centers=centers,
+        cluster_std=0.25
+    )
+
+    return X, y
+
+def generate_ood_samples(n, inbound=[1, -1], outbound=[5, -5]):
+    Xood = []
+    i = 0
+    while True:
+        x1 = (outbound[0] - outbound[1])*np.random.random_sample() - outbound[0]
+        x2 = (outbound[0] - outbound[1])*np.random.random_sample() - outbound[0]
+        if (-inbound[0] < x1 < inbound[1]) and (-inbound[0] < x2 < inbound[1]):
+            continue
+        else:
+            Xood.append([x1, x2])
+            i += 1
+        if i >= n:
+            break
+    Xood = np.array(Xood)
+    return Xood

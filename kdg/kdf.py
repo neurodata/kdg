@@ -16,7 +16,9 @@ class kdf(KernelDensityGraph):
         self.polytope_cov = {}
         self.polytope_cardinality = {}
         self.polytope_mean_cov = {}
+        self.prior = {}
         self.bias = {}
+        self.global_bias = 0
         self.kwargs = kwargs
         self.k = k
         self.is_fitted = False
@@ -55,6 +57,7 @@ class kdf(KernelDensityGraph):
             )
             total_polytopes_this_label = np.max(polytope_idx)+1'''
             total_samples_this_label = X_.shape[0]
+            self.prior[label] = total_samples_this_label/X.shape[0]
 
             for polytope in range(total_samples_this_label):
                 matched_samples = np.sum(
@@ -97,6 +100,7 @@ class kdf(KernelDensityGraph):
             likelihoods /= total_samples_this_label
             self.bias[label] = np.min(likelihoods)/(self.k*total_samples_this_label)
 
+        self.global_bias = min(self.bias.values())
         self.is_fitted = True
         
             
@@ -113,7 +117,7 @@ class kdf(KernelDensityGraph):
         likelihood = var.pdf(X)
         return likelihood
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, return_likelihood=False):
         r"""
         Calculate posteriors using the kernel density forest.
         Parameters
@@ -121,6 +125,7 @@ class kdf(KernelDensityGraph):
         X : ndarray
             Input data matrix.
         """
+        
         X = check_array(X)
 
         likelihoods = np.zeros(
@@ -131,13 +136,17 @@ class kdf(KernelDensityGraph):
         for ii,label in enumerate(self.labels):
             total_polytopes = len(self.polytope_means[label])
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
-                likelihoods[:,ii] += np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
+                likelihoods[:,ii] += self.prior[label] * np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
 
             likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
-            likelihoods[:,ii] += self.bias[label]
+            likelihoods[:,ii] += self.global_bias
 
         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
-        return proba
+        
+        if return_likelihood:
+            return proba, likelihoods
+        else:
+            return proba 
 
     def predict(self, X):
         r"""

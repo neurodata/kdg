@@ -1,3 +1,3 @@
 # !/bin/sh
-python3 openml_cc18_wmle.py 
+python3 true_posterior.py 
 sudo shutdown now
