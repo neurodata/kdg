@@ -9,13 +9,14 @@ from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, k = 1, **kwargs):
+    def __init__(self, k = 1, kwargs={}):
         super().__init__()
 
         self.polytope_means = {}
         self.polytope_cov = {}
         self.polytope_cardinality = {}
         self.polytope_mean_cov = {}
+        self.prior = {}
         self.bias = {}
         self.global_bias = 0
         self.kwargs = kwargs
@@ -56,6 +57,7 @@ class kdf(KernelDensityGraph):
             )
             total_polytopes_this_label = np.max(polytope_idx)+1'''
             total_samples_this_label = X_.shape[0]
+            self.prior[label] = total_samples_this_label/X.shape[0]
 
             for polytope in range(total_samples_this_label):
                 matched_samples = np.sum(
@@ -123,6 +125,7 @@ class kdf(KernelDensityGraph):
         X : ndarray
             Input data matrix.
         """
+        
         X = check_array(X)
 
         likelihoods = np.zeros(
@@ -133,7 +136,7 @@ class kdf(KernelDensityGraph):
         for ii,label in enumerate(self.labels):
             total_polytopes = len(self.polytope_means[label])
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
-                likelihoods[:,ii] += np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
+                likelihoods[:,ii] += self.prior[label] * np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
 
             likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
             likelihoods[:,ii] += self.global_bias
