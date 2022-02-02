@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from kdg.utils import generate_gaussian_parity
+from tensorflow import keras
 import random
 
 
@@ -43,6 +44,7 @@ def label_noise_trial_clf(n_samples, p=0.10, n_estimators=500, clf=None):
         a given classifier on a test distribution
     """
     X, y = generate_gaussian_parity(n_samples, cluster_std=0.5)
+    X_val, y_val = generate_gaussian_parity(n_samples / 2, cluster_std=0.5)
     X_test, y_test = generate_gaussian_parity(1000, cluster_std=0.5)
 
     # Generate noise and flip labels
@@ -50,10 +52,23 @@ def label_noise_trial_clf(n_samples, p=0.10, n_estimators=500, clf=None):
     noise_indices = random.sample(range(len(X)), n_noise)
     y[noise_indices] = 1 - y[noise_indices]
 
+    callback = keras.callbacks.EarlyStopping(monitor="val_loss", patience=10, verbose=True)
+
     err = []
 
-    for c in clf:
-        c.fit(X, y)
-        err.append(1 - np.mean(c.predict(X_test) == y_test))
+    fit_kwargs = {
+    "epochs": 300,
+    "batch_size": 32,
+    "verbose": True,
+    "validation_data": (X_val, keras.utils.to_categorical(y_val)),
+    "callbacks": [callback]}
 
+    for i, c in enumerate(clf):
+        if i == 3:
+            c.fit(X, keras.utils.to_categorical(y), **fit_kwargs)
+            err.append((1 - np.mean(np.argmax(c.predict(X_test), axis=1) == y_test)))
+        else:
+            c.fit(X, y)
+            err.append(1 - np.mean(c.predict(X_test) == y_test))
+        
     return err
