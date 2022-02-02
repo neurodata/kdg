@@ -47,27 +47,31 @@ class kdf(KernelDensityGraph):
         for label in self.labels:
             self.polytope_means[label] = []
             self.polytope_cov[label] = []
+            self.polytope_cardinality[label] = []
 
             X_ = X[np.where(y==label)[0]]
             predicted_leaf_ids_across_trees = np.array(
                 [tree.apply(X_) for tree in self.rf_model.estimators_]
                 ).T
-            '''_, polytope_idx = np.unique(
+            polytopes, polytope_count = np.unique(
                 predicted_leaf_ids_across_trees, return_inverse=True, axis=0
             )
-            total_polytopes_this_label = np.max(polytope_idx)+1'''
+            self.polytope_cardinality[label].extend(
+                polytope_count
+            )
+            total_polytopes_this_label = len(polytopes)
             total_samples_this_label = X_.shape[0]
             self.prior[label] = total_samples_this_label/X.shape[0]
 
-            for polytope in range(total_samples_this_label):
+            for polytope in range(total_polytopes_this_label):
                 matched_samples = np.sum(
-                    predicted_leaf_ids_across_trees == predicted_leaf_ids_across_trees[polytope],
+                    predicted_leaf_ids_across_trees == polytopes[polytope],
                     axis=1
                 )
                 idx = np.where(
                     matched_samples>0
                 )[0]
-
+                
                 if len(idx) == 1:
                     continue
                 
@@ -114,7 +118,7 @@ class kdf(KernelDensityGraph):
             allow_singular=True
             )
 
-        likelihood = var.pdf(X)
+        likelihood = self.polytope_cardinality[label][polytope_idx]*var.pdf(X)
         return likelihood
 
     def predict_proba(self, X, return_likelihood=False):
