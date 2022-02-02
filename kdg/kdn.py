@@ -11,16 +11,34 @@ import numpy as np
 from scipy.stats import multivariate_normal
 from sklearn.covariance import LedoitWolf
 
+
 class kdn(KernelDensityGraph):
     def __init__(
         self,
         network,
         weighting=True,
-        k=1,
+        k=1.0,
         T=1e-3,
         h=0.33,
         verbose=True,
     ):
+        r"""[summary]
+
+        Parameters
+        ----------
+        network : tf.keras.Model()
+            trained neural network model
+        weighting : bool, optional
+            use weighting if true, by default True
+        k : float, optional
+            bias control parameter, by default 1
+        T : float, optional
+            neighborhood size control parameter, by default 1e-3
+        h : float, optional
+            variational parameters of the weighting, by default 0.33
+        verbose : bool, optional
+            print internal data, by default True
+        """
         super().__init__()
         self.polytope_means = {}
         self.polytope_covs = {}
@@ -73,8 +91,10 @@ class kdn(KernelDensityGraph):
             else:
                 binary_preactivation = (preactivation > 0).astype("int")
 
-            if l < self.total_layers - 1: # record the activation patterns only upto the penultimate layer
-                polytope_ids_tmp.append(binary_preactivation) 
+            if (
+                l < self.total_layers - 1
+            ):  # record the activation patterns only upto the penultimate layer
+                polytope_ids_tmp.append(binary_preactivation)
 
             last_activations = preactivation * binary_preactivation
 
@@ -82,7 +102,9 @@ class kdn(KernelDensityGraph):
         polytope_ids_tmp = np.concatenate(polytope_ids_tmp, axis=1)
         polytope_ids = [
             np.tensordot(
-                polytope_ids_tmp, 2 ** np.arange(0, np.shape(polytope_ids_tmp)[1]), axes=1
+                polytope_ids_tmp,
+                2 ** np.arange(0, np.shape(polytope_ids_tmp)[1]),
+                axes=1,
             )
         ]
 
@@ -121,14 +143,14 @@ class kdn(KernelDensityGraph):
         ndarray
             weights of each input sample in the input data matrix
         """
-        
+
         M_ref = self._get_activation_pattern(polytope_id)
 
         start = 0
         A = X_
         A_ref = X_
         d = 0
-        for l in range(len(self.network_shape)-1):
+        for l in range(len(self.network_shape) - 1):
             end = start + self.network_shape[l]
             M_l = M_ref[start:end]
             start = end
@@ -136,10 +158,10 @@ class kdn(KernelDensityGraph):
             pre_A = A @ W + B
             A = np.maximum(0, pre_A)
             pre_A_ref = A_ref @ W + B
-            A_ref = pre_A_ref @ np.diag(M_l) 
+            A_ref = pre_A_ref @ np.diag(M_l)
             d += np.linalg.norm(A - A_ref, axis=1, ord=2)
 
-        return np.exp(- d/self.h)
+        return np.exp(-d / self.h)
 
     def fit(self, X, y):
         r"""
@@ -160,14 +182,14 @@ class kdn(KernelDensityGraph):
             self.polytope_covs[label] = []
             self.polytope_samples[label] = []
 
-            X_ = X[np.where(y == label)[0]] # data having the current label
+            X_ = X[np.where(y == label)[0]]  # data having the current label
 
             # get class prior probability
-            self.class_priors[label] = len(X_)/len(X)
+            self.class_priors[label] = len(X_) / len(X)
 
             # get polytope ids and unique polytope ids
             polytope_ids = self._get_polytope_ids(X_)
-            unique_polytope_ids = np.unique(polytope_ids) 
+            unique_polytope_ids = np.unique(polytope_ids)
 
             for polytope in unique_polytope_ids:
                 weights = self.compute_weights(X_, polytope)
@@ -181,17 +203,25 @@ class kdn(KernelDensityGraph):
 
                 # apply weights to the data
                 X_tmp = X_.copy()
-                polytope_mean_ = np.average(X_tmp, axis=0, weights=weights)  # compute the weighted average of the samples
+                polytope_mean_ = np.average(
+                    X_tmp, axis=0, weights=weights
+                )  # compute the weighted average of the samples
                 X_tmp -= polytope_mean_  # center the data
 
-                sqrt_weights = np.sqrt(weights).reshape(-1, 1) @ np.ones(feature_dim).reshape(1, -1)
-                X_tmp *= sqrt_weights # scale the centered data with the square root of the weights
+                sqrt_weights = np.sqrt(weights).reshape(-1, 1) @ np.ones(
+                    feature_dim
+                ).reshape(1, -1)
+                X_tmp *= sqrt_weights  # scale the centered data with the square root of the weights
 
                 covariance_model = LedoitWolf(assume_centered=True)
                 covariance_model.fit(X_tmp)
-                polytope_cov_ = covariance_model.covariance_ * len(weights) / sum(weights)
+                polytope_cov_ = (
+                    covariance_model.covariance_ * len(weights) / sum(weights)
+                )
 
-                polytope_samples_ = len(np.where(polytope_ids == polytope)[0]) # count the number of points in the polytope
+                polytope_samples_ = len(
+                    np.where(polytope_ids == polytope)[0]
+                )  # count the number of points in the polytope
 
                 # store the mean, covariances, and polytope sample size
                 self.polytope_means[label].append(polytope_mean_)
@@ -202,10 +232,15 @@ class kdn(KernelDensityGraph):
             likelihoods = np.zeros((np.size(X_, 0)), dtype=float)
 
             for polytope, _ in enumerate(self.polytope_means[label]):
-                likelihoods += np.nan_to_num(self.polytope_samples[label][polytope] * self._compute_pdf(X_, label, polytope))
+                likelihoods += np.nan_to_num(
+                    self.polytope_samples[label][polytope]
+                    * self._compute_pdf(X_, label, polytope)
+                )
 
             likelihoods /= sum(self.polytope_samples[label])
-            self.bias[label] = np.min(likelihoods) / (self.k * sum(self.polytope_samples[label]))
+            self.bias[label] = np.min(likelihoods) / (
+                self.k * sum(self.polytope_samples[label])
+            )
 
     def _compute_pdf(self, X, label, polytope_id):
         r"""compute the likelihood for the given data
@@ -234,7 +269,6 @@ class kdn(KernelDensityGraph):
         likelihood = var.pdf(X)
         return likelihood
 
-
     def predict_proba(self, X, return_likelihoods=False):
         r"""
         Calculate posteriors using the kernel density forest.
@@ -250,12 +284,17 @@ class kdn(KernelDensityGraph):
         for ii, label in enumerate(self.labels):
             priors[ii] = self.class_priors[label]
             for polytope, _ in enumerate(self.polytope_means[label]):
-                likelihoods[:, ii] += np.nan_to_num(self.polytope_samples[label][polytope] * self._compute_pdf(X, label, polytope))
+                likelihoods[:, ii] += np.nan_to_num(
+                    self.polytope_samples[label][polytope]
+                    * self._compute_pdf(X, label, polytope)
+                )
 
             likelihoods[:, ii] = likelihoods[:, ii] / sum(self.polytope_samples[label])
             likelihoods[:, ii] += min(self.bias.values())
 
-        proba = (likelihoods.T * priors / (np.sum(likelihoods * priors.T, axis=1) + 1e-100)).T
+        proba = (
+            likelihoods.T * priors / (np.sum(likelihoods * priors.T, axis=1) + 1e-100)
+        ).T
         if return_likelihoods:
             return proba, likelihoods
         else:
@@ -283,15 +322,3 @@ class kdn(KernelDensityGraph):
             Input data matrix.
         """
         return np.argmax(self.predict_proba(X), axis=1)
-
-
-
-
-
-
-
-
-
-
-
-
