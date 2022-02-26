@@ -541,8 +541,8 @@ df = loadmat('kdn_experiments/results/graphs/gxor.mat')
 med, a_25, a_75 = calc_stat(1-df['kdn_acc'])
 med_nn, nn_25, nn_75 = calc_stat(1-df['nn_acc'])
 
-ax[0][0].plot(sample_size, med[1:], c="b", label='KDN')
-ax[0][0].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[0][0].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[0][0].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[0][0].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[0][0].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -558,7 +558,7 @@ top_side = ax[0][0].spines["top"]
 top_side.set_visible(False)
 
 df_ = loadmat('kdf_experiments/results/gxor_plot_data.mat')
-ax[0][0].plot(sample_size, df_['error_kdf_med'].ravel(), c="r", label='KDF')
+ax[0][0].plot(sample_size, df_['error_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[0][0].plot(sample_size, df_['error_rf_med'].ravel(), c="k", label='RF')
 
 ax[0][0].fill_between(sample_size, df_["error_kdf_25"].ravel(), df_["error_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -571,7 +571,7 @@ med, a_25, a_75 = calc_stat(df['kdn_hd'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_hd'])
 
 ax[0][1].plot(sample_size, med[1:], c="b", label='KDN')
-ax[0][1].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[0][1].plot(sample_size, med_nn[1:], c="c", label='DN', linewidth=3)
 
 ax[0][1].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[0][1].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -585,7 +585,7 @@ right_side.set_visible(False)
 top_side = ax[0][1].spines["top"]
 top_side.set_visible(False)
 
-ax[0][1].plot(sample_size, df_['hellinger_kdf_med'].ravel(), c="r", label='KDF')
+ax[0][1].plot(sample_size, df_['hellinger_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[0][1].plot(sample_size, df_['hellinger_rf_med'].ravel(), c="k", label='RF')
 
 ax[0][1].fill_between(sample_size, df_["hellinger_kdf_25"].ravel(), df_["hellinger_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -596,8 +596,8 @@ ax[0][1].set_title('Gaussian XOR', fontsize=title_size)
 med, a_25, a_75 = calc_stat(df['kdn_mmcIn'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_mmcIn'])
 
-ax[0][2].plot(sample_size, med[1:], c="b", label='KDN')
-ax[0][2].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[0][2].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[0][2].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[0][2].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[0][2].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -611,7 +611,7 @@ right_side.set_visible(False)
 top_side = ax[0][2].spines["top"]
 top_side.set_visible(False)
 
-ax[0][2].plot(sample_size, df_['mmcIn_kdf_med'].ravel(), c="r", label='KDF')
+ax[0][2].plot(sample_size, df_['mmcIn_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[0][2].plot(sample_size, df_['mmcIn_rf_med'].ravel(), c="k", label='RF')
 
 ax[0][2].fill_between(sample_size, df_["mmcIn_kdf_25"].ravel(), df_["mmcIn_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -621,8 +621,8 @@ ax[0][2].fill_between(sample_size, df_["mmcIn_rf_25"].ravel(), df_["mmcIn_rf_75"
 med, a_25, a_75 = calc_stat(df['kdn_mmcOut'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_mmcOut'])
 
-ax[0][3].plot(sample_size, med[1:], c="b", label='KDN')
-ax[0][3].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[0][3].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[0][3].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[0][3].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[0][3].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -636,7 +636,7 @@ right_side.set_visible(False)
 top_side = ax[0][3].spines["top"]
 top_side.set_visible(False)
 
-ax[0][3].plot(sample_size, df_['mmcOut_kdf_med'].ravel(), c="r", label='KDF')
+ax[0][3].plot(sample_size, df_['mmcOut_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[0][3].plot(sample_size, df_['mmcOut_rf_med'].ravel(), c="k", label='RF')
 
 ax[0][3].fill_between(sample_size, df_["mmcOut_kdf_25"].ravel(), df_["mmcOut_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -649,8 +649,8 @@ df = loadmat('kdn_experiments/results/graphs/spiral.mat')
 med, a_25, a_75 = calc_stat(1-df['kdn_acc'])
 med_nn, nn_25, nn_75 = calc_stat(1-df['nn_acc'])
 
-ax[1][0].plot(sample_size, med[1:], c="b", label='KDN')
-ax[1][0].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[1][0].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[1][0].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[1][0].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[1][0].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -665,7 +665,7 @@ top_side = ax[1][0].spines["top"]
 top_side.set_visible(False)
 
 df_ = loadmat('kdf_experiments/results/spiral_plot_data.mat')
-ax[1][0].plot(sample_size, df_['error_kdf_med'].ravel(), c="r", label='KDF')
+ax[1][0].plot(sample_size, df_['error_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[1][0].plot(sample_size, df_['error_rf_med'].ravel(), c="k", label='RF')
 
 ax[1][0].fill_between(sample_size, df_["error_kdf_25"].ravel(), df_["error_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -676,8 +676,8 @@ ax[1][0].fill_between(sample_size, df_["error_rf_25"].ravel(), df_["error_rf_75"
 med, a_25, a_75 = calc_stat(df['kdn_hd'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_hd'])
 
-ax[1][1].plot(sample_size, med[1:], c="b", label='KDN')
-ax[1][1].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[1][1].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[1][1].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[1][1].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[1][1].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -691,7 +691,7 @@ right_side.set_visible(False)
 top_side = ax[1][1].spines["top"]
 top_side.set_visible(False)
 
-ax[1][1].plot(sample_size, df_['hellinger_kdf_med'].ravel(), c="r", label='KDF')
+ax[1][1].plot(sample_size, df_['hellinger_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[1][1].plot(sample_size, df_['hellinger_rf_med'].ravel(), c="k", label='RF')
 
 ax[1][1].fill_between(sample_size, df_["hellinger_kdf_25"].ravel(), df_["hellinger_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -701,8 +701,8 @@ ax[1][1].set_title('Spiral', fontsize=title_size)
 med, a_25, a_75 = calc_stat(df['kdn_mmcIn'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_mmcIn'])
 
-ax[1][2].plot(sample_size, med[1:], c="b", label='KDN')
-ax[1][2].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[1][2].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[1][2].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[1][2].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[1][2].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -716,7 +716,7 @@ right_side.set_visible(False)
 top_side = ax[1][2].spines["top"]
 top_side.set_visible(False)
 
-ax[1][2].plot(sample_size, df_['mmcIn_kdf_med'].ravel(), c="r", label='KDF')
+ax[1][2].plot(sample_size, df_['mmcIn_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[1][2].plot(sample_size, df_['mmcIn_rf_med'].ravel(), c="k", label='RF')
 
 ax[1][2].fill_between(sample_size, df_["mmcIn_kdf_25"].ravel(), df_["mmcIn_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -726,8 +726,8 @@ ax[1][2].fill_between(sample_size, df_["mmcIn_rf_25"].ravel(), df_["mmcIn_rf_75"
 med, a_25, a_75 = calc_stat(df['kdn_mmcOut'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_mmcOut'])
 
-ax[1][3].plot(sample_size, med[1:], c="b", label='KDN')
-ax[1][3].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[1][3].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[1][3].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[1][3].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[1][3].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -741,7 +741,7 @@ right_side.set_visible(False)
 top_side = ax[1][3].spines["top"]
 top_side.set_visible(False)
 
-ax[1][3].plot(sample_size, df_['mmcOut_kdf_med'].ravel(), c="r", label='KDF')
+ax[1][3].plot(sample_size, df_['mmcOut_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[1][3].plot(sample_size, df_['mmcOut_rf_med'].ravel(), c="k", label='RF')
 
 ax[1][3].fill_between(sample_size, df_["mmcOut_kdf_25"].ravel(), df_["mmcOut_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -754,8 +754,8 @@ df = loadmat('kdn_experiments/results/graphs/circle.mat')
 med, a_25, a_75 = calc_stat(1-df['kdn_acc'])
 med_nn, nn_25, nn_75 = calc_stat(1-df['nn_acc'])
 
-ax[2][0].plot(sample_size, med[1:], c="b", label='KDN')
-ax[2][0].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[2][0].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[2][0].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[2][0].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[2][0].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -770,7 +770,7 @@ top_side = ax[2][0].spines["top"]
 top_side.set_visible(False)
 
 df_ = loadmat('kdf_experiments/results/circle_plot_data.mat')
-ax[2][0].plot(sample_size, df_['error_kdf_med'].ravel(), c="r", label='KDF')
+ax[2][0].plot(sample_size, df_['error_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[2][0].plot(sample_size, df_['error_rf_med'].ravel(), c="k", label='RF')
 
 ax[2][0].fill_between(sample_size, df_["error_kdf_25"].ravel(), df_["error_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -781,8 +781,8 @@ ax[2][0].fill_between(sample_size, df_["error_rf_25"].ravel(), df_["error_rf_75"
 med, a_25, a_75 = calc_stat(df['kdn_hd'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_hd'])
 
-ax[2][1].plot(sample_size, med[1:], c="b", label='KDN')
-ax[2][1].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[2][1].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[2][1].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[2][1].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[2][1].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -796,7 +796,7 @@ right_side.set_visible(False)
 top_side = ax[2][1].spines["top"]
 top_side.set_visible(False)
 
-ax[2][1].plot(sample_size, df_['hellinger_kdf_med'].ravel(), c="r", label='KDF')
+ax[2][1].plot(sample_size, df_['hellinger_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[2][1].plot(sample_size, df_['hellinger_rf_med'].ravel(), c="k", label='RF')
 
 ax[2][1].fill_between(sample_size, df_["hellinger_kdf_25"].ravel(), df_["hellinger_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -806,8 +806,8 @@ ax[2][1].set_title('Circle', fontsize=title_size)
 med, a_25, a_75 = calc_stat(df['kdn_mmcIn'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_mmcIn'])
 
-ax[2][2].plot(sample_size, med[1:], c="b", label='KDN')
-ax[2][2].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[2][2].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[2][2].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[2][2].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[2][2].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -821,7 +821,7 @@ right_side.set_visible(False)
 top_side = ax[2][2].spines["top"]
 top_side.set_visible(False)
 
-ax[2][2].plot(sample_size, df_['mmcIn_kdf_med'].ravel(), c="r", label='KDF')
+ax[2][2].plot(sample_size, df_['mmcIn_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[2][2].plot(sample_size, df_['mmcIn_rf_med'].ravel(), c="k", label='RF')
 
 ax[2][2].fill_between(sample_size, df_["mmcIn_kdf_25"].ravel(), df_["mmcIn_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -831,8 +831,8 @@ ax[2][2].fill_between(sample_size, df_["mmcIn_rf_25"].ravel(), df_["mmcIn_rf_75"
 med, a_25, a_75 = calc_stat(df['kdn_mmcOut'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_mmcOut'])
 
-ax[2][3].plot(sample_size, med[1:], c="b", label='KDN')
-ax[2][3].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[2][3].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[2][3].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[2][3].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[2][3].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -846,7 +846,7 @@ right_side.set_visible(False)
 top_side = ax[2][3].spines["top"]
 top_side.set_visible(False)
 
-ax[2][3].plot(sample_size, df_['mmcOut_kdf_med'].ravel(), c="r", label='KDF')
+ax[2][3].plot(sample_size, df_['mmcOut_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[2][3].plot(sample_size, df_['mmcOut_rf_med'].ravel(), c="k", label='RF')
 
 ax[2][3].fill_between(sample_size, df_["mmcOut_kdf_25"].ravel(), df_["mmcOut_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -860,8 +860,8 @@ df = loadmat('kdn_experiments/results/graphs/sinewave.mat')
 med, a_25, a_75 = calc_stat(1-df['kdn_acc'])
 med_nn, nn_25, nn_75 = calc_stat(1-df['nn_acc'])
 
-ax[3][0].plot(sample_size, med[1:], c="b", label='KDN')
-ax[3][0].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[3][0].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[3][0].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[3][0].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[3][0].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -876,7 +876,7 @@ top_side = ax[3][0].spines["top"]
 top_side.set_visible(False)
 
 df_ = loadmat('kdf_experiments/results/sinewave_plot_data.mat')
-ax[3][0].plot(sample_size, df_['error_kdf_med'].ravel(), c="r", label='KDF')
+ax[3][0].plot(sample_size, df_['error_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[3][0].plot(sample_size, df_['error_rf_med'].ravel(), c="k", label='RF')
 
 ax[3][0].fill_between(sample_size, df_["error_kdf_25"].ravel(), df_["error_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -887,8 +887,8 @@ ax[3][0].fill_between(sample_size, df_["error_rf_25"].ravel(), df_["error_rf_75"
 med, a_25, a_75 = calc_stat(df['kdn_hd'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_hd'])
 
-ax[3][1].plot(sample_size, med[1:], c="b", label='KDN')
-ax[3][1].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[3][1].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[3][1].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[3][1].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[3][1].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -902,7 +902,7 @@ right_side.set_visible(False)
 top_side = ax[3][1].spines["top"]
 top_side.set_visible(False)
 
-ax[3][1].plot(sample_size, df_['hellinger_kdf_med'].ravel(), c="r", label='KDF')
+ax[3][1].plot(sample_size, df_['hellinger_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[3][1].plot(sample_size, df_['hellinger_rf_med'].ravel(), c="k", label='RF')
 
 ax[3][1].fill_between(sample_size, df_["hellinger_kdf_25"].ravel(), df_["hellinger_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -912,8 +912,8 @@ ax[3][1].set_title('Sinewave', fontsize=title_size)
 med, a_25, a_75 = calc_stat(df['kdn_mmcIn'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_mmcIn'])
 
-ax[3][2].plot(sample_size, med[1:], c="b", label='KDN')
-ax[3][2].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[3][2].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[3][2].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[3][2].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[3][2].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -927,7 +927,7 @@ right_side.set_visible(False)
 top_side = ax[3][2].spines["top"]
 top_side.set_visible(False)
 
-ax[3][2].plot(sample_size, df_['mmcIn_kdf_med'].ravel(), c="r", label='KDF')
+ax[3][2].plot(sample_size, df_['mmcIn_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[3][2].plot(sample_size, df_['mmcIn_rf_med'].ravel(), c="k", label='RF')
 
 ax[3][2].fill_between(sample_size, df_["mmcIn_kdf_25"].ravel(), df_["mmcIn_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -937,8 +937,8 @@ ax[3][2].fill_between(sample_size, df_["mmcIn_rf_25"].ravel(), df_["mmcIn_rf_75"
 med, a_25, a_75 = calc_stat(df['kdn_mmcOut'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_mmcOut'])
 
-ax[3][3].plot(sample_size, med[1:], c="b", label='KDN')
-ax[3][3].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[3][3].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[3][3].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[3][3].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[3][3].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -952,7 +952,7 @@ right_side.set_visible(False)
 top_side = ax[3][3].spines["top"]
 top_side.set_visible(False)
 
-ax[3][3].plot(sample_size, df_['mmcOut_kdf_med'].ravel(), c="r", label='KDF')
+ax[3][3].plot(sample_size, df_['mmcOut_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[3][3].plot(sample_size, df_['mmcOut_rf_med'].ravel(), c="k", label='RF')
 
 ax[3][3].fill_between(sample_size, df_["mmcOut_kdf_25"].ravel(), df_["mmcOut_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -966,8 +966,8 @@ df = loadmat('kdn_experiments/results/graphs/polynomial.mat')
 med, a_25, a_75 = calc_stat(1-df['kdn_acc'])
 med_nn, nn_25, nn_75 = calc_stat(1-df['nn_acc'])
 
-ax[4][0].plot(sample_size, med[1:], c="b", label='KDN')
-ax[4][0].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[4][0].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[4][0].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[4][0].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[4][0].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -982,7 +982,7 @@ top_side = ax[4][0].spines["top"]
 top_side.set_visible(False)
 
 df_ = loadmat('kdf_experiments/results/polynomial_plot_data.mat')
-ax[4][0].plot(sample_size, df_['error_kdf_med'].ravel(), c="r", label='KDF')
+ax[4][0].plot(sample_size, df_['error_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[4][0].plot(sample_size, df_['error_rf_med'].ravel(), c="k", label='RF')
 
 ax[4][0].fill_between(sample_size, df_["error_kdf_25"].ravel(), df_["error_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -993,8 +993,8 @@ ax[4][0].fill_between(sample_size, df_["error_rf_25"].ravel(), df_["error_rf_75"
 med, a_25, a_75 = calc_stat(df['kdn_hd'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_hd'])
 
-ax[4][1].plot(sample_size, med[1:], c="b", label='KDN')
-ax[4][1].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[4][1].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[4][1].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[4][1].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[4][1].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -1008,7 +1008,7 @@ right_side.set_visible(False)
 top_side = ax[4][1].spines["top"]
 top_side.set_visible(False)
 
-ax[4][1].plot(sample_size, df_['hellinger_kdf_med'].ravel(), c="r", label='KDF')
+ax[4][1].plot(sample_size, df_['hellinger_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[4][1].plot(sample_size, df_['hellinger_rf_med'].ravel(), c="k", label='RF')
 
 ax[4][1].fill_between(sample_size, df_["hellinger_kdf_25"].ravel(), df_["hellinger_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -1018,8 +1018,8 @@ ax[4][1].set_title('Polynomial', fontsize=title_size)
 med, a_25, a_75 = calc_stat(df['kdn_mmcIn'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_mmcIn'])
 
-ax[4][2].plot(sample_size, med[1:], c="b", label='KDN')
-ax[4][2].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[4][2].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[4][2].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[4][2].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[4][2].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -1033,7 +1033,7 @@ right_side.set_visible(False)
 top_side = ax[4][2].spines["top"]
 top_side.set_visible(False)
 
-ax[4][2].plot(sample_size, df_['mmcIn_kdf_med'].ravel(), c="r", label='KDF')
+ax[4][2].plot(sample_size, df_['mmcIn_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[4][2].plot(sample_size, df_['mmcIn_rf_med'].ravel(), c="k", label='RF')
 
 ax[4][2].fill_between(sample_size, df_["mmcIn_kdf_25"].ravel(), df_["mmcIn_kdf_75"].ravel(), facecolor='r', alpha=.3)
@@ -1043,8 +1043,8 @@ ax[4][2].fill_between(sample_size, df_["mmcIn_rf_25"].ravel(), df_["mmcIn_rf_75"
 med, a_25, a_75 = calc_stat(df['kdn_mmcOut'])
 med_nn, nn_25, nn_75 = calc_stat(df['nn_mmcOut'])
 
-ax[4][3].plot(sample_size, med[1:], c="b", label='KDN')
-ax[4][3].plot(sample_size, med_nn[1:], c="c", label='NN')
+ax[4][3].plot(sample_size, med[1:], c="b", label='KDN', linewidth=3)
+ax[4][3].plot(sample_size, med_nn[1:], c="c", label='DN')
 
 ax[4][3].fill_between(sample_size, a_25[1:], a_75[1:], facecolor='b', alpha=.3)
 ax[4][3].fill_between(sample_size, nn_25[1:], nn_75[1:], facecolor='c', alpha=.3)
@@ -1058,11 +1058,18 @@ right_side.set_visible(False)
 top_side = ax[4][3].spines["top"]
 top_side.set_visible(False)
 
-ax[4][3].plot(sample_size, df_['mmcOut_kdf_med'].ravel(), c="r", label='KDF')
+ax[4][3].plot(sample_size, df_['mmcOut_kdf_med'].ravel(), c="r", label='KDF', linewidth=3)
 ax[4][3].plot(sample_size, df_['mmcOut_rf_med'].ravel(), c="k", label='RF')
 
 ax[4][3].fill_between(sample_size, df_["mmcOut_kdf_25"].ravel(), df_["mmcOut_kdf_75"].ravel(), facecolor='r', alpha=.3)
 ax[4][3].fill_between(sample_size, df_["mmcOut_rf_25"].ravel(), df_["mmcOut_rf_75"].ravel(), facecolor='k', alpha=.3)
 
-plt.savefig('plots/simulation_res.pdf')
+plt.savefig('plots/simulation_res_.pdf')
+# %%
+filename = '/Users/jayantadey/tmp/kdg/benchmarks/kdn_experiments/different_kdn_versions/gxor/results/KDN_approx_lin_experiment_data.mat'
+
+df = loadmat(filename)
+
+print(np.mean(df['nn_roc']), np.std(df['nn_roc']))
+print(np.mean(df['kdn_roc']), np.std(df['kdn_roc']))
 # %%
