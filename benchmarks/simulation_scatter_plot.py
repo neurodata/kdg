@@ -480,7 +480,7 @@ ax[5][3].set_xticks([-2,-1,0,1,2])
 
 #######################################################
 df = loadmat('kdn_experiments/results/polynomial_plot_data.mat')
-proba_nn = 1-np.flip(df["nn_proba"][:, 0].reshape(400, 400), axis=1)
+proba_nn = np.flip(df["nn_proba"][:, 0].reshape(400, 400), axis=1)
 proba_kdn = np.flip(df["kdn_proba"][:, 0].reshape(400, 400), axis=1)
 
 ax1 = ax[4][4].imshow(
@@ -515,7 +515,7 @@ ax[5][4].tick_params(labelsize=ticksize)
 ax[5][4].set_yticks([])
 ax[5][4].set_xticks([-2,-1,0,1,2])
 
-#plt.savefig('plots/simulations.pdf')
+plt.savefig('plots/simulations.pdf')
 # %%
 def calc_stat(a, reps=45):
     a_med = []
