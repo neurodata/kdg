@@ -30,7 +30,7 @@ for task_id in openml.study.get_suite("OpenML-CC18").data:
             X.shape[1]
         )
         number_of_categorical.append(
-            len(np.mean(is_categorical)*total_features[-1])
+            np.mean(is_categorical)*total_features[-1]
         )
     except:
         print('Could not load ', task_id)
