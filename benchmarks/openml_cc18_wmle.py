@@ -38,7 +38,7 @@ def experiment(task_id, folder, n_estimators=500, reps=30):
     train_samples = np.logspace(
         np.log10(2),
         np.log10(max_sample),
-        num=3,
+        num=10,
         endpoint=True,
         dtype=int
         )
