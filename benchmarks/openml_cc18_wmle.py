@@ -118,7 +118,7 @@ def experiment(task_id, folder, n_estimators=500, reps=30):
 
 #%%
 folder = 'openml_res'
-os.mkdir(folder)
+#os.mkdir(folder)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 current_dir = getcwd()
 files = listdir(current_dir+'/'+folder)
