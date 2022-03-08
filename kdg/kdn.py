@@ -389,7 +389,7 @@ class kdn(KernelDensityGraph):
                     np.outer(self._compute_pdf(X, polytope), sizes)
                 )
     
-        likelihood += bias
+        likelihood += self.task_bias[task_id]
         proba = (
             likelihood.T * priors / (np.sum(likelihood.T * priors, axis=0) + 1e-100)
         ).T
