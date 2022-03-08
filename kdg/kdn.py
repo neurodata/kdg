@@ -285,9 +285,9 @@ class kdn(KernelDensityGraph):
             likelihood.append(self._compute_pdf(X, polytope_idx))
         likelihood = np.array(likelihood)
         
-        bias = sum(np.min(likelihood, axis=1) *
-                   np.sum(self.polytope_sizes[task_id][start_idx:stop_idx, :], axis=0)) / 
-               (self.k*self.polytope_sizes[task_id])
+        bias = (sum(np.min(likelihood, axis=1) *
+                   np.sum(self.polytope_sizes[task_id][start_idx:stop_idx, :], axis=0)) /
+                (self.k*self.polytope_sizes[task_id]))
             
         self.task_bias[task_id] = bias
         
