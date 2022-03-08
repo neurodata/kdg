@@ -318,18 +318,21 @@ class kdn(KernelDensityGraph):
             likelihood.append(self._compute_pdf(X, polytope_idx))
         likelihood = np.array(likelihood)
         
-        needs_transfer = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
+        transfer_idx = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
             
-        proba = np.argmax(likelihood[needs_transfer,:], axis=0)
-        proba_by_label = [proba[y == label] for label in labels]
+        transfer_polytopes = np.argmax(likelihood[transfer_idx,:], axis=0)
+        polytope_by_label = np.array([transfer_polytopes[y == label] for label in labels])
 
-        new_sizes = np.zeros(self.polytope_sizes[task_id].shape)
-        for L, _ in enumerate(labels):
-            polytope_idxs = np.unique(proba_by_label[L])
-            for idx in polytope_idxs:
-                new_sizes[idx, L] = np.sum(proba_by_label[L] == idx)
+        new_sizes = np.zeros(polytope_by_label.shape)
+        polytope_idxs = np.unique(flatten(polytope_by_label))
+        for idx in polytope_idx:
+            new_sizes[idx, :] = np.sum(polytope_by_label == idx, axis=0)
+        #for L, _ in enumerate(labels):
+        #    polytope_idxs = np.unique(polytope_by_label[L])
+        #    for idx in polytope_idxs:
+        #        new_sizes[idx, L] = np.sum(polytope_by_label[L] == idx)
 
-        self.polytope_sizes[task_id][needs_transfer, :] = new_sizes[needs_transfer, :]
+        self.polytope_sizes[task_id][transfer_idx, :] = new_sizes
 
         bias = np.sum(np.min(likelihood, axis=1) * np.sum(self.polytope_sizes[task_id], axis=1)) / self.k / np.sum(self.polytope_sizes[task_id])
 
