@@ -182,7 +182,7 @@ class kdn(KernelDensityGraph):
 
         return np.exp(-d / self.h)
 
-    def add_task(self, X, y, task_id = None, **kwargs):
+    def fit(self, X, y, task_id = None, **kwargs):
         r"""
         Add a task to the multi-task kernel density network.
         Parameters
