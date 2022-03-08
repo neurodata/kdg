@@ -12,9 +12,14 @@ import os
 from os import listdir, getcwd 
 # %%
 def experiment(task_id, folder, n_estimators=500, reps=30):
-    task = openml.tasks.get_task(task_id)
-    X, y = task.get_X_and_y()
+    dataset = openml.datasets.get_dataset(task_id)
+    X, y, is_categorical, _ = dataset.get_data(
+                dataset_format="array", target=dataset.default_target_attribute
+            )
 
+    if np.mean(is_categorical) >0:
+        return
+        
     if np.isnan(np.sum(y)):
         return
 
@@ -126,7 +131,7 @@ Parallel(n_jobs=10,verbose=1)(
         delayed(experiment)(
                 task_id,
                 folder
-                ) for task_id in benchmark_suite.tasks
+                ) for task_id in openml.study.get_suite("OpenML-CC18").data
             )
 
 '''for task_id in benchmark_suite.tasks:
