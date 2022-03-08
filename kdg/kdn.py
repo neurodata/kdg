@@ -12,7 +12,6 @@ from scipy.stats import multivariate_normal
 from sklearn.covariance import LedoitWolf
 from tensorflow import keras
 
-
 class kdn(KernelDensityGraph):
     def __init__(
         self,
@@ -209,7 +208,7 @@ class kdn(KernelDensityGraph):
         X_network = keras.models.clone_model(self.network)
         #replace labeling layer
         X_network.pop()
-        X_network.add(layers.Dense(units=len(labels), activation = 'softmax'))
+        X_network.add(keras.layers.Dense(units=len(labels), activation = 'softmax'))
         X_network.compile(**self.compile_kwargs)
         X_network.fit(X, keras.utils.to_categorical(y), **kwargs)
         
