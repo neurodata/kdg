@@ -323,7 +323,7 @@ class kdn(KernelDensityGraph):
         transfer_polytopes = np.argmax(likelihood[transfer_idx,:], axis=0)
         polytope_by_label = [transfer_polytopes[y == label] for label in labels]
 
-        new_sizes = np.zeros(len(transfer_idx), len(labels))
+        new_sizes = np.zeros([len(transfer_idx), len(labels)])
         for L, _ in enumerate(labels):
             polytope_idxs = np.unique(polytope_by_label[L])
             for idx in polytope_idxs:
