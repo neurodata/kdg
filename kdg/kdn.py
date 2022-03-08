@@ -276,8 +276,8 @@ class kdn(KernelDensityGraph):
             self.polytope_covs = np.concatenate([self.polytope_covs, np.array(polytope_covs)])
             self.polytope_sizes[task_id] = np.concatenate([np.full([start_idx, len(labels)], fill_value=np.nan),
                                                            polytope_sizes])
-            #pad previous polytope sizes
-            for prev_task in task_list[:-1]:
+            #pad polytope sizes of previous tasks
+            for prev_task in self.task_list[:-1]:
                 self.polytope_sizes[prev_task] = np.concatenate([self.polytope_sizes[prev_task],
                                                                  np.full([stop_idx - start_idx,
                                                                           len(self.task_labels[prev_task])],
