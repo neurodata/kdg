@@ -321,16 +321,13 @@ class kdn(KernelDensityGraph):
         transfer_idx = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
             
         transfer_polytopes = np.argmax(likelihood[transfer_idx,:], axis=0)
-        polytope_by_label = np.array([transfer_polytopes[y == label] for label in labels])
+        polytope_by_label = [transfer_polytopes[y == label] for label in labels]
 
-        new_sizes = np.zeros(polytope_by_label.shape)
-        polytope_idxs = np.unique(flatten(polytope_by_label))
-        for idx in polytope_idx:
-            new_sizes[idx, :] = np.sum(polytope_by_label == idx, axis=0)
-        #for L, _ in enumerate(labels):
-        #    polytope_idxs = np.unique(polytope_by_label[L])
-        #    for idx in polytope_idxs:
-        #        new_sizes[idx, L] = np.sum(polytope_by_label[L] == idx)
+        new_sizes = np.zeros(len(transfer_idx), len(labels))
+        for L, _ in enumerate(labels):
+            polytope_idxs = np.unique(polytope_by_label[L])
+            for idx in polytope_idxs:
+                new_sizes[idx, L] = np.sum(polytope_by_label[L] == idx)
 
         self.polytope_sizes[task_id][transfer_idx, :] = new_sizes
 
