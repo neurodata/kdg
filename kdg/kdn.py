@@ -274,8 +274,14 @@ class kdn(KernelDensityGraph):
         else:
             self.polytope_means = np.concatenate([self.polytope_means, np.array(polytope_means)])
             self.polytope_covs = np.concatenate([self.polytope_covs, np.array(polytope_covs)])
-            self.polytope_sizes[task_id] = np.concatenate([np.full([start_idx, len(labels)], fill_value=None),
+            self.polytope_sizes[task_id] = np.concatenate([np.full([start_idx, len(labels)], fill_value=np.nan),
                                                            polytope_sizes])
+            #pad previous polytope sizes
+            for prev_task in task_list[:-1]:
+                self.polytope_sizes[prev_task] = np.concatenate([self.polytope_sizes[prev_task],
+                                                                 np.full([stop_idx - start_idx,
+                                                                          len(self.task_labels[prev_task])],
+                                                                         fill_value=np.nan)])
         
         #Calculate bias
         likelihood = []
@@ -308,11 +314,11 @@ class kdn(KernelDensityGraph):
         labels = self.task_labels[task_id]
 
         likelihood = []
-        for polytope_idx in self.polytope_means.shape[0]:
+        for polytope_idx in range(self.polytope_means.shape[0]):
             likelihood.append(self._compute_pdf(X, polytope_idx))
         likelihood = np.array(likelihood)
         
-        needs_transfer = np.unique(np.asarray(self.polytope_sizes[task_id] == None).nonzero()[0])
+        needs_transfer = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
             
         proba = np.argmax(likelihood[needs_transfer,:], axis=0)
         proba_by_label = [proba[y == label] for label in labels]
@@ -389,7 +395,7 @@ class kdn(KernelDensityGraph):
                     np.outer(self._compute_pdf(X, polytope), sizes)
                 )
     
-        likelihood += bias
+        likelihood += self.task_bias[task_id]
         proba = (
             likelihood.T * priors / (np.sum(likelihood.T * priors, axis=0) + 1e-100)
         ).T
