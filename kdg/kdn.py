@@ -327,7 +327,7 @@ class kdn(KernelDensityGraph):
         for L, _ in enumerate(labels):
             polytope_idxs = np.unique(proba_by_label[L])
             for idx in polytope_idxs:
-                new_sizes[L, idx] = np.sum(proba_by_label[L] == idx)
+                new_sizes[idx, L] = np.sum(proba_by_label[L] == idx)
 
         self.polytope_sizes[task_id][needs_transfer, :] = new_sizes[needs_transfer, :]
 
