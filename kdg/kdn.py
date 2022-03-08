@@ -206,7 +206,7 @@ class kdn(KernelDensityGraph):
         self.class_priors[task_id] = {}
         
         #create and fit neural network
-        X_network = keras.models.clone_model(network)
+        X_network = keras.models.clone_model(self.network)
         #replace labeling layer
         X_network.pop()
         X_network.add(layers.Dense(units=len(labels), activation = 'softmax'))
