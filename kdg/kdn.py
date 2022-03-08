@@ -216,7 +216,7 @@ class kdn(KernelDensityGraph):
         polytope_covs = []
         polytope_sizes = []
         
-        for label in self.labels:
+        for label in labels:
             X_ = X[np.where(y == label)[0]]  # data having the current label
             one_hot = np.zeros(len(labels))
             one_hot[label] = 1
