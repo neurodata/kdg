@@ -275,8 +275,8 @@ class kdn(KernelDensityGraph):
         else:
             self.polytope_means = np.concatenate([self.polytope_means, np.array(polytope_means)])
             self.polytope_covs = np.concatenate([self.polytope_covs, np.array(polytope_covs)])
-            self.polytope_sizes[task_id] = np.concatenate(np.full([start_idx, len(labels)], fill_value=None),
-                                                          polytope_sizes)
+            self.polytope_sizes[task_id] = np.concatenate([np.full([start_idx, len(labels)], fill_value=None),
+                                                           polytope_sizes])
         
         #Calculate bias
         likelihood = []
@@ -356,7 +356,7 @@ class kdn(KernelDensityGraph):
         likelihood = var.pdf(X)
         return likelihood
     
-    def predict_proba(X, task_id, return_likelihoods=False):
+    def predict_proba(self, X, task_id, return_likelihoods=False):
         r"""
         Calculate posteriors using the kernel density network.
         Parameters
@@ -392,7 +392,7 @@ class kdn(KernelDensityGraph):
         else:
             return proba
         
-    def predict(self, X):
+    def predict(self, X, task_id):
         r"""
         Perform inference using the kernel density forest.
         Parameters
@@ -400,4 +400,4 @@ class kdn(KernelDensityGraph):
         X : ndarray
             Input data matrix.
         """
-        return np.argmax(self.predict_proba(X), axis=1)
+        return np.argmax(self.predict_proba(X, task_id), axis=1)
