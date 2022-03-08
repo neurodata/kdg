@@ -23,8 +23,7 @@ class kdn(KernelDensityGraph):
         h=0.33,
         optimizer="rmsprop",
         loss=None,
-        fit_kwargs = {}
-        verbose=True,
+        verbose=True
     ):
         r"""[summary]
 
