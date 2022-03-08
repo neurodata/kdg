@@ -202,7 +202,6 @@ class kdn(KernelDensityGraph):
         if task_id is None: task_id = f"task{len(self.task_list)}" 
         self.task_list.append(task_id)
         self.task_labels[task_id] = labels
-        self.class_priors[task_id] = {}
         
         #create and fit neural network
         X_network = keras.models.clone_model(self.network)
@@ -215,14 +214,14 @@ class kdn(KernelDensityGraph):
         polytope_means = []
         polytope_covs = []
         polytope_sizes = []
-        
+        priors = []
         for label in labels:
             X_ = X[np.where(y == label)[0]]  # data having the current label
             one_hot = np.zeros(len(labels))
             one_hot[label] = 1
 
             # get class prior probability
-            self.class_priors[task_id][label] = len(X_) / len(X)
+            priors.append(len(X_) / len(X))
 
             # get polytope ids and unique polytope ids
             polytope_ids = self._get_polytope_ids(X_, X_network)
@@ -285,8 +284,9 @@ class kdn(KernelDensityGraph):
         likelihood = np.array(likelihood)
         
         bias = np.sum(np.min(likelihood, axis=1) * np.sum(polytope_sizes, axis=1)) / self.k / np.sum(polytope_sizes)
-            
         self.task_bias[task_id] = bias
+        self.class_priors[task_id] = np.array(priors)
+
         
     def forward_transfer(self, X, y, task_id):
         r"""
@@ -367,6 +367,12 @@ class kdn(KernelDensityGraph):
             Task that data is an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
         return_likelihoods : bool
             Whether to return likelihoods as well as array
+        
+        Returns
+        -------
+        ndarray
+            probability of X belonging to each label
+            likelihoods matrix for all polytope
         """
         X = check_array(X)
         if isinstance(task_id, int):
@@ -399,5 +405,14 @@ class kdn(KernelDensityGraph):
         ----------
         X : ndarray
             Input data matrix.
+        
+        Returns
+        -------
+        ndarray
+            predicted labels for each item in X
         """
-        return np.argmax(self.predict_proba(X, task_id), axis=1)
+        if isinstance(task_id, int):
+            task_id = self.task_list[task_id]
+            
+        predictions = np.argmax(self.predict_proba(X, task_id), axis=1)
+        return np.array([self.task_labels[task_id][pred] for pred in predictions])
