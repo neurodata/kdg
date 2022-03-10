@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestClassifier as rf
 import numpy as np
 from scipy.stats import multivariate_normal
 import warnings
-from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope
+from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLasso, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope
 
 class kdf(KernelDensityGraph):
 
@@ -84,7 +84,7 @@ class kdf(KernelDensityGraph):
                 X_tmp *= sqrt_scales
 
                 #covariance_model = LedoitWolf(assume_centered=True)
-                covariance_model = GraphicalLassoCV(assume_centered=True)
+                covariance_model = GraphicalLasso(assume_centered=True)
                 covariance_model.fit(X_tmp)
 
                 self.polytope_means[label].append(
