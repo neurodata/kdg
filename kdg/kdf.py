@@ -84,7 +84,7 @@ class kdf(KernelDensityGraph):
                 X_tmp *= sqrt_scales
 
                 #covariance_model = LedoitWolf(assume_centered=True)
-                covariance_model = GraphicalLasso(assume_centered=True)
+                covariance_model = GraphicalLasso(tol=1e-2, assume_centered=True)
                 covariance_model.fit(X_tmp)
 
                 self.polytope_means[label].append(
