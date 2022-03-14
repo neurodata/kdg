@@ -123,7 +123,7 @@ def experiment(dataset_id, folder, n_estimators=500, reps=30):
 
 #%%
 folder = 'openml_res_diag'
-#os.mkdir(folder)
+os.mkdir(folder)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 current_dir = getcwd()
 files = listdir(current_dir+'/'+folder)
@@ -136,7 +136,6 @@ Parallel(n_jobs=10,verbose=1)(
 
 '''for task_id in benchmark_suite.tasks:
     filename = 'openML_cc18_' + str(task_id) + '.csv'
-
     if filename not in files:
         print(filename)
         try:
@@ -145,4 +144,3 @@ Parallel(n_jobs=10,verbose=1)(
             print("couldn't run!")
         else:
             print("Ran successfully!")'''
-# %%
