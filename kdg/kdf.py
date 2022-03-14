@@ -146,7 +146,7 @@ class kdf(KernelDensityGraph):
             likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
             likelihoods[:,ii] += self.global_bias
 
-        proba = (likelihoods.T/(np.sum(likelihoods,axis=1)).T + 1e-40)
+        proba = (likelihoods.T/np.sum(likelihoods,axis=1) + 1e-40).T
         
         if return_likelihood:
             return proba, likelihoods
