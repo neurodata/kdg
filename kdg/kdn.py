@@ -270,7 +270,7 @@ class kdn(KernelDensityGraph):
         if start_idx == 0:
             self.polytope_means = np.array(polytope_means)
             self.polytope_covs = np.array(polytope_covs)
-            self.polytope_sizes[task_id] = polytope_sizes
+            self.polytope_sizes[task_id] = np.array(polytope_sizes)
         else:
             self.polytope_means = np.concatenate([self.polytope_means, np.array(polytope_means)])
             self.polytope_covs = np.concatenate([self.polytope_covs, np.array(polytope_covs)])
