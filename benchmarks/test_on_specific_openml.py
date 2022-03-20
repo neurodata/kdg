@@ -75,6 +75,7 @@ def experiment(X, y, folder, n_estimators=500, reps=30, feature=0):
     kappa_rf = []
     mc_rep = []
     samples = []
+    total_polytopes = []
 
     for train_sample in train_samples:
         
@@ -101,6 +102,13 @@ def experiment(X, y, folder, n_estimators=500, reps=30, feature=0):
             predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
             predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
+            polytope_count = 0
+            for lbl in unique_classes:
+                polytope_count += len(model_kdf.polytope_means[lbl])
+
+            total_polytopes.append(
+                polytope_count
+            )
             err_train.append(
                 1 - np.mean(
                         model_kdf.predict(X[indx_to_take_train])==y[indx_to_take_train]
@@ -143,6 +151,7 @@ def experiment(X, y, folder, n_estimators=500, reps=30, feature=0):
     df['ece_rf'] = ece_rf
     df['rep'] = mc_rep
     df['samples'] = samples
+    df['total_polytopes'] = total_polytopes
 
     df.to_csv(folder+'/'+'openML_cc18_'+str(dataset_id)+'_'+str(feature)+'.csv')
 
