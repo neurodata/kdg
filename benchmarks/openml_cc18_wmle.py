@@ -122,7 +122,7 @@ def experiment(dataset_id, folder, n_estimators=500, reps=30):
     df.to_csv(folder+'/'+'openML_cc18_'+str(dataset_id)+'.csv')
 
 #%%
-folder = 'openml_res'
+folder = 'openml_res_min_leaf'
 os.mkdir(folder)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 current_dir = getcwd()
