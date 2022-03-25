@@ -5,28 +5,24 @@ from numpy.random import uniform, normal, shuffle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+def get_ece(predicted_posterior, predicted_label, true_label):
+    hists_hat = []
+    amts = []
+    num_bins = 40
+    competences = (predicted_label == true_label)
 
-def get_ece(predicted_posterior, predicted_label, true_label, num_bins=40):
-    bin_size = 1 / num_bins
-    total_sample = len(true_label)
-    posteriors = predicted_posterior.max(axis=1)
-
-    score = 0
-    for bin in range(num_bins):
-        indx = np.where(
-            (posteriors > bin * bin_size) & (posteriors <= (bin + 1) * bin_size)
-        )[0]
-
-        acc = (
-            np.nan_to_num(np.mean(predicted_label[indx] == true_label[indx]))
-            if indx.size != 0
-            else 0
-        )
-        conf = np.nan_to_num(np.mean(posteriors[indx])) if indx.size != 0 else 0
-        score += len(indx) * np.abs(acc - conf)
-
-    score /= total_sample
-    return score
+    for i in range(num_bins):
+        prop = i*1./num_bins
+        inds = np.where((predicted_posterior >= prop) & (predicted_posterior <= prop+1./num_bins))[0]
+        amts.append(len(inds))
+        if len(inds) > 0:
+            hists.append(len(np.where(competences[inds] == 1)[0])*1./len(inds))
+            hists_hat.append(np.mean(predicted_posterior[inds]))
+        else:
+            hists.append(prop)
+            hists_hat.append(prop + 0.5/num_bins)
+    hists, hists_hat, amts = np.array(hists), np.array(hists_hat), np.array(amts)
+    return np.sum(np.abs(hists - hists_hat) * amts) / np.sum(amts)
 
 
 def hellinger(p, q):
