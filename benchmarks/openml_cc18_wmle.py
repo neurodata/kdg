@@ -75,7 +75,7 @@ def experiment(dataset_id, folder, n_estimators=500, reps=30):
                             indx[ii][-test_sample:counts[ii]]
                     )
                 )
-            model_kdf = kdf(kwargs={'n_estimators':n_estimators, 'min_samples_leaf':int(np.ceil(np.sqrt(train_sample*len(unique_classes))))})
+            model_kdf = kdf(kwargs={'n_estimators':n_estimators, 'min_samples_leaf':X.shape[1]**2})
             model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
             proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
             proba_rf = model_kdf.rf_model.predict_proba(X[indx_to_take_test])
