@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def get_ece(predicted_posterior, predicted_label, true_label):
+    hists = []
     hists_hat = []
     amts = []
     num_bins = 40
