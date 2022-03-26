@@ -292,8 +292,59 @@ class kdn(KernelDensityGraph):
         bias = np.sum(np.min(likelihood, axis=1) * np.sum(polytope_sizes, axis=1)) / self.k / np.sum(polytope_sizes)
         self.task_bias[task_id] = bias
         self.class_priors[task_id] = np.array(priors)
-
         
+    def generate_data(self, n_data, task_id, force_equal_priors = True):
+        r"""
+        Generate new data using existing polytopes
+
+        Parameters:
+        -----------
+        n_data: int
+            total size of data to return
+        task_id : int or string
+            Task that data will be an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
+        force_equal_priors : bool
+            If True, generated data will be equally distributed between all labels.
+            If False, generated data will be distributed between labels in proportion to the existing priors.
+        
+        Returns:
+        ndarray
+            Input data matrix.
+            Output (i.e. response) data matrix.
+        """
+        if isinstance(task_id, int):
+            task_id = self.task_list[task_id]
+        labels = self.task_labels[task_id]
+        n_labels = len(labels)
+        n_data = int(n_data)
+
+        X = []
+        y = []
+        
+        if equal_priors:
+            X_label = np.full(n_labels, n_data/n_labels)
+        else: 
+            X_label = n_data * self.class_priors[task_id]
+        size_by_label = size_by_label.astype(int)
+        if np.sum(size_by_label) < n_data :
+            size_by_label[-1] = size_by_label[-1] + 1
+        
+        for i in range(n_labels):
+            index = np.cumsum(self.polytope_sizes[task_id][:,i])
+            polytopes = np.random.randint(0, index[-1], X_label[i])
+            polytope_size = [np.count_nonzero(j > polytopes) for j in index]
+            polytope_size = polytope_size - np.concatenate(([0], polytope_size[0:-1]))
+            for polytope, size in enumerate(polytope_size):
+                if size > 0:
+                    xi = np.random.multivariate_normal(self.polytope_means[polytope],
+                                                       self.polytope_covs[polytope],
+                                                       size)
+                    yi = np.full(size, i)
+                    X.append(xi)
+                    y.append(yi)
+                    
+        return np.concatenate(X), np.concatenate(y)
+
     def forward_transfer(self, X, y, task_id):
         r"""
         Forward transfer all previously unused polytopes to the target task based on current data
