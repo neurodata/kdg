@@ -124,6 +124,100 @@ def experiment(dataset_id, folder, n_estimators=500, reps=30):
 
     df.to_csv(folder+'/'+'openML_cc18_'+str(dataset_id)+'.csv')
 
+
+
+def experiment_rf(dataset_id, folder, n_estimators=500, reps=30):
+    dataset = openml.datasets.get_dataset(dataset_id)
+    X, y, is_categorical, _ = dataset.get_data(
+                dataset_format="array", target=dataset.default_target_attribute
+            )
+
+    if np.mean(is_categorical) >0:
+        return
+
+    if np.isnan(np.sum(y)):
+        return
+
+    if np.isnan(np.sum(X)):
+        return
+
+    total_sample = X.shape[0]
+    unique_classes, counts = np.unique(y, return_counts=True)
+
+    test_sample = min(counts)//3
+
+    indx = []
+    for label in unique_classes:
+        indx.append(
+            np.where(
+                y==label
+            )[0]
+        )
+
+    max_sample = min(counts) - test_sample
+    train_samples = np.logspace(
+        np.log10(2),
+        np.log10(max_sample),
+        num=10,
+        endpoint=True,
+        dtype=int
+        )
+    
+    err = []
+    err_rf = []
+    ece = []
+    ece_rf = []
+    kappa = []
+    kappa_rf = []
+    mc_rep = []
+    samples = []
+
+    for train_sample in train_samples:
+        
+        for rep in range(reps):
+            indx_to_take_train = []
+            indx_to_take_test = []
+
+            for ii, _ in enumerate(unique_classes):
+                np.random.shuffle(indx[ii])
+                indx_to_take_train.extend(
+                    list(
+                            indx[ii][:train_sample]
+                    )
+                )
+                indx_to_take_test.extend(
+                    list(
+                            indx[ii][-test_sample:counts[ii]]
+                    )
+                )
+            model_rf = rf(n_estimators=n_estimators)
+            model_rf.fit(X[indx_to_take_train], y[indx_to_take_train])
+            proba_rf = model_rf.predict_proba(X[indx_to_take_test])
+            predicted_label_rf = np.argmax(proba_rf, axis = 1)
+
+            proba_rf = np.max(proba_rf, axis=1)
+
+            err_rf.append(
+                1 - np.mean(
+                    predicted_label_rf==y[indx_to_take_test]
+                )
+            )
+            ece_rf.append(
+                get_ece(proba_rf, predicted_label_rf, y[indx_to_take_test])
+            )
+            samples.append(
+                train_sample*len(unique_classes)
+            )
+            mc_rep.append(rep)
+
+    df = pd.DataFrame() 
+    df['err_rf'] = err_rf
+    df['ece_rf'] = ece_rf
+    df['rep'] = mc_rep
+    df['samples'] = samples
+
+    df.to_csv(folder+'/'+'openML_cc18_rf_'+str(dataset_id)+'.csv')
+
 #%%
 folder = 'openml_res_min_leaf'
 #os.mkdir(folder)
