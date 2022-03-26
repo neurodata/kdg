@@ -75,7 +75,7 @@ def experiment(dataset_id, folder, n_estimators=500, reps=30):
                             indx[ii][-test_sample:counts[ii]]
                     )
                 )
-            model_kdf = kdf(kwargs={'n_estimators':n_estimators, 'min_samples_leaf':int(np.ceil(X.shape[1]*10/np.log(train_sample)))})
+            model_kdf = kdf(kwargs={'n_estimators':n_estimators, 'min_samples_leaf':int(np.ceil(X.shape[1]*15/np.log(train_sample)))})
             model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
             proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
             proba_rf = model_kdf.rf_model.predict_proba(X[indx_to_take_test])
@@ -231,6 +231,12 @@ Parallel(n_jobs=10,verbose=1)(
                 ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
             )
 
+Parallel(n_jobs=10,verbose=1)(
+        delayed(experiment_rf)(
+                dataset_id,
+                folder
+                ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
+            )
 '''for task_id in benchmark_suite.tasks:
     filename = 'openML_cc18_' + str(task_id) + '.csv'
 
