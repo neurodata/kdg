@@ -231,7 +231,7 @@ files = listdir(current_dir+'/'+folder)
                 ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
             )'''
 
-Parallel(n_jobs=10,verbose=1)(
+Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment_rf)(
                 dataset_id,
                 folder
