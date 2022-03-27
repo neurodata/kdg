@@ -325,9 +325,9 @@ class kdn(KernelDensityGraph):
             X_label = np.full(n_labels, n_data/n_labels)
         else: 
             X_label = n_data * self.class_priors[task_id]
-        size_by_label = size_by_label.astype(int)
-        if np.sum(size_by_label) < n_data :
-            size_by_label[-1] = size_by_label[-1] + 1
+        X_label = X_label.astype(int)
+        if np.sum(X_label) < n_data :
+            X_label[-1] = X_label[-1] + 1
         
         for i in range(n_labels):
             index = np.cumsum(self.polytope_sizes[task_id][:,i])
