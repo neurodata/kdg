@@ -321,7 +321,7 @@ class kdn(KernelDensityGraph):
         X = []
         y = []
         
-        if equal_priors:
+        if force_equal_priors:
             X_label = np.full(n_labels, n_data/n_labels)
         else: 
             X_label = n_data * self.class_priors[task_id]
