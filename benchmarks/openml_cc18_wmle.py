@@ -219,22 +219,23 @@ def experiment_rf(dataset_id, folder, n_estimators=500, reps=30):
     df.to_csv(folder+'/'+'openML_cc18_rf_'+str(dataset_id)+'.csv')
 
 #%%
-folder = 'openml_res_rf'
-os.mkdir(folder)
+folder = 'openml_res_min_leaf'
+folder_rf = 'openml_res_rf'
+#os.mkdir(folder)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
-current_dir = getcwd()
-files = listdir(current_dir+'/'+folder)
-'''Parallel(n_jobs=10,verbose=1)(
+#current_dir = getcwd()
+#files = listdir(current_dir+'/'+folder)
+Parallel(n_jobs=10,verbose=1)(
         delayed(experiment)(
                 dataset_id,
                 folder
                 ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
-            )'''
+            )
 
 Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment_rf)(
                 dataset_id,
-                folder
+                folder_rf
                 ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
             )
 '''for task_id in benchmark_suite.tasks:
