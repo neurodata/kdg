@@ -82,9 +82,6 @@ def experiment(dataset_id, folder, n_estimators=500, reps=30):
             predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
             predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
-            proba_kdf = np.max(proba_kdf,axis=1)
-            proba_rf = np.max(proba_rf, axis=1)
-
             err.append(
                 1 - np.mean(
                         predicted_label_kdf==y[indx_to_take_test]
@@ -194,8 +191,6 @@ def experiment_rf(dataset_id, folder, n_estimators=500, reps=30):
             model_rf.fit(X[indx_to_take_train], y[indx_to_take_train])
             proba_rf = model_rf.predict_proba(X[indx_to_take_test])
             predicted_label_rf = np.argmax(proba_rf, axis = 1)
-
-            proba_rf = np.max(proba_rf, axis=1)
 
             err_rf.append(
                 1 - np.mean(
