@@ -220,12 +220,12 @@ folder_rf = 'openml_res_rf'
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 #current_dir = getcwd()
 #files = listdir(current_dir+'/'+folder)
-Parallel(n_jobs=10,verbose=1)(
+'''Parallel(n_jobs=10,verbose=1)(
         delayed(experiment)(
                 dataset_id,
                 folder
                 ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
-            )
+            )'''
 
 Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment_rf)(
