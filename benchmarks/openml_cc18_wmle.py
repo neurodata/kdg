@@ -11,7 +11,7 @@ from kdg.utils import get_ece
 import os
 from os import listdir, getcwd 
 # %%
-def experiment(dataset_id, folder, n_estimators=500, reps=30):
+def experiment(dataset_id, folder, n_estimators=1, reps=30):
     dataset = openml.datasets.get_dataset(dataset_id)
     X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -214,18 +214,19 @@ def experiment_rf(dataset_id, folder, n_estimators=500, reps=30):
     df.to_csv(folder+'/'+'openML_cc18_rf_'+str(dataset_id)+'.csv')
 
 #%%
-folder = 'openml_res_min_leaf'
-folder_rf = 'openml_res_rf'
-#os.mkdir(folder)
+folder = 'openml_res_min_leaf_1tree'
+folder_rf = 'openml_res_rf_1tree'
+os.mkdir(folder)
+os.mkdir(folder_rf)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 #current_dir = getcwd()
 #files = listdir(current_dir+'/'+folder)
-'''Parallel(n_jobs=10,verbose=1)(
+Parallel(n_jobs=10,verbose=1)(
         delayed(experiment)(
                 dataset_id,
                 folder
                 ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
-            )'''
+            )
 
 Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment_rf)(
