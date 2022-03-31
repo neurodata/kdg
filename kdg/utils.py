@@ -5,27 +5,30 @@ from numpy.random import uniform, normal, shuffle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
-def get_ece(predicted_posterior, predicted_label, true_label, num_bins=40):
-    bin_size = 1 / num_bins
+def get_ece(predicted_posterior, predicted_label, true_label, R=20):
+    bin_size = 1/R
     total_sample = len(true_label)
-    posteriors = predicted_posterior.max(axis=1)
+    K = predicted_posterior.shape[1]
 
     score = 0
-    for bin in range(num_bins):
-        indx = np.where(
-            (posteriors > bin * bin_size) & (posteriors <= (bin + 1) * bin_size)
-        )[0]
+    for k in range(K):
+        posteriors = predicted_posterior[:,k]
+        sorted_indx = np.argsort(posteriors)
+        for r in range(R):        
+            indx = sorted_indx[r*R:(r+1)*R]
+            predicted_label_ = predicted_label[indx]
+            true_label_ = true_label[indx]
 
-        acc = (
-            np.nan_to_num(np.mean(predicted_label[indx] == true_label[indx]))
-            if indx.size != 0
-            else 0
-        )
-        conf = np.nan_to_num(np.mean(posteriors[indx])) if indx.size != 0 else 0
-        score += len(indx) * np.abs(acc - conf)
+            indx_k = np.where(true_label_ == k)[0]
+            acc = (
+                np.nan_to_num(np.mean(predicted_label[indx_k] == k))
+                if indx_k.size != 0
+                else 0
+            )
+            conf = np.nan_to_num(np.mean(posteriors[indx_k])) if indx_k.size != 0 else 0
+            score += len(indx) * np.abs(acc - conf)
 
-    score /= total_sample
+    score /= (K*total_sample)
     return score
 
 
