@@ -85,12 +85,14 @@ class kdf(KernelDensityGraph):
 
                 covariance_model = LedoitWolf(assume_centered=True)
                 covariance_model.fit(X_tmp)
-                cov = np.zeros(covariance_model.covariance_.size,dtype=float)
+                cov = np.zeros(covariance_model.covariance_.shape,dtype=float)
 
                 for cov_i in range(feature_dim):
                     cov[cov_i,cov_i] = covariance_model.covariance_[cov_i,cov_i]
-                    cov[cov_i+1,cov_i] = covariance_model.covariance_[cov_i+1,cov_i] if cov_i+1<feature_dim else 0
-                    cov[cov_i,cov_i+1] = covariance_model.covariance_[cov_i,cov_i+1] if cov_i+1<feature_dim else 0
+
+                    if cov_i+1<feature_dim :
+                        cov[cov_i+1,cov_i] = covariance_model.covariance_[cov_i+1,cov_i]
+                        cov[cov_i,cov_i+1] = covariance_model.covariance_[cov_i,cov_i+1]
 
 
                 self.polytope_means[label].append(
