@@ -11,7 +11,7 @@ from kdg.utils import get_ece
 import os
 from os import listdir, getcwd 
 # %%
-def experiment(dataset_id, folder, n_estimators=1, reps=30):
+def experiment(dataset_id, folder, n_estimators=500, reps=30):
     dataset = openml.datasets.get_dataset(dataset_id)
     X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -228,12 +228,12 @@ Parallel(n_jobs=10,verbose=1)(
                 ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
             )
 
-Parallel(n_jobs=-1,verbose=1)(
+'''Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment_rf)(
                 dataset_id,
                 folder_rf
                 ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
-            )
+            )'''
 '''for task_id in benchmark_suite.tasks:
     filename = 'openML_cc18_' + str(task_id) + '.csv'
 
