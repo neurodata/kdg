@@ -77,21 +77,27 @@ class kdf(KernelDensityGraph):
                 
                 scales = matched_samples[idx]/np.max(matched_samples[idx])
                 X_tmp = X_[idx].copy()
-                location = np.average(X_tmp, axis=0, weights=scales)
-                X_tmp -= location
+                location_ = np.average(X_tmp, axis=0, weights=scales)
+                X_tmp -= location_
                 
                 sqrt_scales = np.sqrt(scales).reshape(-1,1) @ np.ones(feature_dim).reshape(1,-1)
                 X_tmp *= sqrt_scales
 
-                '''covariance_model = LedoitWolf(assume_centered=True)
-                covariance_model.fit(X_tmp)'''
+                covariance_model = LedoitWolf(assume_centered=True)
+                covariance_model.fit(X_tmp)
+                cov = np.zeros(covariance_model.covariance_.size,dtype=float)
 
-                covariance = np.mean(X_tmp**2, axis=0)
+                for cov_i in range(feature_dim):
+                    cov[cov_i,cov_i] = covariance_model.covariance_[cov_i,cov_i]
+                    cov[cov_i+1,cov_i] = covariance_model.covariance_[cov_i+1,cov_i] if cov_i+1<feature_dim else 0
+                    cov[cov_i,cov_i+1] = covariance_model.covariance_[cov_i,cov_i+1] if cov_i+1<feature_dim else 0
+
+
                 self.polytope_means[label].append(
-                    location
+                    location_
                 )
                 self.polytope_cov[label].append(
-                    np.eye(len(covariance))*covariance*len(idx)/sum(scales)
+                    cov*len(idx)/sum(scales)
                 )
 
             ## calculate bias for each label
