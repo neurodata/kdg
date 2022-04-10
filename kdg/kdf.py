@@ -16,7 +16,7 @@ from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf
 class kdf(KernelDensityGraph):
     # Need to create a template forest at some point? 
     def __init__(self, k = 1, kwargs={}):
-        print("In the updated KDF!")
+        #print("In the updated KDF!")
         super().__init__()
 
         #self.polytope_means = {}
