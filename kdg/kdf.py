@@ -5,7 +5,6 @@ from sklearn.ensemble import RandomForestClassifier as rf
 import numpy as np
 from scipy.stats import multivariate_normal
 import warnings
-from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope
 
 class kdf(KernelDensityGraph):
 
@@ -18,6 +17,7 @@ class kdf(KernelDensityGraph):
         self.polytope_mean_cov = {}
         self.prior = {}
         self.bias = {}
+        self.total_samples_this_label = {}
         self.global_bias = 0
         self.kwargs = kwargs
         self.k = k
@@ -42,7 +42,7 @@ class kdf(KernelDensityGraph):
         X, y = check_X_y(X, y)
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
-        feature_dim = X.shape[1]
+        self.feature_dim = X.shape[1]
 
         for label in self.labels:
             self.polytope_means[label] = []
@@ -50,6 +50,7 @@ class kdf(KernelDensityGraph):
             self.polytope_cardinality[label] = []
 
             X_ = X[np.where(y==label)[0]]
+            self.total_samples_this_label[label] = X_.shape[0]
             predicted_leaf_ids_across_trees = np.array(
                 [tree.apply(X_) for tree in self.rf_model.estimators_]
                 ).T
@@ -79,19 +80,16 @@ class kdf(KernelDensityGraph):
                 X_tmp = X_[idx].copy()
                 location = np.average(X_tmp, axis=0, weights=scales)
                 X_tmp -= location
-                
-                sqrt_scales = np.sqrt(scales).reshape(-1,1) @ np.ones(feature_dim).reshape(1,-1)
-                X_tmp *= sqrt_scales
 
                 '''covariance_model = LedoitWolf(assume_centered=True)
                 covariance_model.fit(X_tmp)'''
 
-                covariance = np.mean(X_tmp**2, axis=0)
+                covariance = np.average(X_tmp**2, axis=0, weights=scales)
                 self.polytope_means[label].append(
                     location
                 )
                 self.polytope_cov[label].append(
-                    np.eye(len(covariance))*covariance*len(idx)/sum(scales)
+                    covariance
                 )
 
             ## calculate bias for each label
@@ -108,18 +106,26 @@ class kdf(KernelDensityGraph):
         self.global_bias = min(self.bias.values())
         self.is_fitted = True
         
-            
-    def _compute_pdf(self, X, label, polytope_idx):
-        polytope_mean = self.polytope_means[label][polytope_idx]
-        polytope_cov = self.polytope_cov[label][polytope_idx]
+    def _compute_pdf_1d(self, X, label, polytope_idx, dim):
+        mean_1d = self.polytope_means[label][polytope_idx][dim]
+        var_1d = self.polytope_cov[label][polytope_idx][dim]
+        bias_1d = self.global_bias
 
-        var = multivariate_normal(
-            mean=polytope_mean, 
-            cov=polytope_cov, 
-            allow_singular=True
+        likelihood = np.exp(-(X-mean_1d)**2/(2*var_1d))/(np.sqrt(2*np.pi)*var_1d)
+
+        likelihood = bias_1d + \
+                likelihood*(self.polytope_cardinality[label][polytope_idx]/self.total_samples_this_label[label])
+
+        return likelihood
+
+    def _compute_pdf(self, X, label, polytope_idx):
+        
+        likelihood = np.ones(X.shape[0], dtype=float)
+        for ii in range(self.feature_dim):
+            likelihood *= self._compute_pdf_1d(
+                    X[:,ii], label, polytope_idx, ii
             )
 
-        likelihood = self.polytope_cardinality[label][polytope_idx]*var.pdf(X)
         return likelihood
 
     def predict_proba(self, X, return_likelihood=False):
@@ -139,11 +145,9 @@ class kdf(KernelDensityGraph):
         )
         
         for ii,label in enumerate(self.labels):
-            total_polytopes = len(self.polytope_means[label])
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
                 likelihoods[:,ii] += self.prior[label] * np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
 
-            likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
             likelihoods[:,ii] += self.global_bias
 
         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
