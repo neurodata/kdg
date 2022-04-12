@@ -1,4 +1,3 @@
-from statistics import covariance
 from .base import KernelDensityGraph
 from sklearn.mixture import GaussianMixture
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
