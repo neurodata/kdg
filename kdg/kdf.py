@@ -109,12 +109,8 @@ class kdf(KernelDensityGraph):
     def _compute_pdf_1d(self, X, label, polytope_idx, dim):
         mean_1d = self.polytope_means[label][polytope_idx][dim]
         var_1d = self.polytope_cov[label][polytope_idx][dim]
-        bias_1d = self.global_bias
 
         likelihood = np.exp(-(X-mean_1d)**2/(2*var_1d))/(np.sqrt(2*np.pi*var_1d))
-
-        likelihood = bias_1d + \
-                likelihood*(self.polytope_cardinality[label][polytope_idx]/self.total_samples_this_label[label])
 
         return likelihood
 
@@ -126,6 +122,7 @@ class kdf(KernelDensityGraph):
                     X[:,ii], label, polytope_idx, ii
             )
 
+        likelihood = likelihood*(self.polytope_cardinality[label][polytope_idx]/self.total_samples_this_label[label])
         return likelihood
 
     def predict_proba(self, X, return_likelihood=False):
