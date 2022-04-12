@@ -111,7 +111,7 @@ class kdf(KernelDensityGraph):
         var_1d = self.polytope_cov[label][polytope_idx][dim]
         bias_1d = self.global_bias
 
-        likelihood = np.exp(-(X-mean_1d)**2/(2*var_1d))/(np.sqrt(2*np.pi)*var_1d)
+        likelihood = np.exp(-(X-mean_1d)**2/(2*var_1d))/(np.sqrt(2*np.pi*var_1d))
 
         likelihood = bias_1d + \
                 likelihood*(self.polytope_cardinality[label][polytope_idx]/self.total_samples_this_label[label])
