@@ -44,7 +44,7 @@ class kdf(KernelDensityGraph):
         X, y = check_X_y(X, y)
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
-        feature_dim = X.shape[1]
+        self.feature_dim = X.shape[1]
 
         for label in self.labels:
             self.polytope_means[label] = []
