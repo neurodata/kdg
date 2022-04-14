@@ -81,12 +81,9 @@ class kdf(KernelDensityGraph):
                 scales = matched_samples[idx]/np.max(matched_samples[idx])
                 X_tmp = X_[idx].copy()
                 location_ = np.average(X_tmp, axis=0, weights=scales)
-                #X_tmp -= location_
-                
-                sqrt_scales = np.sqrt(scales).reshape(-1,1) @ np.ones(self.feature_dim).reshape(1,-1)
-                X_tmp *= sqrt_scales
+                X_tmp -= location_
 
-                covariance = (len(idx)*(1.4826*robust.mad(X_tmp))**2)/sum(scales)
+                covariance = np.average(X_tmp**2, axis=0, weights=scales)
 
                 self.polytope_means[label].append(
                     location_
