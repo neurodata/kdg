@@ -6,6 +6,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 import warnings
 from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope
+from statsmodels import robust
 
 class kdf(KernelDensityGraph):
 
@@ -82,7 +83,10 @@ class kdf(KernelDensityGraph):
                 location_ = np.average(X_tmp, axis=0, weights=scales)
                 X_tmp -= location_
                 
-                covariance = np.average(X_tmp**2, axis=0, weights=scales)
+                sqrt_scales = np.sqrt(scales).reshape(-1,1) @ np.ones(self.feature_dim).reshape(1,-1)
+                X_tmp *= sqrt_scales
+
+                covariance = (len(idx)*(1.4826*robust.mad(X_tmp))**2)/sum(scales)
 
                 self.polytope_means[label].append(
                     location_
