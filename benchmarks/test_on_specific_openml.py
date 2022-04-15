@@ -10,7 +10,7 @@ import openml
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 #%%
-dataset_id = 40984
+dataset_id = 16
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -31,7 +31,7 @@ for ii in range(X.shape[1]):
 df['class'] = y
 #sns.pairplot(df,hue='class')
 # %%
-def experiment(X, y, folder, n_estimators=500, reps=30, feature=0):
+def experiment(X, y, folder, n_estimators=100, reps=30, feature=0):
     X = X[:,feature]
     X = X.reshape(-1,1)
     
