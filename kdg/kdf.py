@@ -7,6 +7,7 @@ from scipy.stats import multivariate_normal
 import warnings
 from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope
 from statsmodels import robust
+warnings.filterwarnings("ignore",category =RuntimeWarning)
 
 class kdf(KernelDensityGraph):
 
