@@ -117,7 +117,7 @@ class kdf(KernelDensityGraph):
             allow_singular=True
             )
 
-        likelihood = self.polytope_cardinality[label][polytope_idx]*var.pdf(X)/self.total_sample_this_label[label]
+        likelihood = self.polytope_cardinality[label][polytope_idx]*np.nan_to_num(var.pdf(X))/self.total_sample_this_label[label]
         return likelihood
 
     def predict_proba(self, X, return_likelihood=False):
@@ -138,7 +138,7 @@ class kdf(KernelDensityGraph):
         
         for ii,label in enumerate(self.labels):
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
-                likelihoods[:,ii] += np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
+                likelihoods[:,ii] += self._compute_pdf(X, label, polytope_idx)
                 
             likelihoods[:,ii] += self.global_bias
             likelihoods[:,ii] = self.prior[label] *likelihoods[:,ii]
