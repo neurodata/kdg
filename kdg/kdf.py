@@ -103,7 +103,7 @@ class kdf(KernelDensityGraph):
             #likelihoods /= total_samples_this_label
             self.bias[label] = np.min(likelihoods)/(self.k*total_samples_this_label)
 
-        self.global_bias = min(self.bias.values())
+        self.global_bias = min(self.bias.values()) + 1e-20
         self.is_fitted = True
         
             
