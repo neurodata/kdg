@@ -75,7 +75,7 @@ class kdf(KernelDensityGraph):
                     matched_samples>0
                 )[0]
                 
-                if len(idx) == 1:
+                if len(idx) <= 1:
                     continue
                 
                 scales = matched_samples[idx]/np.max(matched_samples[idx])
