@@ -59,7 +59,7 @@ class kdf(KernelDensityGraph):
                 [tree.apply(X_) for tree in self.rf_model.estimators_]
                 ).T
             polytopes, polytope_count = np.unique(
-                predicted_leaf_ids_across_trees, return_inverse=True, axis=0
+                predicted_leaf_ids_across_trees, return_counts=True, axis=0
             )
             self.polytope_cardinality[label].extend(
                 polytope_count
