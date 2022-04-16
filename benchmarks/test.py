@@ -1,36 +1,75 @@
 #%%
 from kdg import kdf
 from kdg.utils import get_ece
-import openml
-import multiprocessing
-from joblib import Parallel, delayed
-import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold
-from sklearn.ensemble import RandomForestClassifier as rf
+import os 
+import numpy as np
+import openml
 from sklearn.metrics import cohen_kappa_score
-import os
-from sklearn import preprocessing
+from kdg.utils import get_ece
+#%%
+dataset_id = 12
+dataset = openml.datasets.get_dataset(dataset_id)
+X, y, is_categorical, _ = dataset.get_data(
+                dataset_format="array", target=dataset.default_target_attribute
+            )
+#%%
+unique_classes, counts = np.unique(y, return_counts=True)
 
+test_sample = min(counts)//3
+
+indx = []
+for label in unique_classes:
+    indx.append(
+        np.where(
+            y==label
+        )[0]
+    )
+
+max_sample = min(counts) - test_sample
+train_samples = np.logspace(
+    np.log10(2),
+    np.log10(max_sample),
+    num=10,
+    endpoint=True,
+    dtype=int
+    )
+
+train_sample = train_samples[-1]
+indx_to_take_train = []
+indx_to_take_test = []
+
+for ii, _ in enumerate(unique_classes):
+    np.random.shuffle(indx[ii])
+    indx_to_take_train.extend(
+        list(
+                indx[ii][:train_sample]
+        )
+    )
+    indx_to_take_test.extend(
+        list(
+                indx[ii][-test_sample:counts[ii]]
+        )
+    )
+
+model_kdf = kdf(kwargs={'n_estimators':500})
+model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
 # %%
-#task = openml.tasks.get_task(14969)
-#X, y = task.get_X_and_y()
-#X = X[:,4:5]
-df = pd.read_csv('uci_dataset/spambase.data')
-df_ = np.array(df)
-X, y = np.double(df_[:,:2]), df[[' Class']]
-_, y = np.unique(y, return_inverse=True)
-#scaler = preprocessing.StandardScaler().fit(X)
-#X = scaler.transform(X)
-
-skf = StratifiedKFold(n_splits=3)
-train_index, test_index = list(skf.split(X, y))[0]
-
-model_kdf = kdf(k=10000000, kwargs={'n_estimators':500})
-model_kdf.fit(X[train_index], y[train_index])
-
-#model_rf = rf(n_estimators=500).fit(X[train_index], y[train_index])
+def compute_pdf_1d(X, location, cov):
+    return np.exp(-(X-location)**2/(2*cov))/(np.sqrt(2*np.pi*cov))
 # %%
-test_acc = np.mean(model_kdf.predict(X[test_index])==y[test_index])
-test_acc2 = np.mean(model_kdf.rf_model.predict(X[test_index])==y[test_index])
+val = 1
+pow = 0
+for dim in range(X.shape[1]):
+    location = model_kdf.polytope_means[0][0][dim]
+    cov = model_kdf.polytope_cov[0][0][dim]
+    
+    val *= np.exp(model_kdf.pow_exp)*compute_pdf_1d(X[:1,dim], location, cov)
+
+
+    print(val, pow)
+# %%
+np.mean(model_kdf.predict(X[indx_to_take_test])==y[indx_to_take_test])
 # %%

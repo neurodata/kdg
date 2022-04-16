@@ -46,6 +46,7 @@ class kdf(KernelDensityGraph):
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
         self.feature_dim = X.shape[1]
+        self.pow_exp = np.log(self.feature_dim)/self.feature_dim
 
         for label in self.labels:
             self.polytope_means[label] = []
@@ -104,21 +105,23 @@ class kdf(KernelDensityGraph):
             #likelihoods /= total_samples_this_label
             self.bias[label] = np.min(likelihoods)/(self.k*total_samples_this_label)
 
-        self.global_bias = min(self.bias.values()) + 1e-30
+        self.global_bias = min(self.bias.values()) 
         self.is_fitted = True
-        
+    
+    def _compute_pdf_1d(self, X, location, variance):
+        return np.exp(-(X-location)**2/(2*variance)/(np.sqrt(2*np.pi*variance)))
             
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
         polytope_cov = self.polytope_cov[label][polytope_idx] 
+        likelihood = np.ones(X.shape[0], dtype = float)
+        
+        for dim in range(self.feature_dim):
+            likelihood = likelihood * np.exp(self.pow_exp)*\
+                self._compute_pdf_1d(X[:,dim], polytope_mean[dim], polytope_cov[dim])
 
-        var = multivariate_normal(
-            mean=polytope_mean, 
-            cov=np.eye(len(polytope_cov))*polytope_cov, 
-            allow_singular=True
-            )
 
-        likelihood = self.polytope_cardinality[label][polytope_idx]*np.nan_to_num(var.pdf(X))/self.total_sample_this_label[label]
+        likelihood = self.polytope_cardinality[label][polytope_idx]*likelihood/self.total_sample_this_label[label]
         return likelihood
 
     def predict_proba(self, X, return_likelihood=False):
