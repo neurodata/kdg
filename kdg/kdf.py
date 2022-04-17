@@ -46,7 +46,7 @@ class kdf(KernelDensityGraph):
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
         self.feature_dim = X.shape[1]
-        self.pow_exp = np.log(self.feature_dim)/self.feature_dim
+        #self.pow_exp = np.log(self.feature_dim)/self.feature_dim
 
         for label in self.labels:
             self.polytope_means[label] = []
@@ -117,7 +117,7 @@ class kdf(KernelDensityGraph):
         likelihood = np.ones(X.shape[0], dtype = float)
         
         for dim in range(self.feature_dim):
-            likelihood = likelihood * np.exp(self.pow_exp)*\
+            likelihood = likelihood *\
                 self._compute_pdf_1d(X[:,dim], polytope_mean[dim], polytope_cov[dim])
 
 
