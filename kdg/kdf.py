@@ -6,8 +6,6 @@ import numpy as np
 from scipy.stats import multivariate_normal
 import warnings
 from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope
-from statsmodels import robust
-warnings.filterwarnings("ignore",category =RuntimeWarning)
 
 class kdf(KernelDensityGraph):
 
@@ -17,8 +15,8 @@ class kdf(KernelDensityGraph):
         self.polytope_means = {}
         self.polytope_cov = {}
         self.polytope_cardinality = {}
+        self.total_samples_this_label = {}
         self.polytope_mean_cov = {}
-        self.total_sample_this_label = {}
         self.prior = {}
         self.bias = {}
         self.global_bias = 0
@@ -46,7 +44,6 @@ class kdf(KernelDensityGraph):
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
         self.feature_dim = X.shape[1]
-        #self.pow_exp = np.log(self.feature_dim)/self.feature_dim
 
         for label in self.labels:
             self.polytope_means[label] = []
@@ -54,7 +51,6 @@ class kdf(KernelDensityGraph):
             self.polytope_cardinality[label] = []
 
             X_ = X[np.where(y==label)[0]]
-            self.total_sample_this_label[label] = X_.shape[0]
             predicted_leaf_ids_across_trees = np.array(
                 [tree.apply(X_) for tree in self.rf_model.estimators_]
                 ).T
@@ -65,8 +61,8 @@ class kdf(KernelDensityGraph):
                 polytope_count
             )
             total_polytopes_this_label = len(polytopes)
-            total_samples_this_label = X_.shape[0]
-            self.prior[label] = total_samples_this_label/X.shape[0]
+            self.total_samples_this_label[label] = X_.shape[0]
+            self.prior[label] = self.total_samples_this_label[label]/X.shape[0]
 
             for polytope in range(total_polytopes_this_label):
                 matched_samples = np.sum(
@@ -77,21 +73,26 @@ class kdf(KernelDensityGraph):
                     matched_samples>0
                 )[0]
                 
-                if len(idx) <= 1:
+                if len(idx) == 1:
                     continue
                 
                 scales = matched_samples[idx]/np.max(matched_samples[idx])
                 X_tmp = X_[idx].copy()
-                location_ = np.average(X_tmp, axis=0, weights=scales)
-                X_tmp -= location_
+                location = np.average(X_tmp, axis=0, weights=scales)
+                X_tmp -= location
+                
+                sqrt_scales = np.sqrt(scales).reshape(-1,1) @ np.ones(feature_dim).reshape(1,-1)
+                X_tmp *= sqrt_scales
 
-                covariance = np.average(X_tmp**2, axis=0, weights=scales)
+                '''covariance_model = LedoitWolf(assume_centered=True)
+                covariance_model.fit(X_tmp)'''
 
+                covariance = np.mean(X_tmp**2, axis=0)
                 self.polytope_means[label].append(
-                    location_
+                    location
                 )
                 self.polytope_cov[label].append(
-                    covariance
+                    np.eye(len(covariance))*covariance*len(idx)/sum(scales)
                 )
 
             ## calculate bias for each label
@@ -102,26 +103,24 @@ class kdf(KernelDensityGraph):
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
                 likelihoods += np.nan_to_num(self._compute_pdf(X_, label, polytope_idx))
 
-            #likelihoods /= total_samples_this_label
-            self.bias[label] = np.min(likelihoods)/(self.k*total_samples_this_label)
+            likelihoods /= self.total_samples_this_label[label]
+            self.bias[label] = np.min(likelihoods)/(self.k*self.total_samples_this_label[label])
 
-        self.global_bias = min(self.bias.values()) 
+        self.global_bias = min(self.bias.values())
         self.is_fitted = True
-    
+        
+
     def _compute_pdf_1d(self, X, location, variance):
-        return np.exp(-(X-location)**2/(2*variance)/(np.sqrt(2*np.pi*variance)))
-            
+        return np.exp(-(X-location)**2/(2*variance))/np.sqrt(2*np.pi*variance)
+
     def _compute_pdf(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
-        polytope_cov = self.polytope_cov[label][polytope_idx] 
+        polytope_cov = self.polytope_cov[label][polytope_idx]
         likelihood = np.ones(X.shape[0], dtype = float)
-        
-        for dim in range(self.feature_dim):
-            likelihood = likelihood *\
-                self._compute_pdf_1d(X[:,dim], polytope_mean[dim], polytope_cov[dim])
 
+        for ii in range(self.feature_dim):
+            likelihood *= self._compute_pdf_1d(X[:,ii], polytope_mean[ii], polytope_cov[ii])
 
-        likelihood = self.polytope_cardinality[label][polytope_idx]*likelihood/self.total_sample_this_label[label]
         return likelihood
 
     def predict_proba(self, X, return_likelihood=False):
@@ -142,10 +141,10 @@ class kdf(KernelDensityGraph):
         
         for ii,label in enumerate(self.labels):
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
-                likelihoods[:,ii] += self._compute_pdf(X, label, polytope_idx)
-                
+                likelihoods[:,ii] += self.prior[label] * np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
+
+            likelihoods[:,ii] = likelihoods[:,ii]/self.total_samples_this_label[label]
             likelihoods[:,ii] += self.global_bias
-            likelihoods[:,ii] = self.prior[label] *likelihoods[:,ii]
 
         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         
