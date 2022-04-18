@@ -105,7 +105,10 @@ class kdf(KernelDensityGraph):
         self.is_fitted = True
         
 
-    def _compute_log_likelihood_1d(self, X, location, variance):    
+    def _compute_log_likelihood_1d(self, X, location, variance):
+        if variance == 0:
+            return 0
+                
         return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
 
     def _compute_log_likelihood(self, X, label, polytope_idx):
@@ -145,14 +148,14 @@ class kdf(KernelDensityGraph):
                 tmp_[:,polytope_idx] = self._compute_log_likelihood(X, label, polytope_idx) 
             
             pow_exp = np.max(tmp_, axis=1).reshape(-1,1)@np.ones((1,total_polytope_this_label), dtype=float)
-            tmp_ += pow_exp
+            tmp_ -= pow_exp
             likelihoods = np.sum(np.exp(tmp_), axis=1) +\
-                 np.exp(self.global_bias + pow_exp[:,0]) 
+                 np.exp(self.global_bias - pow_exp[:,0]) 
             likelihoods *= self.prior[label] 
-            log_likelihoods[:,ii] = np.log(likelihoods) - pow_exp[:,0]
+            log_likelihoods[:,ii] = np.log(likelihoods) + pow_exp[:,0]
 
         med_pow = np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(self.labels)))
-        log_likelihoods += med_pow
+        log_likelihoods -= med_pow
         likelihoods = np.exp(log_likelihoods)
         total_likelihoods = np.sum(likelihoods, axis=1)
 
