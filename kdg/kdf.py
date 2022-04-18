@@ -81,19 +81,13 @@ class kdf(KernelDensityGraph):
                 X_tmp = X_[idx].copy()
                 location = np.average(X_tmp, axis=0, weights=scales)
                 X_tmp -= location
-                
-                sqrt_scales = np.sqrt(scales).reshape(-1,1) @ np.ones(self.feature_dim).reshape(1,-1)
-                X_tmp *= sqrt_scales
 
-                '''covariance_model = LedoitWolf(assume_centered=True)
-                covariance_model.fit(X_tmp)'''
-
-                covariance = np.mean(X_tmp**2, axis=0)
+                covariance = np.average(X_tmp**2, axis=0, weights=scales)
                 self.polytope_means[label].append(
                     location
                 )
                 self.polytope_cov[label].append(
-                    covariance*len(idx)/sum(scales)
+                    covariance
                 )
 
             ## calculate bias for each label
@@ -111,10 +105,7 @@ class kdf(KernelDensityGraph):
         self.is_fitted = True
         
 
-    def _compute_log_likelihood_1d(self, X, location, variance):
-        if variance == 0:
-            return 0
-            
+    def _compute_log_likelihood_1d(self, X, location, variance):    
         return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
 
     def _compute_log_likelihood(self, X, label, polytope_idx):
