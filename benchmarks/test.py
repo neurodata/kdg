@@ -10,7 +10,7 @@ import openml
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 #%%
-dataset_id = 40979
+dataset_id = 1478
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -54,8 +54,13 @@ for ii, _ in enumerate(unique_classes):
         )
 )
 
-model_kdf = kdf(k=1e3,kwargs={'n_estimators':500, 'min_samples_leaf':30})
+model_kdf = kdf(k=1e7,kwargs={'n_estimators':500, 'min_samples_leaf':30})
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
+
+# %%
+print(np.mean(model_kdf.predict(X[indx_to_take_test])==y[indx_to_take_test]))
+print(np.mean(model_kdf.rf_model.predict(X[indx_to_take_test])==y[indx_to_take_test]))
+
 # %%
 def compute_pdf_1d(X, location, cov):
     return np.exp(-(X-location)**2/(2*cov))/(np.sqrt(2*np.pi*cov))
@@ -70,8 +75,6 @@ for dim in range(X.shape[1]):
 
 
     print(val, pow)
-# %%
-np.mean(model_kdf.predict(X[indx_to_take_test])==y[indx_to_take_test])
 # %%
 from kdg.utils import generate_gaussian_parity, gaussian_sparse_parity
 
