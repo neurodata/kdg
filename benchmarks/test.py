@@ -1,4 +1,5 @@
 #%%
+from numpy import dtype
 from kdg import kdf
 from kdg.utils import get_ece
 import matplotlib.pyplot as plt
@@ -37,7 +38,7 @@ endpoint=True,
 dtype=int
 )
 
-train_sample = train_samples[-1]
+train_sample = train_samples[1]
 indx_to_take_train = []
 indx_to_take_test = []
 
@@ -118,15 +119,27 @@ def predict_proba(model, X, return_likelihood=False):
         for polytope_idx,_ in enumerate(model.polytope_means[label]):
             tmp_[:,polytope_idx] = _compute_log_likelihood(model, X, label, polytope_idx) 
         
-        pow_exp = np.max(tmp_, axis=1).reshape(-1,1)@np.ones((1,total_polytope_this_label), dtype=float)
-        tmp_ += pow_exp
+        print(tmp_, 'tmp')
+        max_pow = np.max(
+            np.concatenate(
+                (
+                    tmp_,
+                    model.global_bias*np.ones((X.shape[0],1), dtype=float)
+                ),
+                axis=1
+            )
+        )
+        pow_exp = max_pow.reshape(-1,1)@np.ones((1,total_polytope_this_label), dtype=float)
+        tmp_ -= pow_exp
+        print(pow_exp, tmp_, 'pow exp, tmp')
         likelihoods = np.sum(np.exp(tmp_), axis=1) +\
-                np.exp(model.global_bias + pow_exp[:,0]) 
+                np.exp(model.global_bias - pow_exp[:,0]) 
         likelihoods *= model.prior[label] 
-        log_likelihoods[:,ii] = np.log(likelihoods) - pow_exp[:,0]
+        print(likelihoods)
+        log_likelihoods[:,ii] = np.log(likelihoods) + pow_exp[:,0]
 
     med_pow = np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(model.labels)))
-    log_likelihoods += med_pow
+    log_likelihoods -= med_pow
     likelihoods = np.exp(log_likelihoods)
     total_likelihoods = np.sum(likelihoods, axis=1)
 

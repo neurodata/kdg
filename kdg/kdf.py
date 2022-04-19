@@ -147,19 +147,28 @@ class kdf(KernelDensityGraph):
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
                 tmp_[:,polytope_idx] = self._compute_log_likelihood(X, label, polytope_idx) 
             
+            max_pow = np.max(
+                    np.concatenate(
+                        (
+                            tmp_,
+                            self.global_bias*np.ones((X.shape[0],1), dtype=float)
+                        ),
+                        axis=1
+                    )
+                )
             pow_exp = np.nan_to_num(
-                np.max(tmp_, axis=1).reshape(-1,1)@np.ones((1,total_polytope_this_label), dtype=float)
+                max_pow.reshape(-1,1)@np.ones((1,total_polytope_this_label), dtype=float)
             )
             tmp_ -= pow_exp
             likelihoods = np.sum(np.exp(tmp_), axis=1) +\
                  np.exp(self.global_bias - pow_exp[:,0]) 
             likelihoods *= self.prior[label] 
-            log_likelihoods[:,ii] = np.log(likelihoods) + pow_exp[:,0]
+            log_likelihoods[:,ii] = np.log(likelihoods + 1e-200) + pow_exp[:,0]
 
-        med_pow = np.nan_to_num(
+        max_pow = np.nan_to_num(
             np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(self.labels)))
         )
-        log_likelihoods -= med_pow
+        log_likelihoods -= max_pow
         likelihoods = np.exp(log_likelihoods)
         total_likelihoods = np.sum(likelihoods, axis=1)
 
