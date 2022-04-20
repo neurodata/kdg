@@ -9,18 +9,12 @@ from .base import KernelDensityGraph
 from sklearn.utils.validation import check_array, check_X_y
 import numpy as np
 from scipy.stats import multivariate_normal
-from sklearn.covariance import LedoitWolf
+from sklearn.covariance import LedoitWolf, log_likelihood
 
 
 class kdn(KernelDensityGraph):
     def __init__(
-        self,
-        network,
-        weighting=True,
-        k=1.0,
-        T=1e-3,
-        h=0.33,
-        verbose=True,
+        self, network, weighting=True, k=1.0, T=1e-3, h=0.33, verbose=True,
     ):
         r"""[summary]
 
@@ -43,13 +37,15 @@ class kdn(KernelDensityGraph):
         self.polytope_means = {}
         self.polytope_covs = {}
         self.polytope_samples = {}
-        self.class_priors = {}
+        self.prior = {}
         self.network = network
         self.weighting = weighting
         self.k = k
         self.h = h
         self.T = T
         self.bias = {}
+        self.global_bias = 0
+        self.total_samples_this_label = {}
         self.verbose = verbose
 
         # total number of layers in the NN
@@ -175,7 +171,7 @@ class kdn(KernelDensityGraph):
         """
         X, y = check_X_y(X, y)
         self.labels = np.unique(y)
-        feature_dim = X.shape[1]
+        self.feature_dim = X.shape[1]
 
         for label in self.labels:
             self.polytope_means[label] = []
@@ -184,8 +180,10 @@ class kdn(KernelDensityGraph):
 
             X_ = X[np.where(y == label)[0]]  # data having the current label
 
+            self.total_samples_this_label[label] = X_.shape[0]
+
             # get class prior probability
-            self.class_priors[label] = len(X_) / len(X)
+            self.prior[label] = len(X_) / len(X)
 
             # get polytope ids and unique polytope ids
             polytope_ids = self._get_polytope_ids(X_)
@@ -208,7 +206,7 @@ class kdn(KernelDensityGraph):
                 )  # compute the weighted average of the samples
                 X_tmp -= polytope_mean_  # center the data
 
-                polytope_cov_ = np.average(X_tmp**2, axis=0, weights=weights)
+                polytope_cov_ = np.average(X_tmp ** 2, axis=0, weights=weights)
 
                 polytope_samples_ = len(
                     np.where(polytope_ids == polytope)[0]
@@ -223,43 +221,35 @@ class kdn(KernelDensityGraph):
             likelihoods = np.zeros((np.size(X_, 0)), dtype=float)
 
             for polytope, _ in enumerate(self.polytope_means[label]):
-                likelihoods += np.nan_to_num(
-                    self.polytope_samples[label][polytope]
-                    * self._compute_pdf(X_, label, polytope)
-                )
+                likelihoods += self._compute_log_likelihood(X_, label, polytope)
 
-            likelihoods /= sum(self.polytope_samples[label])
-            self.bias[label] = np.min(likelihoods) / (
-                self.k * sum(self.polytope_samples[label])
+            self.bias[label] = np.min(likelihoods) - np.log(
+                self.k * self.total_samples_this_label[label]
             )
 
-    def _compute_pdf(self, X, label, polytope_id):
-        r"""compute the likelihood for the given data
+        self.global_bias = min(self.bias.values())
 
-        Parameters
-        ----------
-        X : ndarray
-            Input data matrix
-        label : int
-            class label
-        polytope_idx : int
-            polytope identifier
-
-        Returns
-        -------
-        ndarray
-            likelihoods
-        """
-        polytope_mean = self.polytope_means[label][polytope_id]
-        polytope_cov = self.polytope_covs[label][polytope_id]
-
-        var = multivariate_normal(
-            mean=polytope_mean, 
-            cov=np.eye(len(polytope_cov))*polytope_cov,
-            allow_singular=True
+    def _compute_log_likelihood_1d(self, X, location, variance):
+        if variance == 0:
+            return 0
+        return -((X - location) ** 2) / (2 * variance) - 0.5 * np.log(
+            2 * np.pi * variance
         )
 
-        likelihood = var.pdf(X)
+    def _compute_log_likelihood(self, X, label, polytope_idx):
+        polytope_mean = self.polytope_means[label][polytope_idx]
+        polytope_covs = self.polytope_covs[label][polytope_idx]
+        likelihood = np.zeros(X.shape[0], dtype=float)
+
+        for ii in range(self.feature_dim):
+            likelihood += self._compute_log_likelihood_1d(
+                X[:, ii], polytope_mean[ii], polytope_covs[ii]
+            )
+
+        likelihood += np.log(self.polytope_samples[label][polytope_idx]) - np.log(
+            self.total_samples_this_label[label]
+        )
+
         return likelihood
 
     def predict_proba(self, X, return_likelihoods=False):
@@ -272,22 +262,42 @@ class kdn(KernelDensityGraph):
         """
         X = check_array(X)
 
-        likelihoods = np.zeros((np.size(X, 0), len(self.labels)), dtype=float)
-        priors = np.zeros((len(self.labels), 1))
+        log_likelihoods = np.zeros((np.size(X, 0), len(self.labels)), dtype=float)
         for ii, label in enumerate(self.labels):
-            priors[ii] = self.class_priors[label]
-            for polytope, _ in enumerate(self.polytope_means[label]):
-                likelihoods[:, ii] += np.nan_to_num(
-                    self.polytope_samples[label][polytope]
-                    * self._compute_pdf(X, label, polytope)
+            total_polytope_this_label = len(self.polytope_means[label])
+            tmp_ = np.zeros((X.shape[0], total_polytope_this_label), dtype=float)
+
+            for polytope_idx, _ in enumerate(self.polytope_means[label]):
+                tmp_[:, polytope_idx] = self._compute_log_likelihood(
+                    X, label, polytope_idx
                 )
 
-            likelihoods[:, ii] = likelihoods[:, ii] / sum(self.polytope_samples[label])
-            likelihoods[:, ii] += min(self.bias.values())
+            max_pow = np.max(
+                np.concatenate(
+                    (tmp_, self.global_bias * np.ones((X.shape[0], 1))), axis=1
+                )
+            )
+            pow_exp = np.nan_to_num(
+                max_pow.reshape(-1, 1)
+                @ np.ones((1, total_polytope_this_label), dtype=float)
+            )
+            tmp_ -= pow_exp
+            likelihoods = np.sum(np.exp(tmp_), axis=1) + np.exp(
+                self.global_bias - pow_exp[:, 0]
+            )
+            likelihoods *= self.prior[label]
+            log_likelihoods[:, ii] = np.log(likelihoods + 1e-200) + pow_exp[:, 0]
 
-        proba = (
-            likelihoods.T * priors / (np.sum(likelihoods * priors.T, axis=1) + 1e-100)
-        ).T
+        max_pow = np.nan_to_num(
+            np.max(log_likelihoods, axis=1).reshape(-1, 1)
+            @ np.ones((1, len(self.labels)))
+        )
+        log_likelihoods -= max_pow
+        likelihoods = np.exp(log_likelihoods)
+        total_likelihoods = np.sum(likelihoods, axis=1)
+
+        proba = (likelihoods.T / total_likelihoods).T
+
         if return_likelihoods:
             return proba, likelihoods
         else:
