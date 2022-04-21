@@ -14,7 +14,7 @@ from sklearn.covariance import LedoitWolf, log_likelihood
 
 class kdn(KernelDensityGraph):
     def __init__(
-        self, network, weighting=True, k=1.0, T=1e-3, h=0.33, verbose=True,
+        self, network, weighting=True, k=1.0, T=1e-50, h=0.33, verbose=True,
     ):
         r"""[summary]
 
@@ -230,8 +230,9 @@ class kdn(KernelDensityGraph):
         self.global_bias = min(self.bias.values())
 
     def _compute_log_likelihood_1d(self, X, location, variance):
-        if variance == 0:
-            return 0
+        if variance < 1e-100:
+            return -np.inf
+
         return -((X - location) ** 2) / (2 * variance) - 0.5 * np.log(
             2 * np.pi * variance
         )
@@ -249,7 +250,6 @@ class kdn(KernelDensityGraph):
         likelihood += np.log(self.polytope_samples[label][polytope_idx]) - np.log(
             self.total_samples_this_label[label]
         )
-
         return likelihood
 
     def predict_proba(self, X, return_likelihoods=False):
