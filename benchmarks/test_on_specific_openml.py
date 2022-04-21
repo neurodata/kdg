@@ -1,188 +1,163 @@
 #%%
 from kdg import kdf
 from kdg.utils import get_ece
-import openml
-import multiprocessing
-from joblib import Parallel, delayed
-import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold
-from sklearn.ensemble import RandomForestClassifier as rf
+import os 
+import numpy as np
+import openml
 from sklearn.metrics import cohen_kappa_score
-import os
-# %%
-def get_stratified_samples(y, samples_to_take):
-    labels = np.unique(y)
-    sample_per_class = int(np.floor(samples_to_take/len(labels)))
-
-    if sample_per_class < len(np.where(y==labels[0])[0]):
-        stratified_indices = np.random.choice(
-            (
-            np.where(y==labels[0])[0]
-            ), 
-            sample_per_class,
-            replace = False
-        )
-    else:
-        stratified_indices = np.random.choice(
-            (
-            np.where(y==labels[0])[0]
-            ), 
-            sample_per_class,
-            replace = True
-        )
-
-    for lbl in labels[1:]:
-        if sample_per_class < len(np.where(y==lbl)[0]):
-            _stratified_indices = np.random.choice(
-                (
-                np.where(y==lbl)[0]
-                ), 
-                sample_per_class,
-                replace = False
-            )
-        else:
-            _stratified_indices = np.random.choice(
-                (
-                np.where(y==lbl)[0]
-                ), 
-                sample_per_class,
-                replace = True
+from kdg.utils import get_ece
+#%%
+dataset_id = 40984
+dataset = openml.datasets.get_dataset(dataset_id)
+X, y, is_categorical, _ = dataset.get_data(
+                dataset_format="array", target=dataset.default_target_attribute
             )
 
-        stratified_indices = np.concatenate(
-            (stratified_indices, _stratified_indices),
-            axis=0
-        )
-    return stratified_indices
+#features_to_remove = [0,1,6,7,8,9]
+#features = [True]*X.shape[1]
+#for ii in features_to_remove:
+#    features[ii] = False
+
+#X = X[:,features]
+
+df = pd.DataFrame()
+
+for ii in range(X.shape[1]):
+    df['feature '+str(ii)] = X[:,ii]
+
+df['class'] = y
+#sns.pairplot(df,hue='class')
 # %%
-def experiment(task_id, folder, n_estimators=500, cv=5, reps=10):
-    df = pd.DataFrame() 
-    task = openml.tasks.get_task(task_id)
-    X, y = task.get_X_and_y()
+def experiment(X, y, folder, n_estimators=500, reps=30, feature=0):
+    X = X[:,feature]
+    X = X.reshape(-1,1)
+    
+    if np.mean(is_categorical) >0:
+        return
 
     if np.isnan(np.sum(y)):
         return
 
     if np.isnan(np.sum(X)):
         return
-    
-    dim = X.shape[1]
-    max_class = len(np.unique(y))
-    max_sample = min(np.floor(len(y)*(cv-1.1)/cv),10000)
-    sample_size = np.logspace(
-        np.log10(max_class*2),
+
+    total_sample = X.shape[0]
+    unique_classes, counts = np.unique(y, return_counts=True)
+
+    test_sample = min(counts)//3
+
+    indx = []
+    for label in unique_classes:
+        indx.append(
+            np.where(
+                y==label
+            )[0]
+        )
+
+    max_sample = min(counts) - test_sample
+    train_samples = np.logspace(
+        np.log10(2),
         np.log10(max_sample),
         num=10,
         endpoint=True,
         dtype=int
         )
-
-    mean_rf = np.zeros((len(sample_size),cv), dtype=float)
-    mean_kdf = np.zeros((len(sample_size),cv), dtype=float)
-    mean_ece_rf = np.zeros((len(sample_size),cv), dtype=float)
-    mean_ece_kdf = np.zeros((len(sample_size),cv), dtype=float)
-    mean_kappa_rf = np.zeros((len(sample_size),cv), dtype=float)
-    mean_kappa_kdf = np.zeros((len(sample_size),cv), dtype=float)
-    folds = []
+    
+    err = []
+    err_train = []
+    err_rf = []
+    ece = []
+    ece_rf = []
+    kappa = []
+    kappa_rf = []
+    mc_rep = []
     samples = []
-    dims = []
+    total_polytopes = []
 
-    error_rf = np.zeros((len(sample_size),reps), dtype=float)
-    error_kdf = np.zeros((len(sample_size),reps), dtype=float)
-    ece_rf = np.zeros((len(sample_size),reps), dtype=float)
-    ece_kdf = np.zeros((len(sample_size),reps), dtype=float)
-    kappa_rf = np.zeros((len(sample_size),reps), dtype=float)
-    kappa_kdf = np.zeros((len(sample_size),reps), dtype=float)
+    for train_sample in train_samples:
+        
+        for rep in range(reps):
+            indx_to_take_train = []
+            indx_to_take_test = []
 
-    skf = StratifiedKFold(n_splits=cv)
+            for ii, _ in enumerate(unique_classes):
+                np.random.shuffle(indx[ii])
+                indx_to_take_train.extend(
+                    list(
+                            indx[ii][:train_sample]
+                    )
+                )
+                indx_to_take_test.extend(
+                    list(
+                            indx[ii][-test_sample:counts[ii]]
+                    )
+                )
+            model_kdf = kdf(kwargs={'n_estimators':n_estimators, 'min_samples_leaf':int(np.ceil(np.sqrt(train_sample*len(unique_classes))))})
+            model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
+            proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
+            proba_rf = model_kdf.rf_model.predict_proba(X[indx_to_take_test])
+            predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
+            predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
-    fold = 0
-    for train_index, test_index in skf.split(X, y):
-        X_train, X_test = X[train_index], X[test_index]
-        y_train, y_test = y[train_index], y[test_index]
-        total_sample = X_train.shape[0]
+            polytope_count = 0
+            for lbl in unique_classes:
+                polytope_count += len(model_kdf.polytope_means[lbl])
 
-        for jj,sample in enumerate(sample_size):
-            #print('sample numer'+str(sample))
+            total_polytopes.append(
+                polytope_count
+            )
+            err_train.append(
+                1 - np.mean(
+                        model_kdf.predict(X[indx_to_take_train])==y[indx_to_take_train]
+                    )
+            )
+            err.append(
+                1 - np.mean(
+                        predicted_label_kdf==y[indx_to_take_test]
+                    )
+            )
+            err_rf.append(
+                1 - np.mean(
+                    predicted_label_rf==y[indx_to_take_test]
+                )
+            )
+            kappa.append(
+                cohen_kappa_score(predicted_label_kdf, y[indx_to_take_test])
+            )
+            kappa_rf.append(
+                cohen_kappa_score(predicted_label_rf, y[indx_to_take_test])
+            )
+            ece.append(
+                get_ece(proba_kdf, predicted_label_kdf, y[indx_to_take_test])
+            )
+            ece_rf.append(
+                get_ece(proba_rf, predicted_label_rf, y[indx_to_take_test])
+            )
+            samples.append(
+                train_sample*len(unique_classes)
+            )
+            mc_rep.append(rep)
 
-            if total_sample<sample:
-                continue
+    df = pd.DataFrame() 
+    df['err_kdf'] = err
+    df['err_kdf_train'] = err_train
+    df['err_rf'] = err_rf
+    df['kappa_kdf'] = kappa
+    df['kappa_rf'] = kappa_rf
+    df['ece_kdf'] = ece
+    df['ece_rf'] = ece_rf
+    df['rep'] = mc_rep
+    df['samples'] = samples
+    df['total_polytopes'] = total_polytopes
 
-            for ii in range(reps):
-                train_idx =  get_stratified_samples(y_train, sample)
-                    
-                model_rf = rf(n_estimators=n_estimators).fit(X_train[train_idx], y_train[train_idx])
-                proba_rf = model_rf.predict_proba(X_test)
-                predicted_label = np.argmax(proba_rf, axis = 1)
-                ece_rf[jj][ii] = get_ece(proba_rf, predicted_label, y_test)
-                error_rf[jj][ii] = 1 - np.mean(y_test==predicted_label)
-                kappa_rf[jj][ii] = cohen_kappa_score(predicted_label, y_test)
-
-                model_kdf = kdf(kwargs={'n_estimators':n_estimators})
-                model_kdf.fit(X_train[train_idx], y_train[train_idx])
-                proba_kdf = model_kdf.predict_proba(X_test)
-                predicted_label = np.argmax(proba_kdf, axis = 1)
-                ece_kdf[jj][ii] = get_ece(proba_kdf, predicted_label, y_test)
-                error_kdf[jj][ii] = 1 - np.mean(y_test==predicted_label)    
-                kappa_kdf[jj][ii] = cohen_kappa_score(predicted_label, y_test)
-
-            mean_rf[jj][fold] = np.mean(error_rf[jj])   
-            #var_rf[jj] = np.var(error_rf[jj], ddof=1)
-            mean_kdf[jj][fold] = np.mean(error_kdf[jj])   
-            #var_kdf[jj] = np.var(error_kdf[jj], ddof=1)
-            mean_kappa_rf[jj][fold] = np.mean(kappa_rf[jj])
-            mean_kappa_kdf[jj][fold] = np.mean(kappa_kdf[jj])
-
-            mean_ece_rf[jj][fold] = np.mean(ece_rf[jj])   
-            #var_ece_rf[jj] = np.var(ece_rf[jj], ddof=1)
-            mean_ece_kdf[jj][fold] = np.mean(ece_kdf[jj])   
-            #var_ece_kdf[jj] = np.var(ece_kdf[jj], ddof=1)
-            folds.append(fold)
-            samples.append(sample)
-            dims.append(dim)
-        fold += 1
-
-    df['error_rf'] = np.ravel(mean_rf)
-    df['error_kdf'] = np.ravel(mean_kdf)
-    df['kappa_rf'] = np.ravel(mean_kappa_rf)
-    df['kappa_kdf'] = np.ravel(mean_kappa_kdf)
-    df['ece_rf'] = np.ravel(mean_ece_rf)
-    df['ece_kdf'] = np.ravel(mean_ece_kdf)
-    df['fold'] = folds
-    df['sample'] = samples
-    df['dimension'] = dims
-
-    df.to_csv(folder+'/'+'openML_cc18_task_'+str(task_id)+'.csv')
+    df.to_csv(folder+'/'+'openML_cc18_'+str(dataset_id)+'_'+str(feature)+'.csv')
 
 #%%
-folder = 'result_robust_cov'
-#os.mkdir(folder)
-cv = 5
-reps = 10
-n_estimators = 500
-task_id = 12
-df = pd.DataFrame() 
-#%%
-experiment(task_id, folder)
+folder = 'openml_res'
 
-# %%
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-import numpy as np 
-
-filename1 = 'result_robust_cov/openML_cc18_task_12.csv'
-filename2 = 'result_cov/openML_cc18_task_bic_12.csv'
-
-df_robust = pd.read_csv(filename1)
-df = pd.read_csv(filename2)
-
-del_kappa = np.array(df_robust['kappa_kdf'] - df['kappa_kdf'])
-samples = np.array(df['sample'])
-
-sns.set_context('talk')
-fig, ax = plt.subplots(1,1, figsize=(8,8))
-
-ax.plot(samples, del_kappa, c="k", label='del kappa')
+for ii in range(X.shape[1]):
+    experiment(X, y, folder, feature=ii)
 # %%

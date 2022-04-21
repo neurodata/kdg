@@ -1,7 +1,6 @@
 import numpy as np
 from sklearn.datasets import make_blobs
 from numpy.random import uniform, normal, shuffle
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -9,7 +8,7 @@ import seaborn as sns
 def get_ece(predicted_posterior, predicted_label, true_label, num_bins=40):
     bin_size = 1 / num_bins
     total_sample = len(true_label)
-    posteriors = predicted_posterior.max(axis=1)
+    K = predicted_posterior.shape[1]
 
     score = 0
     for bin in range(num_bins):

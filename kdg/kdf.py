@@ -85,11 +85,13 @@ class kdf(KernelDensityGraph):
             predicted_leaf_ids_across_trees = np.array(
                 [tree.apply(X_) for tree in model.estimators_]
                 ).T
+
             polytope_ids = predicted_leaf_ids_across_trees
             polytopes, polytope_count = np.unique(
                 predicted_leaf_ids_across_trees, return_inverse=True, axis=0
             )
             unique_polytope_ids = np.unique(polytope_ids)
+
             total_polytopes_this_label = len(polytopes)
             total_samples_this_label = X_.shape[0]
             self.prior[label] = total_samples_this_label/X.shape[0]
@@ -108,6 +110,7 @@ class kdf(KernelDensityGraph):
                 
                 scales = matched_samples[idx]/np.max(matched_samples[idx])
                 X_tmp = X_[idx].copy()
+
                 polytope_mean_ = np.average(X_tmp, axis=0, weights=scales)
                 X_tmp -= polytope_mean_
                 
@@ -131,7 +134,7 @@ class kdf(KernelDensityGraph):
                 polytope_means.append(polytope_mean_)
                 polytope_covs.append(polytope_cov_)
                 polytope_sizes.append(polytope_size_ * one_hot)
-        # START OF NEW 
+
         # append the data we have generated + also pad previously generated polytope sizes with np.nan to
         # maintain n_polytopes x n_labels 
         #save calculations for all polytopes
@@ -290,12 +293,11 @@ class kdf(KernelDensityGraph):
             allow_singular=True
             )
 
-        likelihood = var.pdf(X)
+        likelihood = self.polytope_cardinality[label][polytope_idx]*var.pdf(X)
         return likelihood
 
-    
+ def predict_proba(self, X, task_id, return_likelihood=False):
 
-    def predict_proba(self, X, task_id, return_likelihood=False):
         r"""
         Calculate posteriors using the kernel density forest.
         Parameters
@@ -327,6 +329,16 @@ class kdf(KernelDensityGraph):
         proba = (
             likelihoods.T * priors / (np.sum(likelihoods.T * priors, axis=0) + 1e-100)
         ).T        
+
+        for ii,label in enumerate(self.labels):
+            total_polytopes = len(self.polytope_means[label])
+            for polytope_idx,_ in enumerate(self.polytope_means[label]):
+                likelihoods[:,ii] += self.prior[label] * np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
+
+            likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
+            likelihoods[:,ii] += self.global_bias
+
+        proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         
         if return_likelihood:
             return proba, likelihoods
@@ -351,3 +363,4 @@ class kdf(KernelDensityGraph):
             
         predictions = np.argmax(self.predict_proba(X, task_id), axis=1)
         return np.array([self.task_labels[task_id][pred] for pred in predictions])
+
