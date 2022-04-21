@@ -14,13 +14,9 @@ import warnings
 from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope
 
 class kdf(KernelDensityGraph):
-    # Need to create a template forest at some point? 
     def __init__(self, k = 1, kwargs={}):
         #print("In the updated KDF!")
         super().__init__()
-
-        #self.polytope_means = {}
-        #self.polytope_cov = {}
         self.polytope_means = []
         self.polytope_cov = []
         self.polytope_sizes = {}
@@ -42,14 +38,6 @@ class kdf(KernelDensityGraph):
         self.is_fitted = False
 
         self.rf_model =  rf(**self.kwargs)
-
-        # #self.compile_kwargs lines
-        # self.compile_kwargs = {}
-        # if n_estimators is None: self.compile_kwargs["n_estimators"] = rf_model.n_estimators
-        # else: self.compile_kwargs["n_estimators"] = n_estimators
-        
-
-        #kwargs={'n_estimators':n_estimators}
 
     def fit(self, X, y, task_id = None, **kwargs):
         r"""
@@ -79,7 +67,6 @@ class kdf(KernelDensityGraph):
         self.task_list.append(task_id)
         self.task_labels[task_id] = labels
 
-        #model.compile(**self.compile_kwargs)
         model = self.rf_model.fit(X, y)
 
         polytope_means = []
@@ -89,15 +76,9 @@ class kdf(KernelDensityGraph):
 
         for label in labels:
             X_ = X[np.where(y==label)[0]]
-            # print(type(label))
-            # print(label)
-            # print(len(labels))
+
             one_hot = np.zeros(len(labels))
             one_hot[label] = 1
-            # print(len(one_hot))
-            # print(one_hot)
-
-            #self.polytope_cardinality[label] = []
 
             priors.append(len(X_) / len(X))
 
@@ -109,18 +90,11 @@ class kdf(KernelDensityGraph):
                 predicted_leaf_ids_across_trees, return_inverse=True, axis=0
             )
             unique_polytope_ids = np.unique(polytope_ids)
-            # self.polytope_cardinality[label].extend(
-            #     polytope_count
-            # )
             total_polytopes_this_label = len(polytopes)
-            #total_polytopes_this_label = len(unique_polytope_ids)
             total_samples_this_label = X_.shape[0]
             self.prior[label] = total_samples_this_label/X.shape[0]
 
             for polytope in range(total_polytopes_this_label):
-                # print(polytopes)
-                # print(polytope)
-                # print(unique_polytope_ids)
                 matched_samples = np.sum(
                     predicted_leaf_ids_across_trees == polytopes[polytope],
                     axis=1
@@ -143,11 +117,6 @@ class kdf(KernelDensityGraph):
                 covariance_model = LedoitWolf(assume_centered=True)
                 covariance_model.fit(X_tmp)
 
-                # # Why not the sum of scales?
-                # polytope_cov_ = (
-                #     covariance_model.covariance_*len(idx)/sum(scales)
-                # )
-                # Why not the sum of scales?
                 polytope_cov_ = (
                     covariance_model.covariance_*len(scales)/sum(scales)
                 )
@@ -156,28 +125,12 @@ class kdf(KernelDensityGraph):
                     np.where(polytope_ids == polytope)[0]
                 )  # count the number of points in the polytope
 
-                #print(polytope_size_)
                 polytope_size_ = polytope_count[polytope]
-                #print(polytope_size_)
-
-
-                #polytope_size_ = polytope_count[label]
 
                 # store the mean, covariances, and polytope sample size
                 polytope_means.append(polytope_mean_)
                 polytope_covs.append(polytope_cov_)
                 polytope_sizes.append(polytope_size_ * one_hot)
-                #print(polytope_size_ * one_hot)
-                #print(len(polytope_sizes))
-                #print(polytope_sizes)
-
-                # self.polytope_means[label].append(
-                #     location_
-                # )
-                # self.polytope_cov[label].append(
-                #     covariance_model.covariance_*len(idx)/sum(scales)
-                # )
-        # print(polytope_sizes[0:5])
         # START OF NEW 
         # append the data we have generated + also pad previously generated polytope sizes with np.nan to
         # maintain n_polytopes x n_labels 
@@ -208,24 +161,10 @@ class kdf(KernelDensityGraph):
             #for label in labels: 
             likelihood.append(self._compute_pdf(X, polytope))
         likelihood = np.array(likelihood)
-        #print(polytope_sizes.shape)
         # bias over all of the Gaussians 
-        # print("Likelihood Shape: ", likelihood.shape)
-        # print("Polytope_Size Length: ", len(polytope_sizes))
         bias = np.sum(np.min(likelihood, axis = 1) * np.sum(polytope_sizes, axis = 1)) / self.k / np.sum(polytope_sizes)
-        # bias = np.sum(np.min(likelihood, axis=1) * np.sum(self.polytope_sizes[task_id], axis=1)) / self.k / np.sum(self.polytope_sizes[task_id])
         self.task_bias[task_id] = bias
         self.class_priors[task_id] = np.array(priors)
-            # ## calculate bias for each label
-            # likelihoods = np.zeros(
-            #     (np.size(X_,0)),
-            #     dtype=float
-            # )
-            # for polytope_idx,_ in enumerate(self.polytope_means[label]):
-            #     likelihoods += np.nan_to_num(self._compute_pdf(X_, label, polytope_idx))
-
-            # likelihoods /= total_samples_this_label
-            # self.bias[label] = np.min(likelihoods)/(self.k*total_samples_this_label)
 
         self.global_bias = 0 #min(self.bias.values())
         # self.is_fitted = True
@@ -295,10 +234,8 @@ class kdf(KernelDensityGraph):
             Task that data is an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
         """
         # find np.nan parts & use the new data from generate_data 
-        # once you've done one forward transfer, don't do it again 
-        # fit it once only 
         # nans are used to find polytopes for which we're doing forward transfer to 
-        # relies only on polytopes -- should not need to change this for KDF 
+        # relies only on polytopes
 
         X = check_array(X)
         if isinstance(task_id, int):
@@ -345,10 +282,6 @@ class kdf(KernelDensityGraph):
         ndarray
             likelihoods
         """
-        # print(polytope_idx)
-        # print(self.polytope_cov)
-        # polytope_mean = self.polytope_means[label][polytope_idx]
-        # polytope_cov = self.polytope_cov[label][polytope_idx]
         polytope_mean = self.polytope_means[polytope_idx]
         polytope_cov = self.polytope_covs[polytope_idx]
         var = multivariate_normal(
@@ -357,8 +290,6 @@ class kdf(KernelDensityGraph):
             allow_singular=True
             )
 
-        #likelihood = self.polytope_cardinality[label][polytope_idx]*var.pdf(X)
-        #likelihood = self.polytope_sizes[polytope_idx] * var.pdf(X)
         likelihood = var.pdf(X)
         return likelihood
 
@@ -392,20 +323,10 @@ class kdf(KernelDensityGraph):
         priors = self.class_priors[task_id]
         priors = np.reshape(priors, (len(priors), 1))
         
-        # for ii,label in enumerate(self.labels):
-        #     total_polytopes = len(self.polytope_means[label])
-        #     for polytope_idx,_ in enumerate(self.polytope_means[label]):
-        #         likelihoods[:,ii] += self.prior[label] * np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
-
-        #     likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
-        #     #likelihoods[:,ii] += self.global_bias
-        #     likelihoods[:, ii] += self.task_bias[task_id]
-
         likelihoods += self.task_bias[task_id]
         proba = (
             likelihoods.T * priors / (np.sum(likelihoods.T * priors, axis=0) + 1e-100)
         ).T        
-        #proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         
         if return_likelihood:
             return proba, likelihoods
@@ -430,4 +351,3 @@ class kdf(KernelDensityGraph):
             
         predictions = np.argmax(self.predict_proba(X, task_id), axis=1)
         return np.array([self.task_labels[task_id][pred] for pred in predictions])
-        #return np.argmax(self.predict_proba(X), axis = 1)
