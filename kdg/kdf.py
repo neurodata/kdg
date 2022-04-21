@@ -106,9 +106,7 @@ class kdf(KernelDensityGraph):
         
 
     def _compute_log_likelihood_1d(self, X, location, variance):
-        if variance < 1e-50:
-            return -np.inf
-                
+               
         return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
 
     def _compute_log_likelihood(self, X, label, polytope_idx):
