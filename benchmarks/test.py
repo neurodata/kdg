@@ -11,7 +11,7 @@ import openml
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 #%%
-dataset_id = 40979
+dataset_id = 1468
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -38,7 +38,7 @@ endpoint=True,
 dtype=int
 )
 
-train_sample = train_samples[1]
+train_sample = train_samples[-1]
 indx_to_take_train = []
 indx_to_take_test = []
 

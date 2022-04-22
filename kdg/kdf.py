@@ -20,7 +20,7 @@ class kdf(KernelDensityGraph):
         self.polytope_mean_cov = {}
         self.prior = {}
         self.bias = {}
-        self.global_bias = 0
+        self.global_bias = -np.inf
         self.kwargs = kwargs
         self.k = k
         self.is_fitted = False
@@ -105,10 +105,10 @@ class kdf(KernelDensityGraph):
         self.is_fitted = True
         
 
-    def _compute_log_likelihood_1d(self, X, location, variance):
-        if variance < 1e-100:
+    def _compute_log_likelihood_1d(self, X, location, variance):  
+        if variance == 0:
             return -np.inf
-               
+            
         return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
 
     def _compute_log_likelihood(self, X, label, polytope_idx):
