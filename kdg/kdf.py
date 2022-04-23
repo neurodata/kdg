@@ -330,15 +330,15 @@ class kdf(KernelDensityGraph):
             likelihoods.T * priors / (np.sum(likelihoods.T * priors, axis=0) + 1e-100)
         ).T        
 
-        for ii,label in enumerate(self.labels):
-            total_polytopes = len(self.polytope_means[label])
-            for polytope_idx,_ in enumerate(self.polytope_means[label]):
-                likelihoods[:,ii] += self.prior[label] * np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
+#         for ii,label in enumerate(self.labels):
+#             total_polytopes = len(self.polytope_means[label])
+#             for polytope_idx,_ in enumerate(self.polytope_means[label]):
+#                 likelihoods[:,ii] += self.prior[label] * np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
 
-            likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
-            likelihoods[:,ii] += self.global_bias
+#             likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
+#             likelihoods[:,ii] += self.global_bias
 
-        proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
+#         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         
         if return_likelihood:
             return proba, likelihoods
