@@ -296,7 +296,7 @@ class kdf(KernelDensityGraph):
         likelihood = self.polytope_cardinality[label][polytope_idx]*var.pdf(X)
         return likelihood
 
- def predict_proba(self, X, task_id, return_likelihood=False):
+    def predict_proba(self, X, task_id, return_likelihood=False):
 
         r"""
         Calculate posteriors using the kernel density forest.
