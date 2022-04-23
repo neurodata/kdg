@@ -665,7 +665,7 @@ def generate_polynomial(
     return (X, y)
 
 
-def plot_2dsim(X, y, square_plot=False, ax=None, palette="colorblind"):
+def plot_2dsim(X, y, square_plot=False, ax=None, palette="colorblind", **kwargs):
     """
     Plot 2d simulations.
     Parameters
@@ -680,6 +680,8 @@ def plot_2dsim(X, y, square_plot=False, ax=None, palette="colorblind"):
         Axis to plot on. If None, a new axis object will be created.
     palette : String (default: colorblind)
         seaborn.color_palette to use.
+    **kwargs : dict
+        passed to matplotlib.axes.Axes.scatter().
     Returns
     -------
     ax : matplotlib axes object
@@ -699,7 +701,7 @@ def plot_2dsim(X, y, square_plot=False, ax=None, palette="colorblind"):
 
     colors = sns.color_palette(palette)
     for s in samples:
-        ax.plot(X[y == s, 0], X[y == s, 1], marker=".", color=colors[s], linestyle="")
+        ax.scatter(X[y == s, 0], X[y == s, 1], marker=".", color=colors[s], **kwargs)
 
     return ax
 
