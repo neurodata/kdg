@@ -293,7 +293,7 @@ class kdf(KernelDensityGraph):
             allow_singular=True
             )
 
-        likelihood = self.polytope_cardinality[label][polytope_idx]*var.pdf(X)
+        likelihood = var.pdf(X)
         return likelihood
 
     def predict_proba(self, X, task_id, return_likelihood=False):
