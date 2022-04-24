@@ -257,9 +257,9 @@ class kdf(KernelDensityGraph):
         print(transfer_idx is None)
         print(np.array(transfer_idx))
         print(np.array(transfer_idx) is None)
-        print(bool(transfer_idx))
-        print(not transfer_idx)
-        if np.array(transfer_idx) is None:
+        print(type(transfer_idx))
+        print(not np.any(transfer_idx))
+        if not np.any(transfer_idx):
             print("Transfer done already!")
             raise ValueError('Forward transfer is already completed for this task!')
             
