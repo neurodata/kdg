@@ -235,12 +235,6 @@ class kdf(KernelDensityGraph):
         # find np.nan parts & use the new data from generate_data 
         # nans are used to find polytopes for which we're doing forward transfer to 
         # relies only on polytopes
-#         if self.is_forward_transferred:
-#             raise ValueError(
-#                 "Forward transfer is already completed for this task!"
-#             )
-#             return
-
         X = check_array(X)
         if isinstance(task_id, int):
             task_id = self.task_list[task_id]
@@ -252,15 +246,9 @@ class kdf(KernelDensityGraph):
         likelihood = np.array(likelihood)
         
         transfer_idx = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
-        
-        print(transfer_idx)
-        print(transfer_idx is None)
-        print(np.array(transfer_idx))
-        print(np.array(transfer_idx) is None)
-        print(type(transfer_idx))
-        print(not np.any(transfer_idx))
+      
         if not np.any(transfer_idx):
-            print("Transfer done already!")
+            # print("Transfer done already!")
             raise ValueError('Forward transfer is already completed for this task!')
             
         transfer_polytopes = np.argmax(likelihood[transfer_idx,:], axis=0)
