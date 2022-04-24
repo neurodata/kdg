@@ -170,7 +170,7 @@ class kdf(KernelDensityGraph):
         self.class_priors[task_id] = np.array(priors)
 
         self.global_bias = 0 #min(self.bias.values())
-        # self.is_fitted = True
+        self.is_fitted = True
 
     def generate_data(self, n_data, task_id, force_equal_priors = True):
         r"""
