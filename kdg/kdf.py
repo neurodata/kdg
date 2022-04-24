@@ -35,7 +35,7 @@ class kdf(KernelDensityGraph):
         self.kwargs = kwargs
         self.k = k
         
-        self.is_fitted = False
+        self.is_forward_transferred = False
 
         self.rf_model =  rf(**self.kwargs)
 
@@ -53,11 +53,7 @@ class kdf(KernelDensityGraph):
         kwargs : dict, optional
             Additional arguments to pass to keras fit
         """
-        if self.is_fitted:
-            raise ValueError(
-                "Model already fitted!"
-            )
-            return
+
 
         X, y = check_X_y(X, y)
         labels = np.unique(y)        
@@ -170,7 +166,7 @@ class kdf(KernelDensityGraph):
         self.class_priors[task_id] = np.array(priors)
 
         self.global_bias = 0 #min(self.bias.values())
-        self.is_fitted = True
+        #self.is_fitted = True
 
     def generate_data(self, n_data, task_id, force_equal_priors = True):
         r"""
@@ -239,6 +235,11 @@ class kdf(KernelDensityGraph):
         # find np.nan parts & use the new data from generate_data 
         # nans are used to find polytopes for which we're doing forward transfer to 
         # relies only on polytopes
+        if self.is_forward_transferred:
+            raise ValueError(
+                "Model already fitted!"
+            )
+            return
 
         X = check_array(X)
         if isinstance(task_id, int):
@@ -266,7 +267,7 @@ class kdf(KernelDensityGraph):
         bias = np.sum(np.min(likelihood, axis=1) * np.sum(self.polytope_sizes[task_id], axis=1)) / self.k / np.sum(self.polytope_sizes[task_id])
 
         self.task_bias[task_id] = bias
-        
+        self.is_forward_transferred = True
             
     def _compute_pdf(self, X, polytope_idx):
         r"""compute the likelihood for the given data
