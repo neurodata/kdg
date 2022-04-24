@@ -257,7 +257,7 @@ class kdf(KernelDensityGraph):
         print(transfer_idx is None)
         print(np.array(transfer_idx))
         print(np.array(transfer_idx) is None)
-        print(boolean(transfer_idx))
+        print(bool(transfer_idx))
         print(not transfer_idx)
         if np.array(transfer_idx) is None:
             print("Transfer done already!")
