@@ -252,7 +252,10 @@ class kdf(KernelDensityGraph):
         likelihood = np.array(likelihood)
         
         transfer_idx = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
-        print(transfer_idx)
+        
+        if not transfer_idx:
+            print("Transfer done already!")
+            raise ValueError('Forward transfer is already completed for this task!')
             
         transfer_polytopes = np.argmax(likelihood[transfer_idx,:], axis=0)
         polytope_by_label = [transfer_polytopes[y == label] for label in labels]
