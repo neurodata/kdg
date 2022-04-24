@@ -235,11 +235,11 @@ class kdf(KernelDensityGraph):
         # find np.nan parts & use the new data from generate_data 
         # nans are used to find polytopes for which we're doing forward transfer to 
         # relies only on polytopes
-        if self.is_forward_transferred:
-            raise ValueError(
-                "Forward transfer is already completed for this task!"
-            )
-            return
+#         if self.is_forward_transferred:
+#             raise ValueError(
+#                 "Forward transfer is already completed for this task!"
+#             )
+#             return
 
         X = check_array(X)
         if isinstance(task_id, int):
