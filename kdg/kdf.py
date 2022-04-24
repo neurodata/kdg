@@ -252,6 +252,7 @@ class kdf(KernelDensityGraph):
         likelihood = np.array(likelihood)
         
         transfer_idx = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
+        print(transfer_idx)
             
         transfer_polytopes = np.argmax(likelihood[transfer_idx,:], axis=0)
         polytope_by_label = [transfer_polytopes[y == label] for label in labels]
