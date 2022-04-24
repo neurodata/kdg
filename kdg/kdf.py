@@ -237,7 +237,7 @@ class kdf(KernelDensityGraph):
         # relies only on polytopes
         if self.is_forward_transferred:
             raise ValueError(
-                "Model already fitted!"
+                "Forward transfer is already completed for this task!"
             )
             return
 
