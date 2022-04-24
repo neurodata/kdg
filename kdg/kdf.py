@@ -253,7 +253,7 @@ class kdf(KernelDensityGraph):
         
         transfer_idx = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
         
-        if not transfer_idx:
+        if np.array(transfer_idx) is not None::
             print("Transfer done already!")
             raise ValueError('Forward transfer is already completed for this task!')
             
