@@ -76,7 +76,7 @@ def experiment(dataset_id, folder, n_estimators=100, reps=40):
                             indx[ii][-test_sample:counts[ii]]
                     )
                 )
-            model_kdf = kdf(k=1e3, kwargs={'n_estimators':n_estimators})
+            model_kdf = kdf(k=1e10, kwargs={'n_estimators':n_estimators})
             model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
             proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
             proba_rf = model_kdf.rf_model.predict_proba(X[indx_to_take_test])
