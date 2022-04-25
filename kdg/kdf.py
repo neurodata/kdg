@@ -1,3 +1,4 @@
+from numpy import min_scalar_type
 from .base import KernelDensityGraph
 from sklearn.mixture import GaussianMixture
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
@@ -102,6 +103,11 @@ class kdf(KernelDensityGraph):
             self.bias[label] = np.min(likelihoods) - np.log(self.k*self.total_samples_this_label[label])
 
         self.global_bias = min(self.bias.values())
+        min_bias = -600 - np.log(self.k*X.shape[0])
+
+        if self.global_bias < min_bias:
+            self.global_bias = min_bias
+
         self.is_fitted = True
         
 
