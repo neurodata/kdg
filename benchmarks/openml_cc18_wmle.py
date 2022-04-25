@@ -217,7 +217,7 @@ def experiment_rf(dataset_id, folder, n_estimators=100, reps=30):
 #%%
 folder = 'openml_res_min_leaf'
 folder_rf = 'openml_res_rf'
-#os.mkdir(folder)
+os.mkdir(folder)
 #os.mkdir(folder_rf)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 #current_dir = getcwd()
