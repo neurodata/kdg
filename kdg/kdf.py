@@ -163,6 +163,7 @@ class kdf(KernelDensityGraph):
             tmp_ -= pow_exp
             likelihoods = np.sum(np.exp(tmp_), axis=1) +\
                  np.exp(self.global_bias - pow_exp[:,0]) 
+                
             likelihoods *= self.prior[label] 
             log_likelihoods[:,ii] = np.log(likelihoods) + pow_exp[:,0]
 

@@ -12,6 +12,7 @@ import os
 from os import listdir, getcwd 
 # %%
 def experiment(dataset_id, folder, n_estimators=500, reps=30):
+    #print(dataset_id)
     dataset = openml.datasets.get_dataset(dataset_id)
     X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -221,7 +222,7 @@ folder_rf = 'openml_res_rf'
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 #current_dir = getcwd()
 #files = listdir(current_dir+'/'+folder)
-Parallel(n_jobs=-1,verbose=1)(
+Parallel(n_jobs=10,verbose=1)(
         delayed(experiment)(
                 dataset_id,
                 folder

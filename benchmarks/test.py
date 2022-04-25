@@ -11,7 +11,7 @@ import openml
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 #%%
-dataset_id = 1468
+dataset_id = 6#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -38,7 +38,7 @@ endpoint=True,
 dtype=int
 )
 
-train_sample = train_samples[-1]
+train_sample = train_samples[0]
 indx_to_take_train = []
 indx_to_take_test = []
 
@@ -54,8 +54,8 @@ for ii, _ in enumerate(unique_classes):
                 indx[ii][-test_sample:counts[ii]]
         )
 )
-
-model_kdf = kdf(k=1e7,kwargs={'n_estimators':500, 'min_samples_leaf':30})
+#%%
+model_kdf = kdf(k=1e20,kwargs={'n_estimators':500})
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
 
 # %%
@@ -79,7 +79,7 @@ for dim in range(X.shape[1]):
 # %%
 from kdg.utils import generate_gaussian_parity, gaussian_sparse_parity
 
-X, y = gaussian_sparse_parity(1000, p_star=200, p=200)
+X, y = generate_gaussian_parity(1000)
 model_kdf = kdf(k=1e3,kwargs={'n_estimators':500, 'min_samples_leaf':30})
 model_kdf.fit(X, y)
 #%%
@@ -151,7 +151,8 @@ def predict_proba(model, X, return_likelihood=False):
         return proba 
 
 # %%
-X_test, y_test = gaussian_sparse_parity(1000, p_star=200,p=200)
+from kdg.utils import generate_gaussian_parity
+X_test, y_test = generate_gaussian_parity(1000)
 #predict_proba(model_kdf, X_test[:2,:])
 np.mean(model_kdf.predict(X_test)==y_test)
 # %%
