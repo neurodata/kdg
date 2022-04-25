@@ -35,7 +35,7 @@ class kdf(KernelDensityGraph):
         self.kwargs = kwargs
         self.k = k
         
-        self.is_fitted = False
+        self.is_forward_transferred = False
 
         self.rf_model =  rf(**self.kwargs)
 
@@ -53,11 +53,7 @@ class kdf(KernelDensityGraph):
         kwargs : dict, optional
             Additional arguments to pass to keras fit
         """
-        if self.is_fitted:
-            raise ValueError(
-                "Model already fitted!"
-            )
-            return
+
 
         X, y = check_X_y(X, y)
         labels = np.unique(y)        
@@ -170,7 +166,7 @@ class kdf(KernelDensityGraph):
         self.class_priors[task_id] = np.array(priors)
 
         self.global_bias = 0 #min(self.bias.values())
-        # self.is_fitted = True
+        #self.is_fitted = True
 
     def generate_data(self, n_data, task_id, force_equal_priors = True):
         r"""
@@ -239,7 +235,6 @@ class kdf(KernelDensityGraph):
         # find np.nan parts & use the new data from generate_data 
         # nans are used to find polytopes for which we're doing forward transfer to 
         # relies only on polytopes
-
         X = check_array(X)
         if isinstance(task_id, int):
             task_id = self.task_list[task_id]
@@ -251,6 +246,10 @@ class kdf(KernelDensityGraph):
         likelihood = np.array(likelihood)
         
         transfer_idx = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
+      
+        if not np.any(transfer_idx):
+            # print("Transfer done already!")
+            raise ValueError('Forward transfer is already completed for this task!')
             
         transfer_polytopes = np.argmax(likelihood[transfer_idx,:], axis=0)
         polytope_by_label = [transfer_polytopes[y == label] for label in labels]
@@ -266,7 +265,7 @@ class kdf(KernelDensityGraph):
         bias = np.sum(np.min(likelihood, axis=1) * np.sum(self.polytope_sizes[task_id], axis=1)) / self.k / np.sum(self.polytope_sizes[task_id])
 
         self.task_bias[task_id] = bias
-        
+        self.is_forward_transferred = True
             
     def _compute_pdf(self, X, polytope_idx):
         r"""compute the likelihood for the given data
@@ -330,15 +329,15 @@ class kdf(KernelDensityGraph):
             likelihoods.T * priors / (np.sum(likelihoods.T * priors, axis=0) + 1e-100)
         ).T        
 
-        for ii,label in enumerate(self.labels):
-            total_polytopes = len(self.polytope_means[label])
-            for polytope_idx,_ in enumerate(self.polytope_means[label]):
-                likelihoods[:,ii] += self.prior[label] * np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
+#         for ii,label in enumerate(self.labels):
+#             total_polytopes = len(self.polytope_means[label])
+#             for polytope_idx,_ in enumerate(self.polytope_means[label]):
+#                 likelihoods[:,ii] += self.prior[label] * np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
 
-            likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
-            likelihoods[:,ii] += self.global_bias
+#             likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
+#             likelihoods[:,ii] += self.global_bias
 
-        proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
+#         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         
         if return_likelihood:
             return proba, likelihoods
