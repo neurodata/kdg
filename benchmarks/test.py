@@ -38,7 +38,7 @@ endpoint=True,
 dtype=int
 )
 
-train_sample = train_samples[0]
+train_sample = train_samples[-1]
 indx_to_take_train = []
 indx_to_take_test = []
 
@@ -55,7 +55,7 @@ for ii, _ in enumerate(unique_classes):
         )
 )
 #%%
-model_kdf = kdf(k=1e20,kwargs={'n_estimators':500, 'min_samples_leaf':1})
+model_kdf = kdf(k=1e300,kwargs={'n_estimators':500, 'min_samples_leaf':1})
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
 
 # %%
