@@ -11,7 +11,7 @@ import openml
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 #%%
-dataset_id = 6#40979#1468#11#44#1050#
+dataset_id = 12#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -55,7 +55,7 @@ for ii, _ in enumerate(unique_classes):
         )
 )
 #%%
-model_kdf = kdf(k=1e20,kwargs={'n_estimators':500})
+model_kdf = kdf(k=1e20,kwargs={'n_estimators':500, 'min_samples_leaf':1})
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
 
 # %%
