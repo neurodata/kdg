@@ -11,7 +11,7 @@ from kdg.utils import get_ece
 import os
 from os import listdir, getcwd 
 # %%
-def experiment(dataset_id, folder, n_estimators=100, reps=40):
+def experiment(dataset_id, folder, n_estimators=500, reps=40):
     #print(dataset_id)
     dataset = openml.datasets.get_dataset(dataset_id)
     X, y, is_categorical, _ = dataset.get_data(
@@ -217,7 +217,7 @@ def experiment_rf(dataset_id, folder, n_estimators=100, reps=30):
 #%%
 folder = 'openml_res_min_leaf'
 folder_rf = 'openml_res_rf'
-#os.mkdir(folder)
+os.mkdir(folder)
 #os.mkdir(folder_rf)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 #current_dir = getcwd()
