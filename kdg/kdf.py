@@ -113,7 +113,7 @@ class kdf(KernelDensityGraph):
 
     def _compute_log_likelihood_1d(self, X, location, variance):  
         if variance < 1e-100:
-            return -np.inf
+            return 0
             
         return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
 
@@ -178,6 +178,7 @@ class kdf(KernelDensityGraph):
         )
         log_likelihoods -= max_pow
         likelihoods = np.exp(log_likelihoods)
+
         total_likelihoods = np.sum(likelihoods, axis=1)
 
         proba = (likelihoods.T/total_likelihoods).T

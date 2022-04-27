@@ -10,8 +10,17 @@ import numpy as np
 import openml
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
+from numpy import min_scalar_type
+from sklearn.mixture import GaussianMixture
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
+from sklearn.ensemble import RandomForestClassifier as rf 
+import numpy as np
+from scipy.stats import multivariate_normal
+import warnings
+from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
+
 #%%
-dataset_id = 12#40979#1468#11#44#1050#
+dataset_id = 44#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -55,7 +64,7 @@ for ii, _ in enumerate(unique_classes):
         )
 )
 #%%
-model_kdf = kdf(k=1e300,kwargs={'n_estimators':500, 'min_samples_leaf':1})
+model_kdf = kdf(k=1e10,kwargs={'n_estimators':500, 'min_samples_leaf':1})
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
 
 # %%
@@ -201,4 +210,43 @@ def predict_proba(model, X, return_likelihood=False):
     else:
         return proba 
 
+# %%
+#test the fitting
+X_t, y_t = X[indx_to_take_train], y[indx_to_take_train]
+labels = np.unique(y)
+rf_model = rf(n_estimators=5, min_samples_leaf=1).fit(X, y)
+feature_dim = X_t.shape[1]
+
+for label in labels:
+
+    X_ = X_t[np.where(y_t==label)[0]]
+    predicted_leaf_ids_across_trees = np.array(
+        [tree.apply(X_) for tree in rf_model.estimators_]
+                ).T
+    polytopes, polytope_count = np.unique(
+                predicted_leaf_ids_across_trees, return_counts=True, axis=0
+            )
+    total_polytopes_this_label = len(polytopes)
+    print(X_.shape[0], 'total sample this label')
+
+    for polytope in range(total_polytopes_this_label):
+        matched_samples = np.sum(
+            predicted_leaf_ids_across_trees == polytopes[polytope],
+            axis=1
+        )
+        idx = np.where(
+            matched_samples>0
+        )[0]
+        
+        if len(idx) == 1:
+            continue
+        
+        scales = matched_samples[idx]/np.max(matched_samples[idx])
+        X_tmp = X_[idx].copy()
+        location = np.average(X_tmp, axis=0, weights=scales)
+        X_tmp -= location
+
+        covariance = np.average(X_tmp**2, axis=0, weights=scales)
+        break
+    break
 # %%
