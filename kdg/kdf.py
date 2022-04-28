@@ -90,6 +90,9 @@ class kdf(KernelDensityGraph):
 
             total_polytopes_this_label = len(polytopes)
             total_samples_this_label = X_.shape[0]
+
+            polytope_sizes.append(polytope_count * one_hot)            
+            
             self.prior[label] = total_samples_this_label/X.shape[0]
 
             for polytope in range(total_polytopes_this_label):
@@ -120,8 +123,8 @@ class kdf(KernelDensityGraph):
                     covariance_model.covariance_*len(scales)/sum(scales)
                 )
 
-                polytope_size_ = len(
-                    np.where(polytope_ids == polytope)[0]
+#                 polytope_size_ = len(
+#                     np.where(polytope_ids == polytope)[0]
                 )  # count the number of points in the polytope
 
 #                 polytope_size_ = polytope_count[polytope]
@@ -138,7 +141,7 @@ class kdf(KernelDensityGraph):
                 # store the mean, covariances, and polytope sample size
                 polytope_means.append(polytope_mean_)
                 polytope_covs.append(polytope_cov_)
-                polytope_sizes.append(len(scales) * one_hot)
+
 
         # append the data we have generated + also pad previously generated polytope sizes with np.nan to
         # maintain n_polytopes x n_labels 
