@@ -125,7 +125,7 @@ class kdf(KernelDensityGraph):
 
 #                 polytope_size_ = len(
 #                     np.where(polytope_ids == polytope)[0]
-                )  # count the number of points in the polytope
+#                 )  # count the number of points in the polytope
 
 #                 polytope_size_ = polytope_count[polytope]
 #                 print(len(idx))
