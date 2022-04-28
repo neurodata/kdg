@@ -130,6 +130,10 @@ class kdf(KernelDensityGraph):
                 print(X_tmp.shape)
                 print(len(idx) * len(scales)/sum(scales))
                 print(polytope_count[polytope])
+                print(polytope_count[polytope] * len(scales)/sum(scales))
+                print(polytope_size_)
+                print(polytope_size_ * len(scales)/sum(scales))
+                print(len(scales))
         
                 # store the mean, covariances, and polytope sample size
                 polytope_means.append(polytope_mean_)
