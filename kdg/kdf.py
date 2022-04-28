@@ -120,7 +120,7 @@ class kdf(KernelDensityGraph):
                     covariance_model.covariance_*len(scales)/sum(scales)
                 )
                 
-                num_samples_in_polytope = len(scales) # also equal to len(idx) or len(X_tmp)
+                num_samples_in_polytope = sum(scales) # also equal to len(idx) or len(X_tmp)
 
                 polytope_means.append(polytope_mean_)
                 polytope_covs.append(polytope_cov_)
