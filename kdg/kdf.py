@@ -127,12 +127,12 @@ class kdf(KernelDensityGraph):
 #                 polytope_size_ = polytope_count[polytope]
 
                 # store the mean, covariances, and polytope sample size
-                print(sum(scales))
-                print(len(scales))
-                print(scales.shape)
+#                 print(sum(scales))
+#                 print(len(scales))
+#                 print(scales.shape)
                 polytope_means.append(polytope_mean_)
                 polytope_covs.append(polytope_cov_)
-                polytope_sizes.append(len(scales)/sum(scales) * one_hot)
+                polytope_sizes.append(sum(scales) * one_hot)
 
         # append the data we have generated + also pad previously generated polytope sizes with np.nan to
         # maintain n_polytopes x n_labels 
