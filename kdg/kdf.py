@@ -127,7 +127,7 @@ class kdf(KernelDensityGraph):
                 polytope_size_ = polytope_count[polytope]
                 print(len(idx))
                 print(scales.shape)   
-                print(polytope_size.shape)
+                print(polytope_size_.shape)
                 
                 # store the mean, covariances, and polytope sample size
                 polytope_means.append(polytope_mean_)
