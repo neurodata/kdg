@@ -228,14 +228,16 @@ class kdn(KernelDensityGraph):
             )
 
         self.global_bias = min(self.bias.values())
+        min_bias = -500 - np.log(self.k*X.shape[0])
+
+        if self.global_bias < min_bias:
+            self.global_bias = min_bias
 
     def _compute_log_likelihood_1d(self, X, location, variance):
         if variance < 1e-100:
-            return -np.inf
-
-        return -((X - location) ** 2) / (2 * variance) - 0.5 * np.log(
-            2 * np.pi * variance
-        )
+            return 0
+            
+        return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
 
     def _compute_log_likelihood(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
@@ -275,7 +277,8 @@ class kdn(KernelDensityGraph):
             max_pow = np.max(
                 np.concatenate(
                     (tmp_, self.global_bias * np.ones((X.shape[0], 1))), axis=1
-                )
+                ),
+                axis=1
             )
             pow_exp = np.nan_to_num(
                 max_pow.reshape(-1, 1)
