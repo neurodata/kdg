@@ -217,7 +217,7 @@ class kdf(KernelDensityGraph):
                 print("Data size:", n_data)
                 print("n_labels: ", n_labels)
                 print("Task ID: ", task_id)
-                print("Polytope Sizes for current task: ", self.polytope_size[task_id])
+                print("Polytope Sizes for current task: ", self.polytope_sizes[task_id])
                 print("Index:" ,index)
                 print("Cur_label: ", X_label[i])
                 print(index[-1])                
