@@ -212,6 +212,7 @@ class kdf(KernelDensityGraph):
             try:
                 polytopes = np.random.randint(0, index[-1], X_label[i])
             except Exception as e:
+                polytopes = 0
                 print("Error in generate_data")
                 print(e)
                 print("Loop var: ", i)
