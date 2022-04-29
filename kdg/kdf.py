@@ -212,9 +212,14 @@ class kdf(KernelDensityGraph):
             try:
                 polytopes = np.random.randint(0, index[-1], X_label[i])
             except Exception as e:
+                print("Error in generate_data")
                 print(e)
-                print(index)
-                print(X_label[i])
+                print("Data size:", n_data)
+                print("n_labels: ", n_labels)
+                print("Task ID: ", task_id)
+                print("Polytope Sizes for current task: ", self.polytope_size[task_id])
+                print("Index:" ,index)
+                print("Cur_label: ", X_label[i])
                 print(index[-1])                
             polytope_size = [np.count_nonzero(j > polytopes) for j in index]
             polytope_size = polytope_size - np.concatenate(([0], polytope_size[0:-1]))
