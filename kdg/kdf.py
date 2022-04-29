@@ -197,15 +197,18 @@ class kdf(KernelDensityGraph):
         X_label = X_label.astype(int)
         if np.sum(X_label) < n_data :
             X_label[-1] = X_label[-1] + 1
+            print("Pretended there's a label")
+            print(n_data)
+            print(X_label[-1])
         
         for i in range(n_labels):
             index = np.cumsum(np.nan_to_num(self.polytope_sizes[task_id][:,i]))
-            print(index)
-            print(X_label[i])
-            print(index[-1])
-            # try:
-            polytopes = np.random.randint(0, index[-1], X_label[i])
-            # except:
+            try:
+                polytopes = np.random.randint(0, index[-1], X_label[i])
+            except:
+                print(index)
+                print(X_label[i])
+                print(index[-1])                
             polytope_size = [np.count_nonzero(j > polytopes) for j in index]
             polytope_size = polytope_size - np.concatenate(([0], polytope_size[0:-1]))
             for polytope, size in enumerate(polytope_size):
