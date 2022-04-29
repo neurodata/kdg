@@ -74,7 +74,13 @@ class kdf(KernelDensityGraph):
             X_ = X[np.where(y==label)[0]]
 
             one_hot = np.zeros(len(labels))
-            one_hot[label] = 1
+            try:
+                one_hot[label] = 1
+            except Exception as e:
+                print(e)
+                print(labels)
+                print(len(labels))
+                print(one_hot)
 
             priors.append(len(X_) / len(X))
 
@@ -205,7 +211,8 @@ class kdf(KernelDensityGraph):
             index = np.cumsum(np.nan_to_num(self.polytope_sizes[task_id][:,i]))
             try:
                 polytopes = np.random.randint(0, index[-1], X_label[i])
-            except:
+            except Exception as e:
+                print(e)
                 print(index)
                 print(X_label[i])
                 print(index[-1])                
