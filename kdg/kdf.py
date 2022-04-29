@@ -211,8 +211,10 @@ class kdf(KernelDensityGraph):
             index = np.cumsum(np.nan_to_num(self.polytope_sizes[task_id][:,i]))
             try:
                 polytopes = np.random.randint(0, index[-1], X_label[i])
+                print(polytopes)
+                print(polytopes.shape)
             except Exception as e:
-                polytopes = 0
+                polytopes = [0]
                 print("Error in generate_data")
                 print(e)
                 print("Loop var: ", i)
