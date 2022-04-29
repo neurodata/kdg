@@ -126,6 +126,11 @@ class kdf(KernelDensityGraph):
                 polytope_covs.append(polytope_cov_)
                 polytope_sizes.append(num_samples_in_polytope * one_hot)
 
+        # Rescale polytope sizes to enable effective transfer
+        polytope_sizes = np.array(polytope_sizes)
+        polytope_sizes = np.sum(np.nan_to_num(polytope_sizes), axis=0)
+        polytope_sizes *= np.bincount(y)
+        
         # append the data we have generated + also pad previously generated polytope sizes with np.nan to
         # maintain n_polytopes x n_labels 
         #save calculations for all polytopes
@@ -134,7 +139,7 @@ class kdf(KernelDensityGraph):
         if start_idx == 0:
             self.polytope_means = np.array(polytope_means)
             self.polytope_covs = np.array(polytope_covs)
-            self.polytope_sizes[task_id] = np.array(polytope_sizes)
+            self.polytope_sizes[task_id] = polytope_sizes
         else:
             self.polytope_means = np.concatenate([self.polytope_means, np.array(polytope_means)])
             self.polytope_covs = np.concatenate([self.polytope_covs, np.array(polytope_covs)])
