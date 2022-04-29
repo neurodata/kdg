@@ -128,7 +128,7 @@ class kdf(KernelDensityGraph):
 
         # Rescale polytope sizes to enable effective transfer
         polytope_sizes = np.array(polytope_sizes)
-        polytope_sizes = np.sum(np.nan_to_num(polytope_sizes), axis=0)
+        polytope_sizes = polytope_sizes / np.sum(np.nan_to_num(polytope_sizes), axis=0)
         polytope_sizes *= np.bincount(y)
         
         # append the data we have generated + also pad previously generated polytope sizes with np.nan to
