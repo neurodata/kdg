@@ -30,7 +30,6 @@ class kdf(KernelDensityGraph):
         self.polytope_cardinality = {}
         self.polytope_mean_cov = {}
         self.prior = {}
-        self.bias = {}
         self.global_bias = 0
         self.kwargs = kwargs
         self.k = k
@@ -161,7 +160,6 @@ class kdf(KernelDensityGraph):
         self.class_priors[task_id] = np.array(priors)
 
         self.global_bias = 0 #min(self.bias.values())
-        #self.is_fitted = True
 
     def generate_data(self, n_data, task_id, force_equal_priors = True):
         r"""
@@ -216,51 +214,41 @@ class kdf(KernelDensityGraph):
 
     def forward_transfer(self, X, y, task_id):
         r"""
-        Forward transfer all previously unused polytopes to the target task based on current data
-
+        Forward transfer all previously unused polytopes to the target task.
         Parameters:
         -----------
-        X: ndarray
+        X : ndarray
             Input data matrix; training data for current task
         y : ndarray
             Output (i.e. response) data matrix for current task
         task_id : int or string
-            Task that data is an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
+            Task that data is an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly. 
         """
-        # find np.nan parts & use the new data from generate_data 
-        # nans are used to find polytopes for which we're doing forward transfer to 
-        # relies only on polytopes
         X = check_array(X)
         if isinstance(task_id, int):
             task_id = self.task_list[task_id]
         labels = self.task_labels[task_id]
 
+        transfer_idx = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
+        if not np.any(transfer_idx):
+            print("Forward transfer is already completed for this task.")
+            return
+        
         likelihood = []
         for polytope_idx in range(self.polytope_means.shape[0]):
             likelihood.append(self._compute_pdf(X, polytope_idx))
         likelihood = np.array(likelihood)
+        likelihood += self.task_bias[task_id]
+        likelihood /= np.max(likelihood, axis=0)
+
+        for i, label in enumerate(labels):
+            transfer_likelihood = likelihood[transfer_idx,:]*(y==label)
+            transfer_sizes = np.sum(transfer_likelihood, axis=1)
+            transfer_sizes[transfer_sizes < 1] = 0
+            self.polytope_sizes[task_id][transfer_idx, i] = transfer_sizes
         
-        transfer_idx = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
-      
-        if not np.any(transfer_idx):
-            # print("Transfer done already!")
-            raise ValueError('Forward transfer is already completed for this task!')
-            
-        transfer_polytopes = np.argmax(likelihood[transfer_idx,:], axis=0)
-        polytope_by_label = [transfer_polytopes[y == label] for label in labels]
-
-        new_sizes = np.zeros([len(transfer_idx), len(labels)])
-        for L, _ in enumerate(labels):
-            polytope_idxs = np.unique(polytope_by_label[L])
-            for idx in polytope_idxs:
-                new_sizes[idx, L] = np.sum(polytope_by_label[L] == idx)
-
-        self.polytope_sizes[task_id][transfer_idx, :] = new_sizes
-
         bias = np.sum(np.min(likelihood, axis=1) * np.sum(self.polytope_sizes[task_id], axis=1)) / self.k / np.sum(self.polytope_sizes[task_id])
-
         self.task_bias[task_id] = bias
-        self.is_forward_transferred = True
             
     def _compute_pdf(self, X, polytope_idx):
         r"""compute the likelihood for the given data
