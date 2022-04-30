@@ -79,6 +79,8 @@ class kdf(KernelDensityGraph):
                 one_hot = np.zeros(len(labels) + 1)
             else:
                 one_hot = np.zeros(len(labels))
+                
+            one_hot[label] = 1
 
             priors.append(len(X_) / len(X))
 
