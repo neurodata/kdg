@@ -204,31 +204,14 @@ class kdf(KernelDensityGraph):
         X_label = X_label.astype(int)
         if np.sum(X_label) < n_data :
             X_label[-1] = X_label[-1] + 1
-            print("Pretended there's a label")
-            print(n_data)
-            print(X_label[-1])
         
         for i in range(n_labels):
             index = np.cumsum(np.nan_to_num(self.polytope_sizes[task_id][:,i]))
             try:
                 polytopes = np.random.randint(0, index[-1], X_label[i])
-                print(polytopes)
-                print(polytopes.shape)
             except Exception as e:
                 polytopes = [0]
-#                 print("Error in generate_data")
-#                 print(e)
-#                 print("Loop var: ", i)
-#                 print("Data size:", n_data)
-#                 print("n_labels: ", n_labels)
-#                 print("Task ID: ", task_id)
-#                 print("Polytope Sizes for current task: ", self.polytope_sizes[task_id])
-#                 print("Polytope Sizes for current label: ", self.polytope_sizes[task_id][:,i])
-#                 print("Converting nan to num: ", np.nan_to_num(self.polytope_sizes[task_id][:,i]))
-#                 print("Cumulative summation: ", np.cumsum(np.nan_to_num(self.polytope_sizes[task_id][:,i])))
-#                 print("Index:" ,index)
-#                 print("Cur_label: ", X_label[i])
-#                 print(index[-1])                
+                print(e)
             polytope_size = [np.count_nonzero(j > polytopes) for j in index]
             polytope_size = polytope_size - np.concatenate(([0], polytope_size[0:-1]))
             for polytope, size in enumerate(polytope_size):
