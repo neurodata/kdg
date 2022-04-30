@@ -78,10 +78,8 @@ class kdf(KernelDensityGraph):
             try:
                 one_hot[label] = 1
             except Exception as e:
-                print(e)
-                print(labels)
-                print(len(labels))
-                print(one_hot)
+                one_hot = [1] 
+                print("Error Handled! All samples belong to 1 class!")
 
             priors.append(len(X_) / len(X))
 
