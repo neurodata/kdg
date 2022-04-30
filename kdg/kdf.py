@@ -72,14 +72,8 @@ class kdf(KernelDensityGraph):
 
         for label in labels:
             X_ = X[np.where(y==label)[0]]
-
-            if(len(labels) == 1):
-                print("Error Handled! All samples belong to 1 class!")
-                # Assume atleast one more class exists 
-                one_hot = np.zeros(len(labels) + 1)
-            else:
-                one_hot = np.zeros(len(labels))
-                
+            
+            one_hot = np.zeros(len(labels))
             one_hot[label] = 1
 
             priors.append(len(X_) / len(X))
