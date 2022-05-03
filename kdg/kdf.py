@@ -27,16 +27,10 @@ class kdf(KernelDensityGraph):
         self.class_priors = {}
         self.task_bias = {}
 
-        self.polytope_cardinality = {}
-        self.polytope_mean_cov = {}
-        self.prior = {}
-        self.bias = {}
-        self.global_bias = 0
+        self.global_bias = 0 #This variable is not currently being used
         self.kwargs = kwargs
         self.k = k
         
-        self.is_forward_transferred = False
-
         self.rf_model =  rf(**self.kwargs)
 
     def fit(self, X, y, task_id = None, **kwargs):
@@ -265,7 +259,6 @@ class kdf(KernelDensityGraph):
         bias = np.sum(np.min(likelihood, axis=1) * np.sum(self.polytope_sizes[task_id], axis=1)) / self.k / np.sum(self.polytope_sizes[task_id])
 
         self.task_bias[task_id] = bias
-        self.is_forward_transferred = True
             
     def _compute_pdf(self, X, polytope_idx):
         r"""compute the likelihood for the given data
@@ -328,16 +321,6 @@ class kdf(KernelDensityGraph):
         proba = (
             likelihoods.T * priors / (np.sum(likelihoods.T * priors, axis=0) + 1e-100)
         ).T        
-
-#         for ii,label in enumerate(self.labels):
-#             total_polytopes = len(self.polytope_means[label])
-#             for polytope_idx,_ in enumerate(self.polytope_means[label]):
-#                 likelihoods[:,ii] += self.prior[label] * np.nan_to_num(self._compute_pdf(X, label, polytope_idx))
-
-#             likelihoods[:,ii] = likelihoods[:,ii]/total_polytopes
-#             likelihoods[:,ii] += self.global_bias
-
-#         proba = (likelihoods.T/np.sum(likelihoods,axis=1)).T
         
         if return_likelihood:
             return proba, likelihoods
