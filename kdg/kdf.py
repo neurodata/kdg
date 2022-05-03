@@ -84,7 +84,8 @@ class kdf(KernelDensityGraph):
 
             total_polytopes_this_label = len(polytopes)
             total_samples_this_label = X_.shape[0]
-            self.prior[label] = total_samples_this_label/X.shape[0]
+            #remove unused variable
+            #self.prior[label] = total_samples_this_label/X.shape[0]
 
             for polytope in range(total_polytopes_this_label):
                 matched_samples = np.sum(
