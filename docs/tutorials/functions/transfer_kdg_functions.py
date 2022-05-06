@@ -49,7 +49,7 @@ def plot_posterior(post, ax = None, cmap="bwr", size = 3):
 
     ax.imshow(
         post,
-        extent=[-size, size, -size, size]],
+        extent=[-size, size, -size, size],
         cmap=cmap,
         vmin=0,
         vmax=1,
@@ -69,11 +69,11 @@ def _posterior_figure(X1, y1, X2, y2,
     ax[0,0] = plot_2dsim(X1, y1, ax=ax[0,0])
     ax[1,0] = plot_2dsim(X2, y2, ax=ax[1,0])
 
-    ax[0,1] = plot_posterior(post1, ax=[0,1])
+    plot_posterior(post1, ax[0,1])
     ax[0,1].set_title(f"{label1} pre-transfer acc={t1_acc}", fontsize=16)
     ax[0,1].set_aspect("equal")
 
-    ax[1,1] = plot_posterior(post2, ax[1,1])
+    plot_posterior(post2, ax[1,1])
     ax[1,1].set_title(f"{label2} pre-transfer acc={t2_acc}", fontsize=16)
     ax[1,1].set_aspect("equal")
 
@@ -81,7 +81,7 @@ def _posterior_figure(X1, y1, X2, y2,
     ax[0,2].set_title(f"{label1} post-transfer acc={t1_acc_trans}", fontsize=16)
     ax[0,2].set_aspect("equal")
 
-    ax[1,2] = plot_posterior(postt_Trans, ax[1,2])
+    ax[1,2] = plot_posterior(post2_trans, ax[1,2])
     ax[1,2].set_title(f"{label2} post-transfer acc={t2_acc_trans}", fontsize=16)
     ax[1,2].set_aspect("equal")
 
@@ -110,7 +110,7 @@ def transfer_posteriors(X1, y1, X1_test, y1_test,
                       label1, label2)
 
 def force_flip(X, y, X_test, y_test,
-               label, learner, **kwargs):
+               label, learner):
     #divide single array into 2 evenly sized arrays
     if len(np.unique(y)) > 2:
         print("Cannot do flip test on dataset with >2 classes!")
@@ -126,8 +126,8 @@ def force_flip(X, y, X_test, y_test,
     labels = [label, f"{label}Flip"]
     y2_test = -1*(y_test-1)
 
-    learner.fit(X1, y1, labels[0], **fit_kwargs)
-    learner.fit(X2, y2, labels[1], **fit_kwargs)
+    learner.fit(X1, y1, labels[0])
+    learner.fit(X2, y2, labels[1])
     post1 = get_posteriors(learner, labels[0])
     post2 = get_posteriors(learner, labels[1])
     t1_acc = np.mean(learner.predict(X_test, labels[0]) == y_test)
@@ -159,6 +159,8 @@ def _reset_learner(learner):
     learner.task_labels = {}
     learner.class_priors = {}
     learner.task_bias = {}
+    
+    return learner
 
 def run(learner,
         mc_rep,
@@ -166,9 +168,9 @@ def run(learner,
         n_t2,
         n_test = 1000,
         gen_1 = generate_spirals,
-        gen_2 = None
-        gen_kwargs1 = {n_class = 2},
-        gen_kwargs2 = {n_class = 3},
+        gen_2 = None,
+        gen_kwargs1 = {'n_class': 2},
+        gen_kwargs2 = {'n_class': 3},
         random_state = 100):
     mean_error = np.zeros((6, len(n_t1) + len(n_t2)))
     std_error = np.zeros((6, len(n_t1) + len(n_t2)))
@@ -177,9 +179,12 @@ def run(learner,
 
     if gen_2 is None: gen_2 = gen_1
 
+    task1_id = f"Spiral{n_t1}"
+    task2_id = f"Spiral{n_t2}"
+
     for i, n1 in enumerate(n_t1):
         print(f'starting to compute {n1} {task1_id}')
-        error = Parallel(n_jobs = -1)(delayed(experiment)(learner, n1, 0, n_test, gen_1, gen_2, gen_kwargs1, gen_kwargs2, random_state) for _ in range(mc_rep))
+        error = Parallel(n_jobs = -1)(delayed(experiment)(learner, n1, 0, n_test, task1_id, task2_id, gen_1, gen_2, gen_kwargs1, gen_kwargs2, random_state) for _ in range(mc_rep))
         error = np.array(error)
         mean_error[:, i] = np.mean(error, axis=0)
         std_error[:, i] = np.std(error, ddof=1, axis=0)
@@ -191,7 +196,7 @@ def run(learner,
         if n1 == n_t1[-1]:
             for j, n2 in enumerate(n_t2):
                 print(f'starting to compute {n2} {task2_id}')
-                error = Parallel(n_jobs = 2)(delayed(experiment)(learner, n1, n2, n_test, gen_kwargs1, gen_kwargs2, random_state) for _ in range(mc_rep))
+                error = Parallel(n_jobs = 2)(delayed(experiment)(learner, n1, n2, n_test, task1_id, task2_id, gen_1, gen_2, gen_kwargs1, gen_kwargs2, random_state) for _ in range(mc_rep))
                 error = np.array(error)
 
                 mean_error[:, i + j + 1] = np.mean(error, axis=0)
@@ -209,6 +214,8 @@ def experiment(
     n_task1,
     n_task2,
     n_test,
+    task1_id, 
+    task2_id,
     gen_1,
     gen_2,
     gen_kwargs1,
@@ -266,7 +273,7 @@ def experiment(
 
     #Create KDG learners
     kdg_task1 = _reset_learner(copy.copy(learner))
-    kdg_task1.fit(X_task1, y_task1, task_id=task1_id, **fit_kwargs)
+    kdg_task1.fit(X_task1, y_task1, task_id=task1_id, **gen_kwargs1)
 
     if n_task2 == 0:
         single_task1 = kdg_task1.predict(test_task1, task_id=task1_id)
@@ -282,27 +289,27 @@ def experiment(
         test_task2, test_label_task2 = gen_2(n_test, **gen_kwargs2)
 
         kdg_task2 = _reset_learner(copy.copy(learner))
-        kdg_task2.fit(X_task2, y_task2, task_id=task2_id, **fit_kwargs)
+        kdg_task2.fit(X_task2, y_task2, task_id=task2_id, **gen_kwargs2)
 
         naive_X = np.concatenate((X_task1, X_task2), axis=0)
         naive_y = np.concatenate((y_task1, y_task2), axis=0)
         kdg_naive = _reset_learner(copy.copy(learner))
-        kdg_naive.fit(naive_X, naive_y, task_id="Naive", **fit_kwargs)
+        kdg_naive.fit(naive_X, naive_y, task_id="Naive", **gen_kwargs1)
 
         kdg_prog = _reset_learner(copy.copy(learner))
 
-        kdg_prog.fit(X_task1, y_task1, task_id=task1_id, **fit_kwargs)
-        kdg_prog.fit(X_task2, y_task2, task_id=task2_id, **fit_kwargs)
+        kdg_prog.fit(X_task1, y_task1, task_id=task1_id, **gen_kwargs1)
+        kdg_prog.fit(X_task2, y_task2, task_id=task2_id, **gen_kwargs2)
 
         kdg_prog.forward_transfer(X_task1, y_task1, task_id=task1_id)
         kdg_prog.forward_transfer(X_task2, y_task2, task_id=task2_id)
 
-        single_task1 = kdf_task1.predict(test_task1, task_id=task1_id)
-        single_task2 = kdf_task2.predict(test_task2, task_id=task2_id)
-        naive_task1 = kdf_naive.predict(test_task1, task_id="Naive")
-        naive_task2 = kdf_naive.predict(test_task2, task_id="Naive")
-        prog_task1 = kdf_prog.predict(test_task1, task_id=task1_id)
-        prog_task2 = kdf_prog.predict(test_task2, task_id=task2_id)
+        single_task1 = kdg_task1.predict(test_task1, task_id=task1_id)
+        single_task2 = kdg_task2.predict(test_task2, task_id=task2_id)
+        naive_task1 = kdg_naive.predict(test_task1, task_id="Naive")
+        naive_task2 = kdg_naive.predict(test_task2, task_id="Naive")
+        prog_task1 = kdg_prog.predict(test_task1, task_id=task1_id)
+        prog_task2 = kdg_prog.predict(test_task2, task_id=task2_id)
 
         errors[0] = 1 - np.mean(single_task1 == test_label_task1)
         errors[1] = 1 - np.mean(prog_task1 == test_label_task1)
