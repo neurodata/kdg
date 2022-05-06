@@ -75,7 +75,6 @@ class kdf(KernelDensityGraph):
 
         for label in labels:
             X_ = X[np.where(y == label)[0]]
-
             one_hot = np.zeros(len(labels))
             one_hot[label] = 1
 
@@ -222,7 +221,11 @@ class kdf(KernelDensityGraph):
 
         for i in range(n_labels):
             index = np.cumsum(np.nan_to_num(self.polytope_sizes[task_id][:, i]))
-            polytopes = np.random.randint(0, index[-1], X_label[i])
+            try:
+                polytopes = np.random.randint(0, index[-1], X_label[i])
+            except Exception as e:
+                polytopes = [0]
+                print("Exception Handled! Some labels did not have polytopes") 
             polytope_size = [np.count_nonzero(j > polytopes) for j in index]
             polytope_size = polytope_size - np.concatenate(([0], polytope_size[0:-1]))
             for polytope, size in enumerate(polytope_size):
