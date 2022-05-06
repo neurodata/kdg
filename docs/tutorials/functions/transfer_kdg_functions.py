@@ -12,7 +12,7 @@ import copy
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.ensemble import RandomForestClassifier as rf 
+from sklearn.ensemble import RandomForestClassifier as rf
 from tensorflow import keras
 from tensorflow.keras import layers
 import matplotlib.pyplot as plt
@@ -23,27 +23,32 @@ from joblib import Parallel, delayed
 from kdg import *
 from kdg.utils import *
 
-def getNN(dense_size, input_size, levels = 2, n_labels = 2, **kwargs):
+
+def getNN(dense_size, input_size, levels=2, n_labels=2, **kwargs):
     network_base = keras.Sequential()
-    network_base.add(layers.Dense(dense_size, activation='relu', input_shape=(input_size,)))
+    network_base.add(
+        layers.Dense(dense_size, activation="relu", input_shape=(input_size,))
+    )
     for l in range(1, levels):
-        network_base.add(layers.Dense(dense_size, activation='relu'))
-    network_base.add(layers.Dense(units=n_labels, activation = 'softmax'))
+        network_base.add(layers.Dense(dense_size, activation="relu"))
+    network_base.add(layers.Dense(units=n_labels, activation="softmax"))
     network_base.compile(**kwargs)
     return network_base
-    
+
+
 def get_posteriors(learner, label):
-    #define grids
+    # define grids
     p = np.arange(-3, 3, step=0.01)
     q = np.arange(-3, 3, step=0.01)
     xx, yy = np.meshgrid(p, -q)
     grid_samples = np.concatenate((xx.reshape(-1, 1), yy.reshape(-1, 1)), axis=1)
     posteriors = learner.predict_proba(grid_samples, label)
-    posteriors = posteriors[:,0].reshape(600,600)
+    posteriors = posteriors[:, 0].reshape(600, 600)
 
-    return(posteriors)
+    return posteriors
 
-def plot_posterior(post, ax = None, cmap="bwr", size = 3):
+
+def plot_posterior(post, ax=None, cmap="bwr", size=3):
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(8, 8))
 
@@ -59,36 +64,60 @@ def plot_posterior(post, ax = None, cmap="bwr", size = 3):
 
     return ax
 
-def _posterior_figure(X1, y1, X2, y2,
-                      post1, post2, t1_acc, t2_acc,
-                      post1_trans, post2_trans, t1_acc_trans, t2_acc_trans,
-                      label1, label2):
-    
+
+def _posterior_figure(
+    X1,
+    y1,
+    X2,
+    y2,
+    post1,
+    post2,
+    t1_acc,
+    t2_acc,
+    post1_trans,
+    post2_trans,
+    t1_acc_trans,
+    t2_acc_trans,
+    label1,
+    label2,
+):
+
     fig1, ax = plt.subplots(2, 3, figsize=(15, 10))
 
-    ax[0,0] = plot_2dsim(X1, y1, ax=ax[0,0])
-    ax[1,0] = plot_2dsim(X2, y2, ax=ax[1,0])
+    ax[0, 0] = plot_2dsim(X1, y1, ax=ax[0, 0])
+    ax[1, 0] = plot_2dsim(X2, y2, ax=ax[1, 0])
 
-    plot_posterior(post1, ax[0,1])
-    ax[0,1].set_title(f"{label1} pre-transfer acc={t1_acc}", fontsize=16)
-    ax[0,1].set_aspect("equal")
+    plot_posterior(post1, ax[0, 1])
+    ax[0, 1].set_title(f"{label1} pre-transfer acc={t1_acc}", fontsize=16)
+    ax[0, 1].set_aspect("equal")
 
-    plot_posterior(post2, ax[1,1])
-    ax[1,1].set_title(f"{label2} pre-transfer acc={t2_acc}", fontsize=16)
-    ax[1,1].set_aspect("equal")
+    plot_posterior(post2, ax[1, 1])
+    ax[1, 1].set_title(f"{label2} pre-transfer acc={t2_acc}", fontsize=16)
+    ax[1, 1].set_aspect("equal")
 
-    ax[0,2] = plot_posterior(post1_trans, ax[0,2])
-    ax[0,2].set_title(f"{label1} post-transfer acc={t1_acc_trans}", fontsize=16)
-    ax[0,2].set_aspect("equal")
+    ax[0, 2] = plot_posterior(post1_trans, ax[0, 2])
+    ax[0, 2].set_title(f"{label1} post-transfer acc={t1_acc_trans}", fontsize=16)
+    ax[0, 2].set_aspect("equal")
 
-    ax[1,2] = plot_posterior(post2_trans, ax[1,2])
-    ax[1,2].set_title(f"{label2} post-transfer acc={t2_acc_trans}", fontsize=16)
-    ax[1,2].set_aspect("equal")
+    ax[1, 2] = plot_posterior(post2_trans, ax[1, 2])
+    ax[1, 2].set_title(f"{label2} post-transfer acc={t2_acc_trans}", fontsize=16)
+    ax[1, 2].set_aspect("equal")
 
-def transfer_posteriors(X1, y1, X1_test, y1_test,
-                        X2, y2, X2_test, y2_test,
-                        label1, label2,
-                        learner, **kwargs):
+
+def transfer_posteriors(
+    X1,
+    y1,
+    X1_test,
+    y1_test,
+    X2,
+    y2,
+    X2_test,
+    y2_test,
+    label1,
+    label2,
+    learner,
+    **kwargs,
+):
     learner.fit(X1, y1, label1, **kwargs)
     learner.fit(X2, y2, label2, **kwargs)
     post1 = get_posteriors(learner, label1)
@@ -104,27 +133,37 @@ def transfer_posteriors(X1, y1, X1_test, y1_test,
     t1_acc_trans = np.mean(learner.predict(X1_test, label1) == y1_test)
     t2_acc_trans = np.mean(learner.predict(X2_test, label2) == y2_test)
 
-    _posterior_figure(X1, y1, X2, y2,
-                      post1, post2, t1_acc, t2_acc,
-                      post1_trans, post2_trans, t1_acc_trans, t2_acc_trans,
-                      label1, label2)
+    _posterior_figure(
+        X1,
+        y1,
+        X2,
+        y2,
+        post1,
+        post2,
+        t1_acc,
+        t2_acc,
+        post1_trans,
+        post2_trans,
+        t1_acc_trans,
+        t2_acc_trans,
+        label1,
+        label2,
+    )
 
-def force_flip(X, y, X_test, y_test,
-               label, learner):
-    #divide single array into 2 evenly sized arrays
+
+def force_flip(X, y, X_test, y_test, label, learner):
+    # divide single array into 2 evenly sized arrays
     if len(np.unique(y)) > 2:
         print("Cannot do flip test on dataset with >2 classes!")
         return
 
-    split = np.random.choice(np.arange(0, len(y)),
-                             size=int(len(y)/2),
-                             replace=False)
+    split = np.random.choice(np.arange(0, len(y)), size=int(len(y) / 2), replace=False)
     X1 = X[split, :]
     X2 = np.delete(X, split, axis=0)
     y1 = y[split]
-    y2 = -1*(np.delete(y, split)-1)
+    y2 = -1 * (np.delete(y, split) - 1)
     labels = [label, f"{label}Flip"]
-    y2_test = -1*(y_test-1)
+    y2_test = -1 * (y_test - 1)
 
     learner.fit(X1, y1, labels[0])
     learner.fit(X2, y2, labels[1])
@@ -135,55 +174,89 @@ def force_flip(X, y, X_test, y_test,
 
     for i in range(2):
         L1 = labels[i]
-        L2 = labels[i-1]
-        transfer_idx = np.isnan(learner.polytope_sizes[L1])[:,0].nonzero()[0]
-        learner.polytope_sizes[L1][transfer_idx] = np.fliplr(learner.polytope_sizes[L2][transfer_idx])
+        L2 = labels[i - 1]
+        transfer_idx = np.isnan(learner.polytope_sizes[L1])[:, 0].nonzero()[0]
+        learner.polytope_sizes[L1][transfer_idx] = np.fliplr(
+            learner.polytope_sizes[L2][transfer_idx]
+        )
 
     post1_trans = get_posteriors(learner, labels[0])
     post2_trans = get_posteriors(learner, labels[1])
     t1_acc_trans = np.mean(learner.predict(X_test, labels[0]) == y_test)
     t2_acc_trans = np.mean(learner.predict(X_test, labels[1]) == y2_test)
 
-    _posterior_figure(X1, y1, X2, y2,
-                      post1, post2, t1_acc, t2_acc,
-                      post1_trans, post2_trans, t1_acc_trans, t2_acc_trans,
-                      labels[0], labels[1])
+    _posterior_figure(
+        X1,
+        y1,
+        X2,
+        y2,
+        post1,
+        post2,
+        t1_acc,
+        t2_acc,
+        post1_trans,
+        post2_trans,
+        t1_acc_trans,
+        t2_acc_trans,
+        labels[0],
+        labels[1],
+    )
+
 
 def _reset_learner(learner):
     learner.polytope_means = []
     learner.polytope_cov = []
     learner.polytope_sizes = {}
-        
+
     learner.task_list = []
-        
+
     learner.task_labels = {}
     learner.class_priors = {}
     learner.task_bias = {}
-    
+
     return learner
 
-def run(learner,
-        mc_rep,
-        n_t1,
-        n_t2,
-        n_test = 1000,
-        gen_1 = generate_spirals,
-        gen_2 = None,
-        task1_id = "Spiral2",
-        task2_id = "Spiral3",
-        gen_kwargs1 = {'n_class': 2},
-        gen_kwargs2 = {'n_class': 3},
-        random_state = 100):
+
+def run(
+    learner,
+    mc_rep,
+    n_t1,
+    n_t2,
+    n_test=1000,
+    gen_1=generate_spirals,
+    gen_2=None,
+    task1_id="Spiral2",
+    task2_id="Spiral3",
+    gen_kwargs1={"n_class": 2},
+    gen_kwargs2={"n_class": 3},
+    random_state=100,
+):
     mean_error = np.zeros((6, len(n_t1) + len(n_t2)))
     std_error = np.zeros((6, len(n_t1) + len(n_t2)))
     mean_te = np.zeros((4, len(n_t1) + len(n_t2)))
     std_te = np.zeros((4, len(n_t1) + len(n_t2)))
 
-    if gen_2 is None: gen_2 = gen_1
+    if gen_2 is None:
+        gen_2 = gen_1
 
     for i, n1 in enumerate(n_t1):
-        print(f'starting to compute {n1} {task1_id}')
-        error = Parallel(n_jobs = -1)(delayed(experiment)(learner, n1, 0, n_test, task1_id, task2_id, gen_1, gen_2, gen_kwargs1, gen_kwargs2, random_state) for _ in range(mc_rep))
+        print(f"starting to compute {n1} {task1_id}")
+        error = Parallel(n_jobs=-1)(
+            delayed(experiment)(
+                learner,
+                n1,
+                0,
+                n_test,
+                task1_id,
+                task2_id,
+                gen_1,
+                gen_2,
+                gen_kwargs1,
+                gen_kwargs2,
+                random_state,
+            )
+            for _ in range(mc_rep)
+        )
         error = np.array(error)
         mean_error[:, i] = np.mean(error, axis=0)
         std_error[:, i] = np.std(error, ddof=1, axis=0)
@@ -194,8 +267,23 @@ def run(learner,
 
         if n1 == n_t1[-1]:
             for j, n2 in enumerate(n_t2):
-                print(f'starting to compute {n2} {task2_id}')
-                error = Parallel(n_jobs = 2)(delayed(experiment)(learner, n1, n2, n_test, task1_id, task2_id, gen_1, gen_2, gen_kwargs1, gen_kwargs2, random_state) for _ in range(mc_rep))
+                print(f"starting to compute {n2} {task2_id}")
+                error = Parallel(n_jobs=2)(
+                    delayed(experiment)(
+                        learner,
+                        n1,
+                        n2,
+                        n_test,
+                        task1_id,
+                        task2_id,
+                        gen_1,
+                        gen_2,
+                        gen_kwargs1,
+                        gen_kwargs2,
+                        random_state,
+                    )
+                    for _ in range(mc_rep)
+                )
                 error = np.array(error)
 
                 mean_error[:, i + j + 1] = np.mean(error, axis=0)
@@ -213,13 +301,13 @@ def experiment(
     n_task1,
     n_task2,
     n_test,
-    task1_id, 
+    task1_id,
     task2_id,
     gen_1,
     gen_2,
     gen_kwargs1,
     gen_kwargs2,
-    random_state
+    random_state,
 ):
 
     """
@@ -270,7 +358,7 @@ def experiment(
     X_task1, y_task1 = gen_1(n_task1, **gen_kwargs1)
     test_task1, test_label_task1 = gen_1(n_test, **gen_kwargs1)
 
-    #Create KDG learners
+    # Create KDG learners
     kdg_task1 = _reset_learner(copy.copy(learner))
     kdg_task1.fit(X_task1, y_task1, task_id=task1_id, **gen_kwargs1)
 
@@ -319,11 +407,19 @@ def experiment(
 
     return errors
 
-def plot_error_and_eff(n1s, n2s,
-                       mean_error, mean_te,
-                       TASK1, TASK2,
-                       task1_data, task1_labels,
-                       task2_data, task2_labels):
+
+def plot_error_and_eff(
+    n1s,
+    n2s,
+    mean_error,
+    mean_te,
+    TASK1,
+    TASK2,
+    task1_data,
+    task1_labels,
+    task2_data,
+    task2_labels,
+):
     """
     A function that plots the generalization error and
     transfer efficiency for any experiment
@@ -357,12 +453,14 @@ def plot_error_and_eff(n1s, n2s,
     ################################
     # Plots of Generalization Error
     ################################
-    algorithms = [f"Single Task {TASK1}",
-                  f"Transfer {TASK1}",
-                  f"Single Task {TASK2}",
-                  f"Transfer {TASK2}",
-                  f"Naive {TASK1}",
-                  f"Naive {TASK2}"]
+    algorithms = [
+        f"Single Task {TASK1}",
+        f"Transfer {TASK1}",
+        f"Single Task {TASK2}",
+        f"Transfer {TASK2}",
+        f"Naive {TASK1}",
+        f"Naive {TASK2}",
+    ]
 
     fontsize = 30
     labelsize = 28
@@ -395,9 +493,9 @@ def plot_error_and_eff(n1s, n2s,
     ax1.legend(loc="upper left", fontsize=18, facecolor="white", framealpha=1)
     ax1.set_xlabel("Total Sample Size", fontsize=fontsize)
     ax1.tick_params(labelsize=labelsize)
-    #ax1.set_yscale("log")
+    # ax1.set_yscale("log")
     ax1.yaxis.set_major_formatter(ScalarFormatter())
-    ax1.set_xlim([n1s[0]-10, ns[-1]+10])
+    ax1.set_xlim([n1s[0] - 10, ns[-1] + 10])
     ax1.set_ylim([0, 0.8])
     ax1.set_yticks([0.1, 0.3, 0.5, 0.7])
     ax1.set_xticks([n1s[0], n1s[-1], ns[-1]])
@@ -409,19 +507,15 @@ def plot_error_and_eff(n1s, n2s,
     top_side = ax1.spines["top"]
     top_side.set_visible(False)
 
-    #ax1.text(int(0.3*n1s[-1]), 0.15, "%s" % (TASK1), fontsize=26)
-    #ax1.text(int(1.4*n1s[-2]), np.mean(ax1.get_ylim()), "%s" % (TASK2), fontsize=26)
+    # ax1.text(int(0.3*n1s[-1]), 0.15, "%s" % (TASK1), fontsize=26)
+    # ax1.text(int(1.4*n1s[-2]), np.mean(ax1.get_ylim()), "%s" % (TASK2), fontsize=26)
 
     ##############
 
     ax1 = fig.add_subplot(gs[7:, 7:13])
 
     ax1.plot(
-        ns[len(n1s) :],
-        mean_error[2, len(n1s) :],
-        label=algorithms[2],
-        c="g",
-        lw=3
+        ns[len(n1s) :], mean_error[2, len(n1s) :], label=algorithms[2], c="g", lw=3
     )
 
     ax1.plot(
@@ -436,9 +530,9 @@ def plot_error_and_eff(n1s, n2s,
     ax1.legend(loc="lower left", fontsize=18, facecolor="white", framealpha=1)
     ax1.set_xlabel("Total Sample Size", fontsize=fontsize)
     ax1.tick_params(labelsize=labelsize)
-    #ax1.set_yscale("log")
+    # ax1.set_yscale("log")
     ax1.yaxis.set_major_formatter(ScalarFormatter())
-    ax1.set_xlim([n1s[0]-10, ns[-1]+10])
+    ax1.set_xlim([n1s[0] - 10, ns[-1] + 10])
     ax1.set_ylim([0, 0.8])
     ax1.set_yticks([0.1, 0.3, 0.5, 0.7])
     ax1.set_xticks([n1s[0], n1s[-1], ns[-1]])
@@ -450,8 +544,8 @@ def plot_error_and_eff(n1s, n2s,
     top_side = ax1.spines["top"]
     top_side.set_visible(False)
 
-    #ax1.text(int(0.3*n1s[-1]), 0.2, "%s" % (TASK1), fontsize=26)
-    #ax1.text(int(1.4*n1s[-2]), 0.2, "%s" % (TASK2), fontsize=26)
+    # ax1.text(int(0.3*n1s[-1]), 0.2, "%s" % (TASK1), fontsize=26)
+    # ax1.text(int(1.4*n1s[-2]), 0.2, "%s" % (TASK2), fontsize=26)
 
     ax1.set_title(f"{TASK1}       {TASK2}", fontsize=30)
 
@@ -470,7 +564,7 @@ def plot_error_and_eff(n1s, n2s,
         label=algorithms[0],
         c=colors[0],
         ls=ls[0],
-        lw=3
+        lw=3,
     )
     ax1.plot(
         ns[len(n1s) :],
@@ -480,14 +574,7 @@ def plot_error_and_eff(n1s, n2s,
         ls=ls[1],
         lw=3,
     )
-    ax1.plot(
-        ns,
-        mean_te[2],
-        label=algorithms[2],
-        c="g",
-        ls=ls[0],
-        lw=3
-    )
+    ax1.plot(ns, mean_te[2], label=algorithms[2], c="g", ls=ls[0], lw=3)
     ax1.plot(
         ns[len(n1s) :],
         mean_te[3, len(n1s) :],
@@ -507,7 +594,7 @@ def plot_error_and_eff(n1s, n2s,
     ax1.set_yticks(log_lbl)
 
     ax1.set_title(f"{TASK1}       {TASK2}", fontsize=30)
-    
+
     ax1.tick_params(labelsize=labelsize)
     ax1.set_xticks([n1s[0], n1s[-1], ns[-1]])
     ax1.axvline(x=n1s[-1], c="gray", linewidth=1.5, linestyle="dashed")
@@ -517,8 +604,8 @@ def plot_error_and_eff(n1s, n2s,
     top_side.set_visible(False)
     ax1.hlines(0, 50, 1500, colors="gray", linestyles="dashed", linewidth=1.5)
 
-    #ax1.text(int(0.3*n1s[-1]), np.mean(ax1.get_ylim()), "%s" % (TASK1), fontsize=26)
-    #ax1.text(int(1.4*n1s[-2]), np.mean(ax1.get_ylim()), "%s" % (TASK2), fontsize=26)
+    # ax1.text(int(0.3*n1s[-1]), np.mean(ax1.get_ylim()), "%s" % (TASK1), fontsize=26)
+    # ax1.text(int(1.4*n1s[-2]), np.mean(ax1.get_ylim()), "%s" % (TASK2), fontsize=26)
 
     ##############
 
