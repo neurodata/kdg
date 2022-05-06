@@ -12,6 +12,7 @@ from scipy.stats import multivariate_normal
 from sklearn.covariance import LedoitWolf
 from tensorflow import keras
 
+
 class kdn(KernelDensityGraph):
     def __init__(
         self,
@@ -22,7 +23,7 @@ class kdn(KernelDensityGraph):
         h=0.33,
         optimizer="rmsprop",
         loss=None,
-        verbose=True
+        verbose=True,
     ):
         r"""[summary]
 
@@ -49,27 +50,31 @@ class kdn(KernelDensityGraph):
         self.polytope_means = []
         self.polytope_covs = []
         self.polytope_sizes = {}
-        
+
         self.task_list = []
 
         self.task_labels = {}
         self.class_priors = {}
         self.task_bias = {}
-        
-        #Need to fit the network within fit()
+
+        # Need to fit the network within fit()
         self.network = keras.models.clone_model(network)
         self.weighting = weighting
         self.k = k
         self.h = h
         self.T = T
         self.verbose = verbose
-        
+
         self.compile_kwargs = {}
-        if loss is None: self.compile_kwargs["loss"] = network.loss
-        else: self.compile_kwargs["loss"] = loss
-        if optimizer is None: self.compile_kwargs["optimizer"] = network.optimizer
-        else: self.compile_kwargs["optimizer"] = optimizer
-                
+        if loss is None:
+            self.compile_kwargs["loss"] = network.loss
+        else:
+            self.compile_kwargs["loss"] = loss
+        if optimizer is None:
+            self.compile_kwargs["optimizer"] = network.optimizer
+        else:
+            self.compile_kwargs["optimizer"] = optimizer
+
         # total number of layers in the NN
         self.total_layers = len(self.network.layers)
 
@@ -82,9 +87,9 @@ class kdn(KernelDensityGraph):
         self.num_neurons = sum(self.network_shape) - self.network_shape[-1]
 
         # get the weights and biases of the trained MLP
-        #self.weights = {}
-        #self.biases = {}
-        #for i in range(len(self.network.layers)):
+        # self.weights = {}
+        # self.biases = {}
+        # for i in range(len(self.network.layers)):
         #    weight, bias = self.network.layers[i].get_weights()
         #    self.weights[i], self.biases[i] = weight, bias.reshape(1, -1)
 
@@ -98,7 +103,7 @@ class kdn(KernelDensityGraph):
         """
         polytope_ids_tmp = []
         last_activations = X
-        
+
         # Iterate through neural network manually, getting node activations at each step
         for l in range(self.total_layers):
             weight, bias = X_network.layers[l].get_weights()
@@ -181,7 +186,7 @@ class kdn(KernelDensityGraph):
 
         return np.exp(-d / self.h)
 
-    def fit(self, X, y, task_id = None, **kwargs):
+    def fit(self, X, y, task_id=None, **kwargs):
         r"""
         Add a task to the multi-task kernel density network.
         Parameters
@@ -198,19 +203,20 @@ class kdn(KernelDensityGraph):
         X, y = check_X_y(X, y)
         labels = np.unique(y)
         feature_dim = X.shape[1]
-        
-        if task_id is None: task_id = f"task{len(self.task_list)}" 
+
+        if task_id is None:
+            task_id = f"task{len(self.task_list)}"
         self.task_list.append(task_id)
         self.task_labels[task_id] = labels
-        
-        #create and fit neural network
+
+        # create and fit neural network
         X_network = keras.models.clone_model(self.network)
-        #replace labeling layer
+        # replace labeling layer
         X_network.pop()
-        X_network.add(keras.layers.Dense(units=len(labels), activation = 'softmax'))
+        X_network.add(keras.layers.Dense(units=len(labels), activation="softmax"))
         X_network.compile(**self.compile_kwargs)
         X_network.fit(X, keras.utils.to_categorical(y), **kwargs)
-        
+
         polytope_means = []
         polytope_covs = []
         polytope_sizes = []
@@ -263,8 +269,8 @@ class kdn(KernelDensityGraph):
                 polytope_means.append(polytope_mean_)
                 polytope_covs.append(polytope_cov_)
                 polytope_sizes.append(polytope_size_ * one_hot)
-                        
-        #save calculations for all polytopes
+
+        # save calculations for all polytopes
         start_idx = len(self.polytope_means)
         stop_idx = len(polytope_means) + start_idx
         if start_idx == 0:
@@ -272,28 +278,42 @@ class kdn(KernelDensityGraph):
             self.polytope_covs = np.array(polytope_covs)
             self.polytope_sizes[task_id] = np.array(polytope_sizes)
         else:
-            self.polytope_means = np.concatenate([self.polytope_means, np.array(polytope_means)])
-            self.polytope_covs = np.concatenate([self.polytope_covs, np.array(polytope_covs)])
-            self.polytope_sizes[task_id] = np.concatenate([np.full([start_idx, len(labels)], fill_value=np.nan),
-                                                           polytope_sizes])
-            #pad polytope sizes of previous tasks
+            self.polytope_means = np.concatenate(
+                [self.polytope_means, np.array(polytope_means)]
+            )
+            self.polytope_covs = np.concatenate(
+                [self.polytope_covs, np.array(polytope_covs)]
+            )
+            self.polytope_sizes[task_id] = np.concatenate(
+                [np.full([start_idx, len(labels)], fill_value=np.nan), polytope_sizes]
+            )
+            # pad polytope sizes of previous tasks
             for prev_task in self.task_list[:-1]:
-                self.polytope_sizes[prev_task] = np.concatenate([self.polytope_sizes[prev_task],
-                                                                 np.full([stop_idx - start_idx,
-                                                                          len(self.task_labels[prev_task])],
-                                                                         fill_value=np.nan)])
-        
-        #Calculate bias
+                self.polytope_sizes[prev_task] = np.concatenate(
+                    [
+                        self.polytope_sizes[prev_task],
+                        np.full(
+                            [stop_idx - start_idx, len(self.task_labels[prev_task])],
+                            fill_value=np.nan,
+                        ),
+                    ]
+                )
+
+        # Calculate bias
         likelihood = []
         for polytope in range(start_idx, stop_idx):
             likelihood.append(self._compute_pdf(X, polytope))
         likelihood = np.array(likelihood)
-        
-        bias = np.sum(np.min(likelihood, axis=1) * np.sum(polytope_sizes, axis=1)) / self.k / np.sum(polytope_sizes)
+
+        bias = (
+            np.sum(np.min(likelihood, axis=1) * np.sum(polytope_sizes, axis=1))
+            / self.k
+            / np.sum(polytope_sizes)
+        )
         self.task_bias[task_id] = bias
         self.class_priors[task_id] = np.array(priors)
-        
-    def generate_data(self, n_data, task_id, force_equal_priors = True):
+
+    def generate_data(self, n_data, task_id, force_equal_priors=True):
         r"""
         Generate new data using existing polytopes
 
@@ -306,7 +326,7 @@ class kdn(KernelDensityGraph):
         force_equal_priors : bool
             If True, generated data will be equally distributed between all labels.
             If False, generated data will be distributed between labels in proportion to the existing priors.
-        
+
         Returns:
         ndarray
             Input data matrix.
@@ -320,29 +340,31 @@ class kdn(KernelDensityGraph):
 
         X = []
         y = []
-        
+
         if force_equal_priors:
-            X_label = np.full(n_labels, n_data/n_labels)
-        else: 
+            X_label = np.full(n_labels, n_data / n_labels)
+        else:
             X_label = n_data * self.class_priors[task_id]
         X_label = X_label.astype(int)
-        if np.sum(X_label) < n_data :
+        if np.sum(X_label) < n_data:
             X_label[-1] = X_label[-1] + 1
-        
+
         for i in range(n_labels):
-            index = np.cumsum(np.nan_to_num(self.polytope_sizes[task_id][:,i]))
+            index = np.cumsum(np.nan_to_num(self.polytope_sizes[task_id][:, i]))
             polytopes = np.random.randint(0, index[-1], X_label[i])
             polytope_size = [np.count_nonzero(j > polytopes) for j in index]
             polytope_size = polytope_size - np.concatenate(([0], polytope_size[0:-1]))
             for polytope, size in enumerate(polytope_size):
                 if size > 0:
-                    xi = np.random.multivariate_normal(self.polytope_means[polytope],
-                                                       self.polytope_covs[polytope],
-                                                       size)
+                    xi = np.random.multivariate_normal(
+                        self.polytope_means[polytope],
+                        self.polytope_covs[polytope],
+                        size,
+                    )
                     yi = np.full(size, i)
                     X.append(xi)
                     y.append(yi)
-                    
+
         return np.concatenate(X), np.concatenate(y)
 
     def forward_transfer(self, X, y, task_id):
@@ -368,10 +390,10 @@ class kdn(KernelDensityGraph):
         for polytope_idx in range(self.polytope_means.shape[0]):
             likelihood.append(self._compute_pdf(X, polytope_idx))
         likelihood = np.array(likelihood)
-        
-        transfer_idx = np.isnan(self.polytope_sizes[task_id])[:,0].nonzero()[0]
-            
-        transfer_polytopes = np.argmax(likelihood[transfer_idx,:], axis=0)
+
+        transfer_idx = np.isnan(self.polytope_sizes[task_id])[:, 0].nonzero()[0]
+
+        transfer_polytopes = np.argmax(likelihood[transfer_idx, :], axis=0)
         polytope_by_label = [transfer_polytopes[y == label] for label in labels]
 
         new_sizes = np.zeros([len(transfer_idx), len(labels)])
@@ -382,10 +404,17 @@ class kdn(KernelDensityGraph):
 
         self.polytope_sizes[task_id][transfer_idx, :] = new_sizes
 
-        bias = np.sum(np.min(likelihood, axis=1) * np.sum(self.polytope_sizes[task_id], axis=1)) / self.k / np.sum(self.polytope_sizes[task_id])
+        bias = (
+            np.sum(
+                np.min(likelihood, axis=1)
+                * np.sum(self.polytope_sizes[task_id], axis=1)
+            )
+            / self.k
+            / np.sum(self.polytope_sizes[task_id])
+        )
 
         self.task_bias[task_id] = bias
-            
+
     def _compute_pdf(self, X, polytope_idx):
         r"""compute the likelihood for the given data
 
@@ -412,7 +441,7 @@ class kdn(KernelDensityGraph):
 
         likelihood = var.pdf(X)
         return likelihood
-    
+
     def predict_proba(self, X, task_id, return_likelihoods=False):
         r"""
         Calculate posteriors using the kernel density network.
@@ -424,7 +453,7 @@ class kdn(KernelDensityGraph):
             Task that data is an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
         return_likelihoods : bool
             Whether to return likelihoods as well as array
-        
+
         Returns
         -------
         ndarray
@@ -434,18 +463,16 @@ class kdn(KernelDensityGraph):
         X = check_array(X)
         if isinstance(task_id, int):
             task_id = self.task_list[task_id]
-            
+
         labels = self.task_labels[task_id]
 
         likelihood = np.zeros((np.size(X, 0), len(labels)), dtype=float)
         priors = self.class_priors[task_id]
         priors = np.reshape(priors, (len(priors), 1))
-        
+
         for polytope, sizes in enumerate(self.polytope_sizes[task_id]):
-            likelihood += np.nan_to_num(
-                    np.outer(self._compute_pdf(X, polytope), sizes)
-                )
-    
+            likelihood += np.nan_to_num(np.outer(self._compute_pdf(X, polytope), sizes))
+
         likelihood += self.task_bias[task_id]
         proba = (
             likelihood.T * priors / (np.sum(likelihood.T * priors, axis=0) + 1e-100)
@@ -454,7 +481,7 @@ class kdn(KernelDensityGraph):
             return proba, likelihoods
         else:
             return proba
-        
+
     def predict(self, X, task_id):
         r"""
         Perform inference using the kernel density forest.
@@ -462,7 +489,7 @@ class kdn(KernelDensityGraph):
         ----------
         X : ndarray
             Input data matrix.
-        
+
         Returns
         -------
         ndarray
@@ -470,6 +497,6 @@ class kdn(KernelDensityGraph):
         """
         if isinstance(task_id, int):
             task_id = self.task_list[task_id]
-            
+
         predictions = np.argmax(self.predict_proba(X, task_id), axis=1)
         return np.array([self.task_labels[task_id][pred] for pred in predictions])
