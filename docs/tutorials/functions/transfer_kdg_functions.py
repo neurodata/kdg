@@ -169,6 +169,8 @@ def run(learner,
         n_test = 1000,
         gen_1 = generate_spirals,
         gen_2 = None,
+        task1_id = "Spiral2",
+        task2_id = "Spiral3",
         gen_kwargs1 = {'n_class': 2},
         gen_kwargs2 = {'n_class': 3},
         random_state = 100):
@@ -178,9 +180,6 @@ def run(learner,
     std_te = np.zeros((4, len(n_t1) + len(n_t2)))
 
     if gen_2 is None: gen_2 = gen_1
-
-    task1_id = f"Spiral{n_t1}"
-    task2_id = f"Spiral{n_t2}"
 
     for i, n1 in enumerate(n_t1):
         print(f'starting to compute {n1} {task1_id}')
