@@ -10,8 +10,17 @@ import numpy as np
 import openml
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
+from numpy import min_scalar_type
+from sklearn.mixture import GaussianMixture
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
+from sklearn.ensemble import RandomForestClassifier as rf 
+import numpy as np
+from scipy.stats import multivariate_normal
+import warnings
+from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
+
 #%%
-dataset_id = 1478
+dataset_id = 1067#1468#44#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -38,7 +47,7 @@ endpoint=True,
 dtype=int
 )
 
-train_sample = train_samples[1]
+train_sample = train_samples[-1]
 indx_to_take_train = []
 indx_to_take_test = []
 
@@ -54,8 +63,8 @@ for ii, _ in enumerate(unique_classes):
                 indx[ii][-test_sample:counts[ii]]
         )
 )
-
-model_kdf = kdf(k=1e7,kwargs={'n_estimators':500, 'min_samples_leaf':30})
+#%%
+model_kdf = kdf(k=1e200,kwargs={'n_estimators':500, 'min_samples_leaf':1})
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
 
 # %%
@@ -79,7 +88,7 @@ for dim in range(X.shape[1]):
 # %%
 from kdg.utils import generate_gaussian_parity, gaussian_sparse_parity
 
-X, y = gaussian_sparse_parity(1000, p_star=200, p=200)
+X, y = generate_gaussian_parity(1000)
 model_kdf = kdf(k=1e3,kwargs={'n_estimators':500, 'min_samples_leaf':30})
 model_kdf.fit(X, y)
 #%%
@@ -151,7 +160,8 @@ def predict_proba(model, X, return_likelihood=False):
         return proba 
 
 # %%
-X_test, y_test = gaussian_sparse_parity(1000, p_star=200,p=200)
+from kdg.utils import generate_gaussian_parity
+X_test, y_test = generate_gaussian_parity(1000)
 #predict_proba(model_kdf, X_test[:2,:])
 np.mean(model_kdf.predict(X_test)==y_test)
 # %%
@@ -200,4 +210,43 @@ def predict_proba(model, X, return_likelihood=False):
     else:
         return proba 
 
+# %%
+#test the fitting
+X_t, y_t = X[indx_to_take_train], y[indx_to_take_train]
+labels = np.unique(y)
+rf_model = rf(n_estimators=5, min_samples_leaf=1).fit(X, y)
+feature_dim = X_t.shape[1]
+
+for label in labels:
+
+    X_ = X_t[np.where(y_t==label)[0]]
+    predicted_leaf_ids_across_trees = np.array(
+        [tree.apply(X_) for tree in rf_model.estimators_]
+                ).T
+    polytopes, polytope_count = np.unique(
+                predicted_leaf_ids_across_trees, return_counts=True, axis=0
+            )
+    total_polytopes_this_label = len(polytopes)
+    print(X_.shape[0], 'total sample this label')
+
+    for polytope in range(total_polytopes_this_label):
+        matched_samples = np.sum(
+            predicted_leaf_ids_across_trees == polytopes[polytope],
+            axis=1
+        )
+        idx = np.where(
+            matched_samples>0
+        )[0]
+        
+        if len(idx) == 1:
+            continue
+        
+        scales = matched_samples[idx]/np.max(matched_samples[idx])
+        X_tmp = X_[idx].copy()
+        location = np.average(X_tmp, axis=0, weights=scales)
+        X_tmp -= location
+
+        covariance = np.average(X_tmp**2, axis=0, weights=scales)
+        break
+    break
 # %%
