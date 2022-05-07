@@ -54,13 +54,6 @@ def experiment(dataset_id, folder, n_estimators=500, reps=5, n_attack=50):
         dtype=int
         )
 
-    """
-    NOTE(Jacob):
-    KDF is throwing divide by zero errors at small samples sizes. Speak with 
-    Jayanta about this. Because of this, unable to generate adversarial samples
-    since the prediction is always the same number, resulting in l2 of zero which
-    doesn't make sense.
-    """
     train_samples = [train_samples[-1]]
 
     # Only use small data for now
@@ -147,42 +140,9 @@ def experiment(dataset_id, folder, n_estimators=500, reps=5, n_attack=50):
                 max_eval=1000,
                 init_eval=10,
             )
-            # attack_kdf = ZooAttack(
-            #     classifier=art_classifier_kdf,
-            #     confidence=0.0,
-            #     targeted=False,
-            #     learning_rate=1e-1,
-            #     max_iter=20,
-            #     binary_search_steps=10,
-            #     initial_const=1e-3,
-            #     abort_early=True,
-            #     use_resize=False,
-            #     use_importance=False,
-            #     nb_parallel=1,
-            #     batch_size=1,
-            #     variable_h=0.2,
-            # )
-
-            # attack_rf = ZooAttack(
-            #     classifier=art_classifier_rf,
-            #     confidence=0.0, # originally 0.0
-            #     targeted=False,
-            #     learning_rate=1e-1,
-            #     max_iter=20,
-            #     binary_search_steps=10,
-            #     initial_const=1e-3,
-            #     abort_early=True,
-            #     use_resize=False,
-            #     use_importance=False,
-            #     nb_parallel=1,
-            #     batch_size=1,
-            #     variable_h=0.2,
-            # )
-
 
             ### For computational reasons, attack a random subset that is identified correctly
             # Get indices of correctly classified samples common to both
-            # selection_idx = indx_to_take_test
             selection_idx = indx_to_take_train
             proba_kdf = model_kdf.predict_proba(X[selection_idx])
             proba_rf = model_kdf.rf_model.predict_proba(X[selection_idx])
@@ -220,10 +180,8 @@ def experiment(dataset_id, folder, n_estimators=500, reps=5, n_attack=50):
             predicted_label_kdf_adv = np.argmax(proba_kdf, axis = 1)
             err_adv_kdf = 1 - np.mean(predicted_label_kdf_adv == y[selection_idx][idx])
 
-
             print("l2_rf = {:.4f}, linf_rf = {:.4f}, err_rf = {:.4f}".format(l2_rf, linf_rf, err_adv_rf))
-            print("l2_kdf = {:.4f}, linf_kdf = {:.4f}, err_kdf = {:.4f}".format(l2_kdf, linf_kdf, err_adv_kdf))
-            
+            print("l2_kdf = {:.4f}, linf_kdf = {:.4f}, err_kdf = {:.4f}".format(l2_kdf, linf_kdf, err_adv_kdf))            
 
             l2_kdf_list.append(l2_kdf)
             l2_rf_list.append(l2_rf)
@@ -250,17 +208,6 @@ def experiment(dataset_id, folder, n_estimators=500, reps=5, n_attack=50):
     df['samples'] = samples
 
     df.to_csv(folder+'/'+'openML_cc18_'+str(dataset_id)+'.csv')
-
-# folder = 'openml_res_adv_zoo'
-# os.mkdir(folder)
-# benchmark_suite = openml.study.get_suite('OpenML-CC18')
-# experiment(6, folder, n_estimators=500, reps=2, n_attack=5)
-# experiment(11, folder, n_estimators=500, reps=2, n_attack=10)
-# experiment(1497, folder, n_estimators=500, reps=2, n_attack=20)
-# experiment(16, folder, n_estimators=500, reps=2, n_attack=5)
-# for dataset_id in openml.study.get_suite("OpenML-CC18").data:
-#     experiment(dataset_id, folder, n_estimators=500, reps=10, n_attack = 20)
-
 
 #%%
 folder = 'openml_res_adv_hsj'
