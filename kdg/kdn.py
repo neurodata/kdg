@@ -484,12 +484,13 @@ class kdn(KernelDensityGraph):
 
     def predict(self, X, task_id):
         r"""
-        Perform inference using the kernel density forest.
+        Perform inference using the kernel density network.
         Parameters
         ----------
         X : ndarray
             Input data matrix.
-
+        task_id : int or string
+            Task that data is an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
         Returns
         -------
         ndarray
