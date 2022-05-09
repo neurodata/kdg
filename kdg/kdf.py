@@ -321,38 +321,41 @@ class kdf(KernelDensityGraph):
         likelihood = var.pdf(X)
         return likelihood
 
-    def predict_proba(self, X, task_id, return_likelihood=False):
-
+    def predict_proba(self, X, task_id, return_likelihoods=False):
         r"""
         Calculate posteriors using the kernel density forest.
         Parameters
         ----------
         X : ndarray
             Input data matrix.
+        task_id : int or string
+            Task that data is an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
+        return_likelihoods : bool
+            Whether to return likelihoods as well as array
+        Returns
+        -------
+        ndarray
+            probability of X belonging to each label
+            likelihoods matrix for all polytope
         """
-
         X = check_array(X)
-
         if isinstance(task_id, int):
             task_id = self.task_list[task_id]
 
         labels = self.task_labels[task_id]
 
-        likelihoods = np.zeros((np.size(X, 0), len(labels)), dtype=float)
-
-        for polytope, sizes in enumerate(self.polytope_sizes[task_id]):
-            likelihoods += np.nan_to_num(
-                np.outer(self._compute_pdf(X, polytope), sizes)
-            )
+        likelihood = np.zeros((np.size(X, 0), len(labels)), dtype=float)
         priors = self.class_priors[task_id]
         priors = np.reshape(priors, (len(priors), 1))
 
-        likelihoods += self.task_bias[task_id]
-        proba = (
-            likelihoods.T * priors / (np.sum(likelihoods.T * priors, axis=0) + 1e-100)
-        ).T
+        for polytope, sizes in enumerate(self.polytope_sizes[task_id]):
+            likelihood += np.nan_to_num(np.outer(self._compute_pdf(X, polytope), sizes))
 
-        if return_likelihood:
+        likelihood += self.task_bias[task_id]
+        proba = (
+            likelihood.T * priors / (np.sum(likelihood.T * priors, axis=0) + 1e-100)
+        ).T
+        if return_likelihoods:
             return proba, likelihoods
         else:
             return proba
@@ -364,7 +367,8 @@ class kdf(KernelDensityGraph):
         ----------
         X : ndarray
             Input data matrix.
-
+        task_id : int or string
+            Task that data is an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
         Returns
         -------
         ndarray
