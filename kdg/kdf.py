@@ -1,32 +1,48 @@
-from numpy import min_scalar_type
+# Created on Wed Mar 30 11:01:00 PM
+# Author: Aishwarya Seth (aseth5@jhu.edu)
+# Objective: Kernel Density Forest with Forward Transfer
+
+
+from enum import unique
 from .base import KernelDensityGraph
 from sklearn.mixture import GaussianMixture
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
-from sklearn.ensemble import RandomForestClassifier as rf 
+from sklearn.ensemble import RandomForestClassifier as rf
 import numpy as np
 from scipy.stats import multivariate_normal
 import warnings
-from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
-warnings.filterwarnings("ignore")
+from sklearn.covariance import (
+    MinCovDet,
+    fast_mcd,
+    GraphicalLassoCV,
+    LedoitWolf,
+    EmpiricalCovariance,
+    OAS,
+    EllipticEnvelope,
+)
 
 class kdf(KernelDensityGraph):
-
-    def __init__(self, k = 1, kwargs={}):
+    def __init__(self, k=1, kwargs={}):
+        # print("In the updated KDF!")
         super().__init__()
+        self.polytope_means = []
+        self.polytope_cov = []
+        self.polytope_sizes = {}
 
-        self.polytope_means = {}
-        self.polytope_cov = {}
-        self.polytope_cardinality = {}
-        self.total_samples_this_label = {}
-        self.polytope_mean_cov = {}
-        self.prior = {}
-        self.bias = {}
-        self.global_bias = -np.inf
+        self.task_list = []
+
+        self.task_labels = {}
+        self.class_priors = {}
+        self.task_bias = {}
+
+        self.global_bias = 0  # This variable is not currently being used
+
         self.kwargs = kwargs
         self.k = k
-        self.is_fitted = False
 
-    def fit(self, X, y):
+        self.rf_model = rf(**self.kwargs)
+
+    def fit(self, X, y, task_id=None, **kwargs):
         r"""
         Fits the kernel density forest.
         Parameters
@@ -35,165 +51,331 @@ class kdf(KernelDensityGraph):
             Input data matrix.
         y : ndarray
             Output (i.e. response) data matrix.
+        task_id : string, optional
+            Name used to identify task
+        kwargs : dict, optional
+            Additional arguments to pass to keras fit
         """
-        if self.is_fitted:
-            raise ValueError(
-                "Model already fitted!"
-            )
-            return
 
         X, y = check_X_y(X, y)
-        self.labels = np.unique(y)
-        self.rf_model = rf(**self.kwargs).fit(X, y)
-        self.feature_dim = X.shape[1]
+        labels = np.unique(y)
+        feature_dim = X.shape[1]
 
-        for label in self.labels:
-            self.polytope_means[label] = []
-            self.polytope_cov[label] = []
-            self.polytope_cardinality[label] = []
+        if task_id is None:
+            task_id = f"task{len(self.task_list)}"
+        self.task_list.append(task_id)
+        self.task_labels[task_id] = labels
 
-            X_ = X[np.where(y==label)[0]]
+        model = self.rf_model.fit(X, y)
+
+        polytope_means = []
+        polytope_covs = []
+        polytope_sizes = []
+        priors = []
+
+        for label in labels:
+            X_ = X[np.where(y == label)[0]]
+            one_hot = np.zeros(len(labels))
+            one_hot[label] = 1
+
+            priors.append(len(X_) / len(X))
+
             predicted_leaf_ids_across_trees = np.array(
-                [tree.apply(X_) for tree in self.rf_model.estimators_]
-                ).T
+                [tree.apply(X_) for tree in model.estimators_]
+            ).T
+
+            polytope_ids = predicted_leaf_ids_across_trees
             polytopes, polytope_count = np.unique(
                 predicted_leaf_ids_across_trees, return_counts=True, axis=0
             )
-            self.polytope_cardinality[label].extend(
-                polytope_count
-            )
+            unique_polytope_ids = np.unique(polytope_ids)
+
             total_polytopes_this_label = len(polytopes)
-            self.total_samples_this_label[label] = X_.shape[0]
-            self.prior[label] = self.total_samples_this_label[label]/X.shape[0]
+            total_samples_this_label = X_.shape[0]
+            # remove unused variable
+            # self.prior[label] = total_samples_this_label/X.shape[0]
 
             for polytope in range(total_polytopes_this_label):
                 matched_samples = np.sum(
-                    predicted_leaf_ids_across_trees == polytopes[polytope],
-                    axis=1
+                    predicted_leaf_ids_across_trees == polytopes[polytope], axis=1
                 )
-                idx = np.where(
-                    matched_samples>0
-                )[0]
-                
+                idx = np.where(matched_samples > 0)[0]
+
                 if len(idx) == 1:
                     continue
-                
-                scales = matched_samples[idx]/np.max(matched_samples[idx])
+
+                scales = matched_samples[idx] / np.max(matched_samples[idx])
                 X_tmp = X_[idx].copy()
-                location = np.average(X_tmp, axis=0, weights=scales)
-                X_tmp -= location
 
-                covariance = np.average(X_tmp**2, axis=0, weights=scales)
-                self.polytope_means[label].append(
-                    location
-                )
-                self.polytope_cov[label].append(
-                    covariance
-                )
+                polytope_mean_ = np.average(X_tmp, axis=0, weights=scales)
+                X_tmp -= polytope_mean_
 
-            ## calculate bias for each label
-            likelihoods = np.zeros(
-                (np.size(X_,0)),
-                dtype=float
+                sqrt_scales = np.sqrt(scales).reshape(-1, 1) @ np.ones(
+                    feature_dim
+                ).reshape(1, -1)
+                X_tmp *= sqrt_scales
+
+                covariance_model = LedoitWolf(assume_centered=True)
+                covariance_model.fit(X_tmp)
+
+                polytope_cov_ = covariance_model.covariance_ * len(scales) / sum(scales)
+
+                num_samples_in_polytope = sum(
+                    scales
+                )  # also equal to len(idx) or len(X_tmp)
+
+                polytope_means.append(polytope_mean_)
+                polytope_covs.append(polytope_cov_)
+                polytope_sizes.append(num_samples_in_polytope * one_hot)
+
+        # Rescale polytope sizes to enable effective transfer
+        polytope_sizes = np.array(polytope_sizes)
+        polytope_sizes = polytope_sizes / np.sum(np.nan_to_num(polytope_sizes), axis=0)
+        polytope_sizes *= np.bincount(y)
+
+        # append the data we have generated + also pad previously generated polytope sizes with np.nan to
+        # maintain n_polytopes x n_labels
+        # save calculations for all polytopes
+        start_idx = len(self.polytope_means)
+        stop_idx = len(polytope_means) + start_idx
+        if start_idx == 0:
+            self.polytope_means = np.array(polytope_means)
+            self.polytope_covs = np.array(polytope_covs)
+            self.polytope_sizes[task_id] = polytope_sizes
+        else:
+            self.polytope_means = np.concatenate(
+                [self.polytope_means, np.array(polytope_means)]
             )
-            for polytope_idx,_ in enumerate(self.polytope_means[label]):
-                likelihoods += self._compute_log_likelihood(X_, label, polytope_idx)
+            self.polytope_covs = np.concatenate(
+                [self.polytope_covs, np.array(polytope_covs)]
+            )
+            self.polytope_sizes[task_id] = np.concatenate(
+                [np.full([start_idx, len(labels)], fill_value=np.nan), polytope_sizes]
+            )
+            # pad polytope sizes of previous tasks
+            for prev_task in self.task_list[:-1]:
+                self.polytope_sizes[prev_task] = np.concatenate(
+                    [
+                        self.polytope_sizes[prev_task],
+                        np.full(
+                            [stop_idx - start_idx, len(self.task_labels[prev_task])],
+                            fill_value=np.nan,
+                        ),
+                    ]
+                )
+        # END OF NEW
 
-            #likelihoods -= np.log(self.total_samples_this_label[label]
-            self.bias[label] = np.min(likelihoods) - np.log(self.k*self.total_samples_this_label[label])
+        # Calculate bias
+        # print(polytope_sizes.shape)
+        likelihood = []
+        for polytope in range(start_idx, stop_idx):
+            # for label in labels:
+            likelihood.append(self._compute_pdf(X, polytope))
+        likelihood = np.array(likelihood)
+        # bias over all of the Gaussians
+        bias = (
+            np.sum(np.min(likelihood, axis=1) * np.sum(polytope_sizes, axis=1))
+            / self.k
+            / np.sum(polytope_sizes)
+        )
+        self.task_bias[task_id] = bias
+        self.class_priors[task_id] = np.array(priors)
 
-        self.global_bias = min(self.bias.values())
-        min_bias = -500 - np.log(self.k*X.shape[0])
+        self.global_bias = 0  # min(self.bias.values())
+        # self.is_fitted = True
 
-        if self.global_bias < min_bias:
-            self.global_bias = min_bias
+    def generate_data(self, n_data, task_id, force_equal_priors=True):
+        r"""
+        Generate new data using existing polytopes
+        Parameters:
+        -----------
+        n_data: int
+            total size of data to return
+        task_id : int or string
+            Task that data will be an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
+        force_equal_priors : bool
+            If True, generated data will be equally distributed between all labels.
+            If False, generated data will be distributed between labels in proportion to the existing priors.
 
-        self.is_fitted = True
-        
+        Returns:
+        ndarray
+            Input data matrix.
+            Output (i.e. response) data matrix.
+        """
+        if isinstance(task_id, int):
+            task_id = self.task_list[task_id]
+        labels = self.task_labels[task_id]
+        n_labels = len(labels)
+        n_data = int(n_data)
 
-    def _compute_log_likelihood_1d(self, X, location, variance):  
-        '''if variance < 1e-100:
-            return 0'''
-            
-        return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
+        X = []
+        y = []
 
-    def _compute_log_likelihood(self, X, label, polytope_idx):
-        polytope_mean = self.polytope_means[label][polytope_idx]
-        polytope_cov = self.polytope_cov[label][polytope_idx]
-        likelihood = np.zeros(X.shape[0], dtype = float)
+        if force_equal_priors:
+            X_label = np.full(n_labels, n_data / n_labels)
+        else:
+            X_label = n_data * self.class_priors[task_id]
+        X_label = X_label.astype(int)
+        if np.sum(X_label) < n_data:
+            X_label[-1] = X_label[-1] + 1
 
-        for ii in range(self.feature_dim):
-            likelihood += self._compute_log_likelihood_1d(X[:,ii], polytope_mean[ii], polytope_cov[ii])
+        for i in range(n_labels):
+            index = np.cumsum(np.nan_to_num(self.polytope_sizes[task_id][:, i]))
+            try:
+                polytopes = np.random.randint(0, index[-1], X_label[i])
+            except Exception as e:
+                polytopes = [0]
+                print("Exception Handled! Some labels did not have polytopes") 
+            polytope_size = [np.count_nonzero(j > polytopes) for j in index]
+            polytope_size = polytope_size - np.concatenate(([0], polytope_size[0:-1]))
+            for polytope, size in enumerate(polytope_size):
+                if size > 0:
+                    xi = np.random.multivariate_normal(
+                        self.polytope_means[polytope],
+                        self.polytope_covs[polytope],
+                        size,
+                    )
+                    yi = np.full(size, i)
+                    X.append(xi)
+                    y.append(yi)
 
-        likelihood += np.log(self.polytope_cardinality[label][polytope_idx]) -\
-            np.log(self.total_samples_this_label[label])
+        return np.concatenate(X), np.concatenate(y)
 
+    def forward_transfer(self, X, y, task_id):
+        r"""
+        Forward transfer all previously unused polytopes to the target task based on current data
+
+        Parameters:
+        -----------
+        X: ndarray
+            Input data matrix; training data for current task
+        y : ndarray
+            Output (i.e. response) data matrix for current task
+        task_id : int or string
+            Task that data is an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
+        """
+        # find np.nan parts & use the new data from generate_data
+        # nans are used to find polytopes for which we're doing forward transfer to
+        # relies only on polytopes
+        X = check_array(X)
+        if isinstance(task_id, int):
+            task_id = self.task_list[task_id]
+        labels = self.task_labels[task_id]
+
+        likelihood = []
+        for polytope_idx in range(self.polytope_means.shape[0]):
+            likelihood.append(self._compute_pdf(X, polytope_idx))
+        likelihood = np.array(likelihood)
+
+        transfer_idx = np.isnan(self.polytope_sizes[task_id])[:, 0].nonzero()[0]
+
+        if not np.any(transfer_idx):
+            # print("Transfer done already!")
+            raise ValueError("Forward transfer is already completed for this task!")
+
+        transfer_polytopes = np.argmax(likelihood[transfer_idx, :], axis=0)
+        polytope_by_label = [transfer_polytopes[y == label] for label in labels]
+
+        new_sizes = np.zeros([len(transfer_idx), len(labels)])
+        for L, _ in enumerate(labels):
+            polytope_idxs = np.unique(polytope_by_label[L])
+            for idx in polytope_idxs:
+                new_sizes[idx, L] = np.sum(polytope_by_label[L] == idx)
+
+        self.polytope_sizes[task_id][transfer_idx, :] = new_sizes
+
+        bias = (
+            np.sum(
+                np.min(likelihood, axis=1)
+                * np.sum(self.polytope_sizes[task_id], axis=1)
+            )
+            / self.k
+            / np.sum(self.polytope_sizes[task_id])
+        )
+
+        self.task_bias[task_id] = bias
+
+    def _compute_pdf(self, X, polytope_idx):
+        r"""compute the likelihood for the given data
+
+        Parameters
+        ----------
+        X : ndarray
+            Input data matrix
+        label : int
+            class label
+        polytope_idx : int
+            polytope identifier
+
+        Returns
+        -------
+        ndarray
+            likelihoods
+        """
+        polytope_mean = self.polytope_means[polytope_idx]
+        polytope_cov = self.polytope_covs[polytope_idx]
+        var = multivariate_normal(
+            mean=polytope_mean, cov=polytope_cov, allow_singular=True
+        )
+
+        likelihood = var.pdf(X)
         return likelihood
 
-    def predict_proba(self, X, return_likelihood=False):
+    def predict_proba(self, X, task_id, return_likelihoods=False):
         r"""
         Calculate posteriors using the kernel density forest.
         Parameters
         ----------
         X : ndarray
             Input data matrix.
+        task_id : int or string
+            Task that data is an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
+        return_likelihoods : bool
+            Whether to return likelihoods as well as array
+        Returns
+        -------
+        ndarray
+            probability of X belonging to each label
+            likelihoods matrix for all polytope
         """
-        
         X = check_array(X)
+        if isinstance(task_id, int):
+            task_id = self.task_list[task_id]
 
-        log_likelihoods = np.zeros(
-            (np.size(X,0), len(self.labels)),
-            dtype=float
-        )
-        
-        for ii,label in enumerate(self.labels):
-            total_polytope_this_label = len(self.polytope_means[label])
-            tmp_ = np.zeros((X.shape[0],total_polytope_this_label), dtype=float)
+        labels = self.task_labels[task_id]
 
-            for polytope_idx,_ in enumerate(self.polytope_means[label]):
-                tmp_[:,polytope_idx] = self._compute_log_likelihood(X, label, polytope_idx) 
-            
-            max_pow = np.max(
-                    np.concatenate(
-                        (
-                            tmp_,
-                            self.global_bias*np.ones((X.shape[0],1), dtype=float)
-                        ),
-                        axis=1
-                    ),
-                    axis=1
-                )
-            pow_exp = np.nan_to_num(
-                max_pow.reshape(-1,1)@np.ones((1,total_polytope_this_label), dtype=float)
-            )
-            tmp_ -= pow_exp
-            likelihoods = np.sum(np.exp(tmp_), axis=1) +\
-                 np.exp(self.global_bias - pow_exp[:,0]) 
-                
-            likelihoods *= self.prior[label] 
-            log_likelihoods[:,ii] = np.log(likelihoods) + pow_exp[:,0]
+        likelihood = np.zeros((np.size(X, 0), len(labels)), dtype=float)
+        priors = self.class_priors[task_id]
+        priors = np.reshape(priors, (len(priors), 1))
 
-        max_pow = np.nan_to_num(
-            np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(self.labels)))
-        )
-        log_likelihoods -= max_pow
-        likelihoods = np.exp(log_likelihoods)
+        for polytope, sizes in enumerate(self.polytope_sizes[task_id]):
+            likelihood += np.nan_to_num(np.outer(self._compute_pdf(X, polytope), sizes))
 
-        total_likelihoods = np.sum(likelihoods, axis=1)
-
-        proba = (likelihoods.T/total_likelihoods).T
-        
-        if return_likelihood:
+        likelihood += self.task_bias[task_id]
+        proba = (
+            likelihood.T * priors / (np.sum(likelihood.T * priors, axis=0) + 1e-100)
+        ).T
+        if return_likelihoods:
             return proba, likelihoods
         else:
-            return proba 
+            return proba
 
-    def predict(self, X):
+    def predict(self, X, task_id):
         r"""
         Perform inference using the kernel density forest.
         Parameters
         ----------
         X : ndarray
             Input data matrix.
+        task_id : int or string
+            Task that data is an instance of. If task_id is an integer, then use as index. Otherwise use as task id directly.
+        Returns
+        -------
+        ndarray
+            predicted labels for each item in X
         """
-        return np.argmax(self.predict_proba(X), axis = 1)
+        if isinstance(task_id, int):
+            task_id = self.task_list[task_id]
+
+        predictions = np.argmax(self.predict_proba(X, task_id), axis=1)
+        return np.array([self.task_labels[task_id][pred] for pred in predictions])

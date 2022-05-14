@@ -1,34 +1,30 @@
 import numpy as np
 from sklearn.datasets import make_blobs
 from numpy.random import uniform, normal, shuffle
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def get_ece(predicted_posterior, predicted_label, true_label, R=20):
-    bin_size = 1/R
+
+def get_ece(predicted_posterior, predicted_label, true_label, num_bins=40):
+    bin_size = 1 / num_bins
     total_sample = len(true_label)
     K = predicted_posterior.shape[1]
 
     score = 0
-    for k in range(K):
-        posteriors = predicted_posterior[:,k]
-        sorted_indx = np.argsort(posteriors)
-        for r in range(R):        
-            indx = sorted_indx[r*R:(r+1)*R]
-            predicted_label_ = predicted_label[indx]
-            true_label_ = true_label[indx]
+    for bin in range(num_bins):
+        indx = np.where(
+            (posteriors > bin * bin_size) & (posteriors <= (bin + 1) * bin_size)
+        )[0]
 
-            indx_k = np.where(true_label_ == k)[0]
-            acc = (
-                np.nan_to_num(np.mean(predicted_label[indx_k] == k))
-                if indx_k.size != 0
-                else 0
-            )
-            conf = np.nan_to_num(np.mean(posteriors[indx_k])) if indx_k.size != 0 else 0
-            score += len(indx) * np.abs(acc - conf)
+        acc = (
+            np.nan_to_num(np.mean(predicted_label[indx] == true_label[indx]))
+            if indx.size != 0
+            else 0
+        )
+        conf = np.nan_to_num(np.mean(posteriors[indx])) if indx.size != 0 else 0
+        score += len(indx) * np.abs(acc - conf)
 
-    score /= (K*total_sample)
+    score /= total_sample
     return score
 
 
@@ -131,21 +127,21 @@ def generate_gaussian_parity(
         n_samples, 1 / blob_num * np.ones(blob_num)
     )
 
-    X = np.zeros((1,2), dtype=float)
+    X = np.zeros((1, 2), dtype=float)
     y = np.zeros((1), dtype=float)
     ii = 0
     for center, sample in zip(centers, samples_per_blob):
         X_, _ = make_blobs(
-            n_samples=sample*10,
+            n_samples=sample * 10,
             n_features=2,
             centers=[center],
-            cluster_std=cluster_std
+            cluster_std=cluster_std,
         )
-        col1 = (X_[:,0] > bounding_box[0]) & (X_[:,0] < bounding_box[1])
-        col2 = (X_[:,1] > bounding_box[0]) & (X_[:,1] < bounding_box[1])
+        col1 = (X_[:, 0] > bounding_box[0]) & (X_[:, 0] < bounding_box[1])
+        col2 = (X_[:, 1] > bounding_box[0]) & (X_[:, 1] < bounding_box[1])
         X_ = X_[col1 & col2]
-        X = np.concatenate((X,X_[:sample,:]), axis=0)
-        y_ = np.array([class_label[ii]]*sample)
+        X = np.concatenate((X, X_[:sample, :]), axis=0)
+        y_ = np.array([class_label[ii]] * sample)
         y = np.concatenate((y, y_), axis=0)
         ii += 1
 
@@ -234,7 +230,7 @@ def gaussian_sparse_parity(
         n_samples=samples_per_blob,
         n_features=p_star,
         centers=centers,
-        cluster_std=cluster_std
+        cluster_std=cluster_std,
     )
 
     for blob in range(blob_num):
@@ -282,7 +278,7 @@ def generate_spirals(
     n_samples,
     n_class=2,
     noise=0.3,
-    bounding_box = (-1.0,1.0),
+    bounding_box=(-1.0, 1.0),
     random_state=None,
 ):
     """
@@ -345,14 +341,11 @@ def generate_spirals(
     else:
         for j in range(1, n_class + 1):
             r = np.linspace(0.01, 1, int(mvt[j - 1]))
-            t = (
-                np.linspace(
-                    (j - 1) * np.pi * 4 * turns / n_class,
-                    j * np.pi * 4 * turns / n_class,
-                    int(mvt[j - 1]),
-                )
-                + np.random.normal(0, noise, int(mvt[j - 1]))
-            )
+            t = np.linspace(
+                (j - 1) * np.pi * 4 * turns / n_class,
+                j * np.pi * 4 * turns / n_class,
+                int(mvt[j - 1]),
+            ) + np.random.normal(0, noise, int(mvt[j - 1]))
 
             dx = r * np.cos(t)
             dy = r * np.sin(t)
@@ -370,7 +363,7 @@ def generate_ellipse(
     height=None,
     offsets=None,
     sigma=0.1,
-    bounding_box = (-1.0,1.0),
+    bounding_box=(-1.0, 1.0),
     random_state=None,
 ):
     """
@@ -427,18 +420,18 @@ def generate_ellipse(
             size = int(size)
             if n == n_ellipses:
                 size = size + 1
-        
-        t = uniform(0, 2 * np.pi, 10*size)
-        a = width[n] + normal(0, sigma, 10*size)
-        b = height[n] + normal(0, sigma, 10*size)
+
+        t = uniform(0, 2 * np.pi, 10 * size)
+        a = width[n] + normal(0, sigma, 10 * size)
+        b = height[n] + normal(0, sigma, 10 * size)
 
         xn = np.column_stack((a * np.cos(t), b * np.sin(t)))
 
         if offsets is not None:
             xn = xn + offsets[n, :]
 
-        col1 = (xn[:,0] > bounding_box[0]) & (xn[:,0] < bounding_box[1])
-        col2 = (xn[:,1] > bounding_box[0]) & (xn[:,1] < bounding_box[1])
+        col1 = (xn[:, 0] > bounding_box[0]) & (xn[:, 0] < bounding_box[1])
+        col2 = (xn[:, 1] > bounding_box[0]) & (xn[:, 1] < bounding_box[1])
         xn = xn[col1 & col2]
         xn = xn[:size]
 
@@ -455,7 +448,7 @@ def generate_sinewave(
     height=None,
     n_peaks=2,
     sigma=0.1,
-    bounding_box=(-1.0,1.0),
+    bounding_box=(-1.0, 1.0),
     random_state=None,
 ):
     """
@@ -492,7 +485,7 @@ def generate_sinewave(
     n_waves = len(offsets)
     if height is None:
         mul = max(np.abs(bounding_box[0]), np.abs(bounding_box[1]))
-        height = mul*np.ones(n_waves)
+        height = mul * np.ones(n_waves)
 
     X = np.empty((1, 2))
     y = np.array(1)
@@ -503,11 +496,13 @@ def generate_sinewave(
             if n == n_waves:
                 size = size + 1
 
-        t_n = uniform(bounding_box[0], bounding_box[1], 10*size)
-        y_n = height[n] * np.sin(t_n*n_peaks*2 + offsets[n] * np.pi) + normal(0, sigma, 10*size)
+        t_n = uniform(bounding_box[0], bounding_box[1], 10 * size)
+        y_n = height[n] * np.sin(t_n * n_peaks * 2 + offsets[n] * np.pi) + normal(
+            0, sigma, 10 * size
+        )
         xn = np.column_stack((t_n, y_n))
-        col1 = (xn[:,0] > bounding_box[0]) & (xn[:,0] < bounding_box[1])
-        col2 = (xn[:,1] > bounding_box[0]) & (xn[:,1] < bounding_box[1])
+        col1 = (xn[:, 0] > bounding_box[0]) & (xn[:, 0] < bounding_box[1])
+        col2 = (xn[:, 1] > bounding_box[0]) & (xn[:, 1] < bounding_box[1])
         xn = xn[col1 & col2]
         xn = xn[:size]
 
@@ -590,7 +585,7 @@ def generate_polynomial(
     a=1.0,
     b=0.0,
     sigma=0.1,
-    bounding_box = (-1.0,1.0),
+    bounding_box=(-1.0, 1.0),
     random_state=None,
 ):
     """
@@ -649,16 +644,16 @@ def generate_polynomial(
             size = int(size)
             if n == n_lines:
                 size = size + 1
-        t_n = uniform(-1, 1, 10*size)
+        t_n = uniform(-1, 1, 10 * size)
         if a[n] < 1:
             y_n = m[n] * np.power(abs(t_n), a[n])
         else:
             y_n = m[n] * np.power(t_n, a[n])
-        y_n = y_n + b[n] + normal(0, sigma, 10*size)
+        y_n = y_n + b[n] + normal(0, sigma, 10 * size)
 
         xn = np.column_stack((t_n, y_n))
-        col1 = (xn[:,0] > bounding_box[0]) & (xn[:,0] < bounding_box[1])
-        col2 = (xn[:,1] > bounding_box[0]) & (xn[:,1] < bounding_box[1])
+        col1 = (xn[:, 0] > bounding_box[0]) & (xn[:, 0] < bounding_box[1])
+        col2 = (xn[:, 1] > bounding_box[0]) & (xn[:, 1] < bounding_box[1])
         xn = xn[col1 & col2]
         xn = xn[:size]
 
@@ -669,7 +664,7 @@ def generate_polynomial(
     return (X, y)
 
 
-def plot_2dsim(X, y, square_plot=False, ax=None):
+def plot_2dsim(X, y, square_plot=False, ax=None, palette="colorblind", **kwargs):
     """
     Plot 2d simulations.
     Parameters
@@ -682,6 +677,10 @@ def plot_2dsim(X, y, square_plot=False, ax=None):
         If plot should be forced to have square bounds, with (0, 0) at the center
     ax : matplotlib axes object (default: None)
         Axis to plot on. If None, a new axis object will be created.
+    palette : String (default: colorblind)
+        seaborn.color_palette to use.
+    **kwargs : dict
+        passed to matplotlib.axes.Axes.scatter().
     Returns
     -------
     ax : matplotlib axes object
@@ -699,47 +698,39 @@ def plot_2dsim(X, y, square_plot=False, ax=None):
         ax.set_xlim(lim)
         ax.set_ylim(lim)
 
-    colors = sns.color_palette("colorblind")
+    colors = sns.color_palette(palette)
     for s in samples:
-        ax.plot(X[y == s, 0], X[y == s, 1], marker=".", color=colors[s], linestyle="")
+        ax.scatter(X[y == s, 0], X[y == s, 1], marker=".", color=colors[s], **kwargs)
 
     return ax
 
 
 def multiclass_guassian(n_samples, k=98):
-    samples_per_blob = np.random.multinomial(
-        n_samples, 1 / k * np.ones(k)
-    )
+    samples_per_blob = np.random.multinomial(n_samples, 1 / k * np.ones(k))
     sqrt_cls = np.ceil(np.sqrt(k))
 
-    center_x = np.arange(0,sqrt_cls*.5,step=.5)
-    center_y = np.arange(0,sqrt_cls*.5,step=.5)
+    center_x = np.arange(0, sqrt_cls * 0.5, step=0.5)
+    center_y = np.arange(0, sqrt_cls * 0.5, step=0.5)
     center_x, center_y = np.meshgrid(center_x, center_y)
 
     grid_samples = np.concatenate(
-            (
-                center_x.reshape(-1,1),
-                center_y.reshape(-1,1)
-            ),
-            axis=1
-    ) 
+        (center_x.reshape(-1, 1), center_y.reshape(-1, 1)), axis=1
+    )
     centers = grid_samples[:k]
 
     X, y = make_blobs(
-        n_samples=samples_per_blob,
-        n_features=2,
-        centers=centers,
-        cluster_std=0.25
+        n_samples=samples_per_blob, n_features=2, centers=centers, cluster_std=0.25
     )
 
     return X, y
+
 
 def generate_ood_samples(n, inbound=[1, -1], outbound=[5, -5]):
     Xood = []
     i = 0
     while True:
-        x1 = (outbound[0] - outbound[1])*np.random.random_sample() - outbound[0]
-        x2 = (outbound[0] - outbound[1])*np.random.random_sample() - outbound[0]
+        x1 = (outbound[0] - outbound[1]) * np.random.random_sample() - outbound[0]
+        x2 = (outbound[0] - outbound[1]) * np.random.random_sample() - outbound[0]
         if (-inbound[0] < x1 < inbound[1]) and (-inbound[0] < x2 < inbound[1]):
             continue
         else:
