@@ -11,7 +11,7 @@ from kdg.utils import get_ece
 import os
 from os import listdir, getcwd 
 # %%
-def experiment(dataset_id, folder, n_estimators=500, reps=40):
+def experiment(dataset_id, folder, n_estimators=500, test_sample=1000, reps=40):
     #print(dataset_id)
     dataset = openml.datasets.get_dataset(dataset_id)
     X, y, is_categorical, _ = dataset.get_data(
@@ -27,26 +27,25 @@ def experiment(dataset_id, folder, n_estimators=500, reps=40):
     if np.isnan(np.sum(X)):
         return
 
+    for ii in range(X.shape[1]):
+        unique_val = np.unique(X[:,ii])
+
+        if len(unique_val) < 10:
+            return
+
+            
     total_sample = X.shape[0]
-    unique_classes, counts = np.unique(y, return_counts=True)
-
-    test_sample = min(counts)//3
-
-    indx = []
-    for label in unique_classes:
-        indx.append(
-            np.where(
-                y==label
-            )[0]
-        )
-
-    max_sample = min(counts) - test_sample
+    indx = list(
+        range(
+            total_sample
+            )
+    )
     train_samples = np.logspace(
-        np.log10(2),
-        np.log10(max_sample),
-        num=10,
-        endpoint=True,
-        dtype=int
+            np.log10(2),
+            np.log10(total_sample-test_sample),
+            num=10,
+            endpoint=True,
+            dtype=int
         )
     
     err = []
@@ -59,23 +58,10 @@ def experiment(dataset_id, folder, n_estimators=500, reps=40):
     samples = []
 
     for train_sample in train_samples:
-        
         for rep in range(reps):
-            indx_to_take_train = []
-            indx_to_take_test = []
-
-            for ii, _ in enumerate(unique_classes):
-                np.random.shuffle(indx[ii])
-                indx_to_take_train.extend(
-                    list(
-                            indx[ii][:train_sample]
-                    )
-                )
-                indx_to_take_test.extend(
-                    list(
-                            indx[ii][-test_sample:counts[ii]]
-                    )
-                )
+            np.random.shuffle(indx)
+            indx_to_take_train = indx[:train_sample]
+            indx_to_take_test = indx[-test_sample:]
             model_kdf = kdf(k=1e300, kwargs={'n_estimators':n_estimators})
             model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
             proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
@@ -106,7 +92,7 @@ def experiment(dataset_id, folder, n_estimators=500, reps=40):
                 get_ece(proba_rf, predicted_label_rf, y[indx_to_take_test])
             )
             samples.append(
-                train_sample*len(unique_classes)
+                train_sample
             )
             mc_rep.append(rep)
 
@@ -215,7 +201,7 @@ def experiment_rf(dataset_id, folder, n_estimators=100, reps=30):
     df.to_csv(folder+'/'+'openML_cc18_rf_'+str(dataset_id)+'.csv')
 
 #%%
-folder = 'openml_res_min_leaf'
+folder = 'openml_res'
 folder_rf = 'openml_res_rf'
 os.mkdir(folder)
 #os.mkdir(folder_rf)

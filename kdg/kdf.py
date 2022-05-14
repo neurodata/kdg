@@ -21,7 +21,6 @@ from sklearn.covariance import (
     EllipticEnvelope,
 )
 
-
 class kdf(KernelDensityGraph):
     def __init__(self, k=1, kwargs={}):
         # print("In the updated KDF!")
@@ -37,6 +36,7 @@ class kdf(KernelDensityGraph):
         self.task_bias = {}
 
         self.global_bias = 0  # This variable is not currently being used
+
         self.kwargs = kwargs
         self.k = k
 
@@ -86,7 +86,7 @@ class kdf(KernelDensityGraph):
 
             polytope_ids = predicted_leaf_ids_across_trees
             polytopes, polytope_count = np.unique(
-                predicted_leaf_ids_across_trees, return_inverse=True, axis=0
+                predicted_leaf_ids_across_trees, return_counts=True, axis=0
             )
             unique_polytope_ids = np.unique(polytope_ids)
 

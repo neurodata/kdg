@@ -250,16 +250,7 @@ class kdn(KernelDensityGraph):
                 )  # compute the weighted average of the samples
                 X_tmp -= polytope_mean_  # center the data
 
-                sqrt_weights = np.sqrt(weights).reshape(-1, 1) @ np.ones(
-                    feature_dim
-                ).reshape(1, -1)
-                X_tmp *= sqrt_weights  # scale the centered data with the square root of the weights
-
-                covariance_model = LedoitWolf(assume_centered=True)
-                covariance_model.fit(X_tmp)
-                polytope_cov_ = (
-                    covariance_model.covariance_ * len(weights) / sum(weights)
-                )
+                polytope_cov_ = np.average(X_tmp**2, axis=0, weights=weights)
 
                 polytope_size_ = len(
                     np.where(polytope_ids == polytope)[0]
@@ -436,7 +427,9 @@ class kdn(KernelDensityGraph):
         polytope_cov = self.polytope_covs[polytope_idx]
 
         var = multivariate_normal(
-            mean=polytope_mean, cov=polytope_cov, allow_singular=True
+            mean=polytope_mean, 
+            cov=np.eye(len(polytope_cov))*polytope_cov,
+            allow_singular=True
         )
 
         likelihood = var.pdf(X)

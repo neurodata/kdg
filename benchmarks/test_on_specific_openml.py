@@ -10,7 +10,7 @@ import openml
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 #%%
-dataset_id = 40984
+dataset_id = 12
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -95,7 +95,7 @@ def experiment(X, y, folder, n_estimators=500, reps=30, feature=0):
                             indx[ii][-test_sample:counts[ii]]
                     )
                 )
-            model_kdf = kdf(kwargs={'n_estimators':n_estimators, 'min_samples_leaf':int(np.ceil(np.sqrt(train_sample*len(unique_classes))))})
+            model_kdf = kdf(kwargs={'n_estimators':n_estimators})
             model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
             proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
             proba_rf = model_kdf.rf_model.predict_proba(X[indx_to_take_test])
