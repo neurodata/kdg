@@ -20,7 +20,7 @@ import warnings
 from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
 
 #%%
-dataset_id = 1067#1468#44#40979#1468#11#44#1050#
+dataset_id = 44#1497#1067#1468#44#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -28,48 +28,36 @@ X, y, is_categorical, _ = dataset.get_data(
 #%%
 unique_classes, counts = np.unique(y, return_counts=True)
 
-test_sample = min(counts)//3
+test_sample = 100
+total_sample = X.shape[0]
+indx = list(
+    range(
+        total_sample
+        )
+)
 
-indx = []
-for label in unique_classes:
-    indx.append(
-        np.where(
-            y==label
-        )[0]
-    )
-
-max_sample = min(counts) - test_sample
 train_samples = np.logspace(
 np.log10(2),
-np.log10(max_sample),
+np.log10(total_sample-test_sample),
 num=10,
 endpoint=True,
 dtype=int
 )
 
 train_sample = train_samples[-1]
-indx_to_take_train = []
-indx_to_take_test = []
-
-for ii, _ in enumerate(unique_classes):
-    np.random.shuffle(indx[ii])
-    indx_to_take_train.extend(
-        list(
-                indx[ii][:train_sample]
-        )
-    )
-    indx_to_take_test.extend(
-        list(
-                indx[ii][-test_sample:counts[ii]]
-        )
-)
+np.random.shuffle(indx)
+indx_to_take_train = indx[:train_sample]
+indx_to_take_test = indx[-test_sample:]       
 #%%
-model_kdf = kdf(k=1e200,kwargs={'n_estimators':500, 'min_samples_leaf':1})
+model_kdf = kdf(k=1e100,kwargs={'n_estimators':5, 'min_samples_leaf':10})
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
 
 # %%
+
+#%%
 print(np.mean(model_kdf.predict(X[indx_to_take_test])==y[indx_to_take_test]))
 print(np.mean(model_kdf.rf_model.predict(X[indx_to_take_test])==y[indx_to_take_test]))
+print(np.mean(model_kdf.predict(X[indx_to_take_train])==y[indx_to_take_train]))
 
 # %%
 def compute_pdf_1d(X, location, cov):

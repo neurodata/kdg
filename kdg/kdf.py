@@ -71,17 +71,16 @@ class kdf(KernelDensityGraph):
                     predicted_leaf_ids_across_trees == polytopes[polytope],
                     axis=1
                 )
+                
                 idx = np.where(
                     matched_samples>0
                 )[0]
-                
-                if len(idx) == 1:
-                    continue
-                
                 scales = matched_samples[idx]/np.max(matched_samples[idx])
                 X_tmp = X_[idx].copy()
+                
                 location = np.average(X_tmp, axis=0, weights=scales)
                 X_tmp -= location
+
 
                 covariance = np.average(X_tmp**2, axis=0, weights=scales)
                 self.polytope_means[label].append(
@@ -111,10 +110,7 @@ class kdf(KernelDensityGraph):
         self.is_fitted = True
         
 
-    def _compute_log_likelihood_1d(self, X, location, variance):  
-        '''if variance < 1e-100:
-            return 0'''
-            
+    def _compute_log_likelihood_1d(self, X, location, variance):          
         return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
 
     def _compute_log_likelihood(self, X, label, polytope_idx):
