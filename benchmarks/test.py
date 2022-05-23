@@ -20,7 +20,7 @@ import warnings
 from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
 
 #%%
-dataset_id = 44#1497#1067#1468#44#40979#1468#11#44#1050#
+dataset_id = 6#44#1497#1067#1468#44#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -49,7 +49,7 @@ np.random.shuffle(indx)
 indx_to_take_train = indx[:train_sample]
 indx_to_take_test = indx[-test_sample:]       
 #%%
-model_kdf = kdf(k=1e100,kwargs={'n_estimators':5, 'min_samples_leaf':10})
+model_kdf = kdf(k=1e300,kwargs={'n_estimators':500, 'min_samples_leaf':10})
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
 
 # %%
