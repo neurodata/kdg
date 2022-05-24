@@ -20,7 +20,7 @@ import warnings
 from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
 
 #%%
-dataset_id = 6#44#1497#1067#1468#44#40979#1468#11#44#1050#
+dataset_id = 1067#44#1497#1067#1468#44#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute

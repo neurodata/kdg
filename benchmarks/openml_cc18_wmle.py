@@ -28,7 +28,7 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=40):
         return
 
     for ii in range(X.shape[1]):
-        if len(np.unique(X[:,ii])) < 10:
+        if len(np.unique(X[:,ii])) < 100:
             return
     
     total_sample = X.shape[0]
