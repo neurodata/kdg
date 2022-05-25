@@ -11,6 +11,25 @@ from kdg.utils import get_ece
 import os
 from os import listdir, getcwd 
 # %%
+def count_rf_param(rf_model):
+    total_param = 0
+    for tree in rf_model.estimators_:
+        nodes = tree.tree_.node_count
+        leaf_node = np.sum(tree.tree_.children_left)
+        total_param += tree.tree_.value.shape[2]*leaf_node\
+            + (nodes-leaf_node)*2 + nodes
+    return total_param
+
+def count_kdf_param(kdf_model):
+    total_param = 0
+
+    for label in kdf_model.labels:
+        total_param += len(kdf_model.polytope_cardinality[label])
+        total_param += len(kdf_model.polytope_cardinality[label])\
+            *(kdf_model.feature_dim + 1)
+
+    return total_param
+
 def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=40):
     #print(dataset_id)
     dataset = openml.datasets.get_dataset(dataset_id)
@@ -103,6 +122,12 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=40):
     df['ece_rf'] = ece_rf
     df['rep'] = mc_rep
     df['samples'] = samples
+    df['kdf_param'] = count_kdf_param(
+        model_kdf
+    )
+    df['rf_param'] = count_kdf_param(
+        model_kdf.rf_model
+    )
 
     df.to_csv(folder+'/'+'openML_cc18_'+str(dataset_id)+'.csv')
 
