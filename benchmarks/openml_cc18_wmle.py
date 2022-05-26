@@ -71,6 +71,8 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=40):
     kappa_rf = []
     mc_rep = []
     samples = []
+    param_kdf = []
+    param_rf = []
     indices = list(range(total_sample))
 
     for train_sample in train_samples:     
@@ -111,6 +113,12 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=40):
             samples.append(
                 train_sample
             )
+            param_kdf.append(
+                count_kdf_param(model_kdf)
+            )
+            param_rf.append(
+                count_rf_param(model_kdf.rf_model)
+            )
             mc_rep.append(rep)
 
     df = pd.DataFrame() 
@@ -122,12 +130,8 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=40):
     df['ece_rf'] = ece_rf
     df['rep'] = mc_rep
     df['samples'] = samples
-    df['kdf_param'] = count_kdf_param(
-        model_kdf
-    )
-    df['rf_param'] = count_rf_param(
-        model_kdf.rf_model
-    )
+    df['kdf_param'] = param_kdf
+    df['rf_param'] = param_rf
 
     df.to_csv(folder+'/'+'openML_cc18_'+str(dataset_id)+'.csv')
 
