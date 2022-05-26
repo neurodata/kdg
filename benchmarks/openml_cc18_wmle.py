@@ -125,7 +125,7 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=40):
     df['kdf_param'] = count_kdf_param(
         model_kdf
     )
-    df['rf_param'] = count_kdf_param(
+    df['rf_param'] = count_rf_param(
         model_kdf.rf_model
     )
 
