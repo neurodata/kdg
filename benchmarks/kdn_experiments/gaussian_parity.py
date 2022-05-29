@@ -65,10 +65,6 @@ print("Vanilla NN accuracy : ", accuracy_nn)
 model_kdn = kdn(
     network=vanilla_nn,
     k=1e-6,
-    polytope_compute_method="all",
-    weighting_method="lin",
-    T=2,
-    c=1,
     verbose=False,
 )
 model_kdn.fit(X, y)
