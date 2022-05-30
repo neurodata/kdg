@@ -174,8 +174,6 @@ class kdn(KernelDensityGraph):
                 weights[weights < self.T] = 0  # set very small weights to zero
 
                 points_with_nonzero_weights = len(np.where(weights > 0)[0])
-                if points_with_nonzero_weights < 2:
-                    continue
 
                 # apply weights to the data
                 X_tmp = X_.copy()
@@ -258,7 +256,6 @@ class kdn(KernelDensityGraph):
                     ),
                     axis=1
                 )
-            
             pow_exp = np.nan_to_num(
                 max_pow.reshape(-1,1)@np.ones((1,total_polytope_this_label), dtype=float)
             )
