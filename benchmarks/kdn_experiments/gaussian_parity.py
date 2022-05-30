@@ -3,7 +3,7 @@
 # Author: Ashwin De Silva (ldesilv2@jhu.edu)
 # Objective: Gaussian Parity Experiment
 #
-
+#%%
 # import standard libraries
 import numpy as np
 from tensorflow import keras
@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 # import internal libraries
 from kdg.kdn import *
 from kdg.utils import generate_gaussian_parity
-
+#%%
 # generate training data
-X, y = generate_gaussian_parity(10000)
+X, y = generate_gaussian_parity(1000)
 X_val, y_val = generate_gaussian_parity(500)
 
 # NN params
@@ -72,7 +72,7 @@ model_kdn.fit(X, y)
 # print the accuracy of Vanilla NN and KDN
 accuracy_kdn = np.mean(model_kdn.predict(X_test) == y_test)
 print("KDN accuracy : ", accuracy_kdn)
-
+#%%
 # plot
 
 # define the grid

@@ -1,10 +1,3 @@
-#
-# Created on Mon Jan 31 2022 10:02:26 AM
-# Author: Ashwin De Silva (ldesilv2@jhu.edu)
-# Objective: Kernel Density Network
-#
-
-# import standard libraries
 from .base import KernelDensityGraph
 from sklearn.utils.validation import check_array, check_X_y
 import numpy as np
@@ -23,7 +16,6 @@ class kdn(KernelDensityGraph):
         verbose=True,
     ):
         r"""[summary]
-
         Parameters
         ----------
         network : tf.keras.Model()
@@ -52,7 +44,6 @@ class kdn(KernelDensityGraph):
         self.T = T
         self.bias = {}
         self.verbose = verbose
-        self.is_fitted = False
 
         # total number of layers in the NN
         self.total_layers = len(self.network.layers)
@@ -63,7 +54,7 @@ class kdn(KernelDensityGraph):
             self.network_shape.append(layer.output_shape[-1])
 
         # total number of units in the network (up to the penultimate layer)
-        #self.num_neurons = sum(self.network_shape) - self.network_shape[-1]
+        self.num_neurons = sum(self.network_shape) - self.network_shape[-1]
 
         # get the weights and biases of the trained MLP
         self.weights = {}
@@ -102,34 +93,18 @@ class kdn(KernelDensityGraph):
 
         # Concatenate all activations for given observation
         polytope_ids_tmp = np.concatenate(polytope_ids_tmp, axis=1)
-
         self.num_neurons = polytope_ids_tmp.shape[
             1
         ]  # get the number of total FC neurons under consideration
+
+
         total_samples = X.shape[0]
         polytope_ids = ["" for ii in range(total_samples)]
-
         for ii in range(total_samples):
             for jj in polytope_ids_tmp[ii]:
                 polytope_ids[ii] += str(jj)
 
         return polytope_ids
-
-    def _get_activation_pattern(self, polytope_id):
-        r"""get the ReLU activation pattern given the polytope ID
-
-        Parameters
-        ----------
-        polytope_id : int
-            polytope identifier
-
-        Returns
-        -------
-        ndarray
-            ReLU activation pattern (binary) corresponding to the given polytope ID
-        """
-        binary_string = np.binary_repr(polytope_id, width=self.num_neurons)[::-1]
-        return np.array(list(binary_string)).astype("int")
 
     def compute_weights(self, X_, polytope_id):
         """compute weights based on the global network linearity measure
@@ -145,18 +120,14 @@ class kdn(KernelDensityGraph):
             weights of each input sample in the input data matrix
         """
 
-        M_ref = polytope_id
+        M_ref = np.array(list(polytope_id)).astype("int")
         start = 0
         A = X_
         A_ref = X_
         d = 0
         for l in range(len(self.network_shape) - 1):
-            M_l = np.zeros((self.network_shape[l]))
             end = start + self.network_shape[l]
-
-            for ii in range(self.network_shape[l]):
-                M_l[ii] = int(M_ref[start+ii])
-            
+            M_l = M_ref[start:end]
             start = end
             W, B = self.weights[l], self.biases[l]
             pre_A = A @ W + B
@@ -164,6 +135,7 @@ class kdn(KernelDensityGraph):
             pre_A_ref = A_ref @ W + B
             A_ref = pre_A_ref @ np.diag(M_l)
             d += np.linalg.norm(A - A_ref, axis=1, ord=2)
+        
         return np.exp(-d / self.h)
 
     def fit(self, X, y):
@@ -176,12 +148,6 @@ class kdn(KernelDensityGraph):
         y : ndarray
             Output (i.e. response) data matrix.
         """
-        if self.is_fitted:
-            raise ValueError(
-                "Model already fitted!"
-            )
-            return
-
         X, y = check_X_y(X, y)
         self.labels = np.unique(y)
         self.feature_dim = X.shape[1]
@@ -189,45 +155,41 @@ class kdn(KernelDensityGraph):
         for label in self.labels:
             self.polytope_means[label] = []
             self.polytope_cov[label] = []
-            self.polytope_cardinality[label] = []
 
             X_ = X[np.where(y == label)[0]]  # data having the current label
             self.total_samples_this_label[label] = X_.shape[0]
+
             # get class prior probability
             self.prior[label] = len(X_) / len(X)
 
             # get polytope ids and unique polytope ids
             polytope_ids = self._get_polytope_ids(X_)
-            unique_polytope_ids = np.unique(polytope_ids)
-            
+            unique_polytope_ids, polytope_samples_ = np.unique(polytope_ids, return_counts=True)
+            self.polytope_cardinality[label] = polytope_samples_
+
             for polytope in unique_polytope_ids:
                 weights = self.compute_weights(X_, polytope)
-                
                 if not self.weighting:
                     weights[weights < 1] = 0
                 weights[weights < self.T] = 0  # set very small weights to zero
-                #points_with_nonzero_weights = len(np.where(weights > 0)[0])
-                '''if points_with_nonzero_weights < 2:
-                    continue'''
+
+                points_with_nonzero_weights = len(np.where(weights > 0)[0])
+                if points_with_nonzero_weights < 2:
+                    continue
 
                 # apply weights to the data
                 X_tmp = X_.copy()
                 polytope_mean_ = np.average(
                     X_tmp, axis=0, weights=weights
                 )  # compute the weighted average of the samples
-                #print(polytope_mean_, weights, 'gdgtdt')
+
                 X_tmp -= polytope_mean_  # center the data
                 polytope_cov_ = np.average(X_tmp**2, axis=0, weights=weights)
-
-                polytope_samples_ = len(
-                    np.where(polytope_ids == polytope)[0]
-                )  # count the number of points in the polytope
 
                 # store the mean, covariances, and polytope sample size
                 self.polytope_means[label].append(polytope_mean_)
                 self.polytope_cov[label].append(polytope_cov_)
-                self.polytope_cardinality[label].append(polytope_samples_)
-
+                
             ## calculate bias for each label
             likelihoods = np.zeros(
                 (np.size(X_,0)),
@@ -247,7 +209,7 @@ class kdn(KernelDensityGraph):
 
         self.is_fitted = True
 
-    def _compute_log_likelihood_1d(self, X, location, variance):                   
+    def _compute_log_likelihood_1d(self, X, location, variance):                  
         return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
 
     def _compute_log_likelihood(self, X, label, polytope_idx):
@@ -296,7 +258,7 @@ class kdn(KernelDensityGraph):
                     ),
                     axis=1
                 )
-            #print(max_pow, total_polytope_this_label, label)
+            
             pow_exp = np.nan_to_num(
                 max_pow.reshape(-1,1)@np.ones((1,total_polytope_this_label), dtype=float)
             )

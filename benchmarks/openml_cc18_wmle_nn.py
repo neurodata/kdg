@@ -91,12 +91,12 @@ def experiment_random_sample(dataset_id, folder, reps=10):
     fit_kwargs = {
         "epochs": 200,
         "batch_size": 64,
-        "verbose": True,
+        "verbose": False,
         "callbacks": [callback],
     }
     for train_sample in train_samples:     
         for rep in range(reps):
-            print("reps ", reps, dataset_id)
+            print("sample", train_sample, " reps ", rep, dataset_id)
             np.random.shuffle(indices)
             indx_to_take_train = indices[:train_sample]
             indx_to_take_test = indices[-test_sample:]
@@ -117,7 +117,7 @@ def experiment_random_sample(dataset_id, folder, reps=10):
                         verbose=False,
                     )
             model_kdn.fit(X[indx_to_take_train], y_converted)
-            print(model_kdn.polytope_means)
+            #print(model_kdn.polytope_means)
             proba_kdn = model_kdn.predict_proba(X[indx_to_take_test])
             proba_nn = vanilla_nn.predict_proba(X[indx_to_take_test])
             predicted_label_kdn = np.argmax(proba_kdn, axis = 1)
