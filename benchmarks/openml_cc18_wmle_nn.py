@@ -37,7 +37,7 @@ def count_kdn_param(kdn_model):
 
     return total_param
 
-def experiment_random_sample(dataset_id, folder, reps=10):
+def experiment_random_sample(dataset_id, folder, reps=40):
     #print(dataset_id)
     dataset = openml.datasets.get_dataset(dataset_id)
     X, y, is_categorical, _ = dataset.get_data(
@@ -89,7 +89,7 @@ def experiment_random_sample(dataset_id, folder, reps=10):
     }
     callback = keras.callbacks.EarlyStopping(monitor="loss", patience=10, verbose=True)
     fit_kwargs = {
-        "epochs": 200,
+        "epochs": 1000,
         "batch_size": 64,
         "verbose": False,
         "callbacks": [callback],
