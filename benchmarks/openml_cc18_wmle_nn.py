@@ -119,7 +119,7 @@ def experiment_random_sample(dataset_id, folder, reps=40):
             model_kdn.fit(X[indx_to_take_train], y_converted)
             #print(model_kdn.polytope_means)
             proba_kdn = model_kdn.predict_proba(X[indx_to_take_test])
-            proba_nn = vanilla_nn.predict_proba(X[indx_to_take_test])
+            proba_nn = vanilla_nn.predict(X[indx_to_take_test])
             predicted_label_kdn = np.argmax(proba_kdn, axis = 1)
             predicted_label_nn = np.argmax(proba_nn, axis = 1)
 
