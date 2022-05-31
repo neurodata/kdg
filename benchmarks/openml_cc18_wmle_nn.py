@@ -16,10 +16,10 @@ from os import listdir, getcwd
 def getNN(compile_kwargs, input_size, num_classes):
     network_base = keras.Sequential()
     initializer = keras.initializers.GlorotNormal(seed=0)
-    network_base.add(keras.layers.Dense(50, activation="relu", kernel_initializer=initializer, input_shape=(input_size,)))
-    network_base.add(keras.layers.Dense(50, activation="relu", kernel_initializer=initializer))
-    network_base.add(keras.layers.Dense(50, activation="relu", kernel_initializer=initializer))
-    network_base.add(keras.layers.Dense(50, activation="relu", kernel_initializer=initializer))
+    network_base.add(keras.layers.Dense(500, activation="relu", kernel_initializer=initializer, input_shape=(input_size,)))
+    network_base.add(keras.layers.Dense(500, activation="relu", kernel_initializer=initializer))
+    network_base.add(keras.layers.Dense(500, activation="relu", kernel_initializer=initializer))
+    network_base.add(keras.layers.Dense(500, activation="relu", kernel_initializer=initializer))
     network_base.add(keras.layers.Dense(units=num_classes, activation="softmax", kernel_initializer=initializer))
     network_base.compile(**compile_kwargs)
     return network_base
@@ -113,7 +113,7 @@ def experiment_random_sample(dataset_id, folder, reps=10):
 
             model_kdn = kdn(
                         network=vanilla_nn,
-                        k=1e30,
+                        k=1e300,
                         verbose=False,
                     )
             model_kdn.fit(X[indx_to_take_train], y_converted)

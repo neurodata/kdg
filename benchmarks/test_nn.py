@@ -29,10 +29,10 @@ fit_kwargs = {
 # network architecture
 def getNN(compile_kwargs, feature_size, total_class):
     network_base = keras.Sequential()
-    network_base.add(layers.Dense(50, activation="relu", input_shape=(feature_size,)))
-    network_base.add(layers.Dense(50, activation="relu"))
-    network_base.add(layers.Dense(50, activation="relu"))
-    network_base.add(layers.Dense(50, activation="relu"))
+    network_base.add(layers.Dense(500, activation="relu", input_shape=(feature_size,)))
+    network_base.add(layers.Dense(500, activation="relu"))
+    network_base.add(layers.Dense(500, activation="relu"))
+    network_base.add(layers.Dense(500, activation="relu"))
     network_base.add(layers.Dense(units=total_class, activation="softmax"))
     network_base.compile(**compile_kwargs)
     return network_base
