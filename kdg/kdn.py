@@ -9,11 +9,8 @@ class kdn(KernelDensityGraph):
     def __init__(
         self,
         network,
-        weighting=True,
-        k=1.0,
-        T=1e-3,
-        h=0.33,
-        verbose=True,
+        k = 1.0,
+        verbose=True
     ):
         r"""[summary]
         Parameters
@@ -24,10 +21,6 @@ class kdn(KernelDensityGraph):
             use weighting if true, by default True
         k : float, optional
             bias control parameter, by default 1
-        T : float, optional
-            neighborhood size control parameter, by default 1e-3
-        h : float, optional
-            variational parameters of the weighting, by default 0.33
         verbose : bool, optional
             print internal data, by default True
         """
@@ -38,10 +31,7 @@ class kdn(KernelDensityGraph):
         self.total_samples_this_label = {}
         self.prior = {}
         self.network = network
-        self.weighting = weighting
         self.k = k
-        self.h = h
-        self.T = T
         self.bias = {}
         self.verbose = verbose
 
@@ -56,12 +46,6 @@ class kdn(KernelDensityGraph):
         # total number of units in the network (up to the penultimate layer)
         self.num_neurons = sum(self.network_shape) - self.network_shape[-1]
 
-        # get the weights and biases of the trained MLP
-        self.weights = {}
-        self.biases = {}
-        for i in range(len(self.network.layers)):
-            weight, bias = self.network.layers[i].get_weights()
-            self.weights[i], self.biases[i] = weight, bias.reshape(1, -1)
 
     def _get_polytope_ids(self, X):
         r"""
@@ -76,7 +60,7 @@ class kdn(KernelDensityGraph):
 
         # Iterate through neural network manually, getting node activations at each step
         for l in range(self.total_layers):
-            weights, bias = self.weights[l], self.biases[l]
+            weights, bias = self.network.layers[l].get_weights()
             preactivation = np.matmul(last_activations, weights) + bias
 
             if l == self.total_layers - 1:
@@ -92,51 +76,9 @@ class kdn(KernelDensityGraph):
             last_activations = preactivation * binary_preactivation
 
         # Concatenate all activations for given observation
-        polytope_ids_tmp = np.concatenate(polytope_ids_tmp, axis=1)
-        self.num_neurons = polytope_ids_tmp.shape[
-            1
-        ]  # get the number of total FC neurons under consideration
-
-
-        total_samples = X.shape[0]
-        polytope_ids = ["" for ii in range(total_samples)]
-        for ii in range(total_samples):
-            for jj in polytope_ids_tmp[ii]:
-                polytope_ids[ii] += str(jj)
+        polytope_ids = np.concatenate(polytope_ids_tmp, axis=1)
 
         return polytope_ids
-
-    def compute_weights(self, X_, polytope_id):
-        """compute weights based on the global network linearity measure
-        Parameters
-        ----------
-        X_ : ndarray
-            Input data matrix
-        polytope_id : int
-            refernce polytope identifier
-        Returns
-        -------
-        ndarray
-            weights of each input sample in the input data matrix
-        """
-
-        M_ref = np.array(list(polytope_id)).astype("int")
-        start = 0
-        A = X_
-        A_ref = X_
-        d = 0
-        for l in range(len(self.network_shape) - 1):
-            end = start + self.network_shape[l]
-            M_l = M_ref[start:end]
-            start = end
-            W, B = self.weights[l], self.biases[l]
-            pre_A = A @ W + B
-            A = np.maximum(0, pre_A)
-            pre_A_ref = A_ref @ W + B
-            A_ref = pre_A_ref @ np.diag(M_l)
-            d += np.linalg.norm(A - A_ref, axis=1, ord=2)
-        
-        return np.exp(-d / self.h)
 
     def fit(self, X, y):
         r"""
@@ -160,29 +102,37 @@ class kdn(KernelDensityGraph):
             self.total_samples_this_label[label] = X_.shape[0]
 
             # get class prior probability
-            self.prior[label] = len(X_) / len(X)
+            self.prior[label] = \
+                self.total_samples_this_label[label] / X.shape[0]
 
             # get polytope ids and unique polytope ids
             polytope_ids = self._get_polytope_ids(X_)
-            unique_polytope_ids, polytope_samples_ = np.unique(polytope_ids, return_counts=True)
+            unique_polytope_ids, polytope_samples_ = np.unique(polytope_ids, return_counts=True, axis=0)
             self.polytope_cardinality[label] = polytope_samples_
-
+            
             for polytope in unique_polytope_ids:
-                weights = self.compute_weights(X_, polytope)
-                if not self.weighting:
-                    weights[weights < 1] = 0
-                weights[weights < self.T] = 0  # set very small weights to zero
+                matched_pattern = (polytope_ids==polytope)
+                matched_nodes = np.zeros((len(polytope_ids),self.total_layers-1))
 
-                points_with_nonzero_weights = len(np.where(weights > 0)[0])
+                end_node = 0
+                normalizing_factor = 0
+                for layer in range(self.total_layers-1):
+                    end_node += self.network_shape[layer]
+                    matched_nodes[:, layer] = \
+                        np.sum(matched_pattern[:,end_node-self.network_shape[layer]:end_node], axis=1)
+                    normalizing_factor += \
+                        np.log(self.network_shape[layer])
+                scales = np.exp(np.sum(np.log(matched_nodes), axis=1)\
+                    - normalizing_factor)
 
                 # apply weights to the data
                 X_tmp = X_.copy()
                 polytope_mean_ = np.average(
-                    X_tmp, axis=0, weights=weights
+                    X_tmp, axis=0, weights=scales
                 )  # compute the weighted average of the samples
 
                 X_tmp -= polytope_mean_  # center the data
-                polytope_cov_ = np.average(X_tmp**2, axis=0, weights=weights)
+                polytope_cov_ = np.average(X_tmp**2, axis=0, weights=scales)
 
                 # store the mean, covariances, and polytope sample size
                 self.polytope_means[label].append(polytope_mean_)
