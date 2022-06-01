@@ -89,7 +89,7 @@ def experiment_random_sample(dataset_id, folder, reps=40):
     }
     callback = keras.callbacks.EarlyStopping(monitor="loss", patience=10, verbose=True)
     fit_kwargs = {
-        "epochs": 1000,
+        "epochs": 200,
         "batch_size": 64,
         "verbose": False,
         "callbacks": [callback],
