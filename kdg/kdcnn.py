@@ -54,15 +54,16 @@ class kdcnn(KernelDensityGraph):
     def _get_layer_activation(self, X, layer):
         total_samples = X.shape[0]
         layer_name = self.network.layers[layer].name
-        #print(layer_name)
+        
         if 'batch_normalization' in layer_name or 'flatten' in layer_name:
+            print(layer_name)
             return np.array([None])
 
         intermediate_layer_model = Model(inputs=self.network.input,
                                  outputs=self.network.get_layer(layer_name).output)
         output = intermediate_layer_model.predict(X)
         
-        if layer == self.total_layers - 1:
+        if layer == len(self.network.layers) - 1:
             binary_activation = (output > 0.5).astype("int")
         else:
             binary_activation = (output > 0).astype("int")

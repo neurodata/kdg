@@ -104,9 +104,14 @@ model_kdn = kdcnn(
     verbose=False,
 )
 model_kdn.fit(X_train, y_train)
-
-'''with open('trained_kdcnn.pickle', 'w') as f:
-    pickle.dump(model_kdn, f)'''
+#%%
+with open('trained_kdcnn.pickle', 'wb') as f:
+    pickle.dump(model_kdn, f, pickle.HIGHEST_PROTOCOL)
 # %%
-print(np.mean(model_kdn.predict(X_test) == y_test.reshape(-1)))
+proba = model_kdn.predict(X_test)
+
+if np.isnan(proba).any():
+    print("yes")
+
+print(np.mean(np.argmax(proba, axis=1) == y_test.reshape(-1)))
 # %%
