@@ -51,7 +51,7 @@ def count_kdn_param(kdn_model):
     return total_param
 
 #%%
-dataset_id = 14#44#1497#1067#1468#44#40979#1468#11#44#1050#
+dataset_id = 1497#44#1497#1067#1468#44#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -111,3 +111,28 @@ print(np.mean(np.argmax(vanilla_nn.predict(X[indx_to_take_test]), axis=1)==y[ind
 print(np.mean(model_kdn.predict(X[indx_to_take_train])==y[indx_to_take_train]))
 
 # %%
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D
+import pickle
+# %%
+model = Sequential()
+model.add(Conv2D(64, (3,3), input_shape = X.shape[1:]))
+model.add(Activation("relu"))
+model.add(MaxPooling2D(pool_size=(2,2)))
+
+model.add(Conv2D(64, (3,3)))
+model.add(Activation("relu"))
+model.add(MaxPooling2D(pool_size=(2,2)))
+
+model.add(Flatten())
+model.add(Dense(64))
+
+model.add(Dense(1))
+model.add(Activation("softmax"))
+
+model.compile(loss="binary_crossentropy",
+             optimizer="adam",
+             metrics=["accuracy"])
+
+model.fit(X, y, batch_size=32, validation_split=0.1, epochs=3)
