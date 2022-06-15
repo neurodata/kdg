@@ -405,7 +405,8 @@ else:
         # image data format, either "channels_first" or "channels_last"
         data_format=None,
         # fraction of images reserved for validation (strictly between 0 and 1)
-        validation_split=0.0)
+        validation_split=0.0,
+        )
 
     # Compute quantities required for featurewise normalization
     # (std, mean, and principal components if ZCA whitening is applied).
@@ -415,7 +416,8 @@ else:
     model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_size),
                         validation_data=(x_test, y_test),
                         epochs=epochs, verbose=1, workers=4,
-                        callbacks=callbacks)
+                        callbacks=callbacks,
+                        use_multiprocessing=True)
 
 # Score trained model.
 scores = model.evaluate(x_test, y_test, verbose=1)
