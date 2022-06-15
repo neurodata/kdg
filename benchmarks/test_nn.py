@@ -13,6 +13,9 @@ from tensorflow.keras.datasets import cifar10
 import numpy as np
 import os
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 # Training parameters
 batch_size = 32  # orig paper trained all networks with batch_size=128
 epochs = 200
