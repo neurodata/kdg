@@ -339,10 +339,10 @@ if not os.path.isdir(save_dir):
 filepath = os.path.join(save_dir, model_name)
 
 # Prepare callbacks for model saving and for learning rate adjustment.
-checkpoint = ModelCheckpoint(filepath=filepath,
+'''checkpoint = ModelCheckpoint(filepath=filepath,
                              monitor='val_acc',
                              verbose=1,
-                             save_best_only=True)
+                             save_best_only=True)'''
 
 lr_scheduler = LearningRateScheduler(lr_schedule)
 
@@ -351,7 +351,7 @@ lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
                                patience=5,
                                min_lr=0.5e-6)
 
-callbacks = [checkpoint, lr_reducer, lr_scheduler]
+callbacks = [lr_reducer, lr_scheduler]
 
 # Run training, with or without data augmentation.
 if not data_augmentation:
