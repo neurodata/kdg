@@ -9,6 +9,12 @@ from kdg import kdcnn, kdf
 import pickle
 # %%
 (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
+X_train = X_train.astype('float32') / 255
+X_test = X_test.astype('float32') / 255
+
+x_train_mean = np.mean(X_train, axis=0)
+X_train -= x_train_mean
+X_test -= x_train_mean
 #%%
 '''network = Sequential()
 network.add(
@@ -85,8 +91,8 @@ network.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
 # %%
 network.save('cnn_test')'''
 # %%
-network = keras.models.load_model('cnn_test')
-np.mean(np.argmax(network.predict(X_test), axis=1)==y_test.reshape(-1))
+network = keras.models.load_model('saved_models/cifar10_ResNet164v1_model.130.h5')
+print(np.mean(np.argmax(network.predict(X_test), axis=1)==y_test.reshape(-1)))
 # %%
 def output_from_model(model, layer_name, x):
     intermediate_layer_model = Model(inputs=model.input,
@@ -111,10 +117,4 @@ if np.isnan(proba).any():
     print("yes")
 
 print(np.mean(np.argmax(proba, axis=1) == y_test.reshape(-1)))
-# %%
-model_kdf = kdf(k=1e300,kwargs={'n_estimators':500})
-model_kdf.fit(X_train.reshape(X_train.shape[0],-1), y_train)
-# %%
-np.mean(model_kdf.predict(X_test.reshape(X_test.shape[0],-1))==y_test)
-np.mean(model_kdf.rf_model.predict(X_test.reshape(X_test.shape[0],-1))==y_test)
 # %%

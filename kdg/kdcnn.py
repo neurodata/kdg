@@ -4,6 +4,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 from sklearn.covariance import LedoitWolf
 from tensorflow.keras.models import Model
+from joblib import Parallel, delayed 
 
 class kdcnn(KernelDensityGraph):
     def __init__(
@@ -36,15 +37,15 @@ class kdcnn(KernelDensityGraph):
         self.verbose = verbose
 
         # total number of layers in the NN
-        self.total_layers = len(self.network.layers)
+        self.total_layers = 0
 
         # get the sizes of each layer
         self.network_shape = []
         for layer in network.layers:
             layer_name = layer.name
 
-            if 'batch_normalization' not in layer_name and 'flatten' not in layer_name:
-                self.total_layers -= 1
+            if 'activaion' in layer_name:
+                self.total_layers += 1
                 self.network_shape.append(
                     np.product(
                         layer.output_shape[1:]
@@ -55,7 +56,7 @@ class kdcnn(KernelDensityGraph):
         total_samples = X.shape[0]
         layer_name = self.network.layers[layer].name
         
-        if 'batch_normalization' in layer_name or 'flatten' in layer_name:
+        if 'activation' not in layer_name:
             #print(layer_name)
             return np.array([None])
 
@@ -108,7 +109,6 @@ class kdcnn(KernelDensityGraph):
             Output (i.e. response) data matrix.
         """
         #X, y = check_X_y(X, y)
-        X = X.astype('double')
         self.labels = np.unique(y)
         self.feature_dim = np.product(X.shape[1:])
 
@@ -184,11 +184,17 @@ class kdcnn(KernelDensityGraph):
         polytope_cov = self.polytope_cov[label][polytope_idx].reshape(-1)
         total_sample = X.shape[0]
         X = X.reshape(total_sample,-1)
-        likelihood = np.zeros(total_sample, dtype = float)
+        #likelihood = np.zeros(total_sample, dtype = float)
 
-        for ii in range(self.feature_dim):
-            likelihood += self._compute_log_likelihood_1d(X[:,ii], polytope_mean[ii], polytope_cov[ii])
-
+        likelihood = Parallel(n_jobs=-1,verbose=1)(
+            delayed(self._compute_log_likelihood_1d)(
+                    X[:,ii],
+                    polytope_mean[ii],
+                    polytope_cov[ii]
+                    ) for ii in range(self.feature_dim)
+            )
+        likelihood = np.sum(likelihood, axis=0)
+        print(likelihood)
         likelihood += np.log(self.polytope_cardinality[label][polytope_idx]) -\
             np.log(self.total_samples_this_label[label])
 
