@@ -1,5 +1,5 @@
 from __future__ import print_function
-import keras
+from tensorflow import keras
 from keras.layers import Dense, Conv2D, BatchNormalization, Activation
 from keras.layers import AveragePooling2D, Input, Flatten
 from keras.optimizers import Adam
