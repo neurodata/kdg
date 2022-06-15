@@ -5,7 +5,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
 import pickle
 from keras.models import Model
-from kdg import kdcnn
+from kdg import kdcnn, kdf
 import pickle
 # %%
 (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
@@ -111,4 +111,10 @@ if np.isnan(proba).any():
     print("yes")
 
 print(np.mean(np.argmax(proba, axis=1) == y_test.reshape(-1)))
+# %%
+model_kdf = kdf(k=1e300,kwargs={'n_estimators':500})
+model_kdf.fit(X_train.reshape(X_train.shape[0],-1), y_train)
+# %%
+np.mean(model_kdf.predict(X_test.reshape(X_test.shape[0],-1))==y_test)
+np.mean(model_kdf.rf_model.predict(X_test.reshape(X_test.shape[0],-1))==y_test)
 # %%

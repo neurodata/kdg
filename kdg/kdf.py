@@ -43,6 +43,8 @@ class kdf(KernelDensityGraph):
             return
 
         X, y = check_X_y(X, y)
+        X = X.astype('double')
+        
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
         self.feature_dim = X.shape[1]
@@ -134,7 +136,6 @@ class kdf(KernelDensityGraph):
         X : ndarray
             Input data matrix.
         """
-        
         X = check_array(X)
 
         log_likelihoods = np.zeros(

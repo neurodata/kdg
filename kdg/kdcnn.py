@@ -56,7 +56,7 @@ class kdcnn(KernelDensityGraph):
         layer_name = self.network.layers[layer].name
         
         if 'batch_normalization' in layer_name or 'flatten' in layer_name:
-            print(layer_name)
+            #print(layer_name)
             return np.array([None])
 
         intermediate_layer_model = Model(inputs=self.network.input,
