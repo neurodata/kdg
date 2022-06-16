@@ -51,7 +51,7 @@ class kdcnn(KernelDensityGraph):
                         layer.output_shape[1:]
                     )
                 )
-
+        print(self.total_layers)
     def _get_layer_activation(self, X, layer):
         total_samples = X.shape[0]
         layer_name = self.network.layers[layer].name
@@ -194,7 +194,7 @@ class kdcnn(KernelDensityGraph):
                     ) for ii in range(self.feature_dim)
             )
         likelihood = np.sum(likelihood, axis=0)
-        print(likelihood)
+        #print(likelihood)
         likelihood += np.log(self.polytope_cardinality[label][polytope_idx]) -\
             np.log(self.total_samples_this_label[label])
 
