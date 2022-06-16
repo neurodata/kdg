@@ -51,7 +51,7 @@ class kdcnn(KernelDensityGraph):
                         layer.output_shape[1:]
                     )
                 )
-        print(self.total_layers, layer_name)
+            print(self.total_layers, layer_name, 'activaion' in layer_name)
     def _get_layer_activation(self, X, layer):
         total_samples = X.shape[0]
         layer_name = self.network.layers[layer].name
