@@ -11,6 +11,7 @@ class kdcnn(KernelDensityGraph):
         self,
         network,
         k = 1.0,
+        threshold = .1,
         verbose=True
     ):
         r"""[summary]
@@ -33,6 +34,7 @@ class kdcnn(KernelDensityGraph):
         self.prior = {}
         self.network = network
         self.k = k
+        self.threshold = threshold
         self.bias = {}
         self.verbose = verbose
 
@@ -113,6 +115,7 @@ class kdcnn(KernelDensityGraph):
         self.feature_dim = np.product(X.shape[1:])
 
         for label in self.labels:
+            print('doing label ', label)
             self.polytope_means[label] = []
             self.polytope_cov[label] = []
 
@@ -143,9 +146,13 @@ class kdcnn(KernelDensityGraph):
                         np.log(self.network_shape[layer])
                 scales = np.exp(np.sum(np.log(matched_nodes), axis=1)\
                     - normalizing_factor)
-                
+                threshold_indx = np.where(scales<=self.threshold)[0]
+                scales[threshold_indx] = 0
+
                 # apply weights to the data
-                X_tmp = X_.copy()
+                X_tmp = X_.reshape(
+                    X_.shape[0], -1
+                )
                 polytope_mean_ = np.average(
                     X_tmp, axis=0, weights=scales
                 )  # compute the weighted average of the samples
@@ -163,7 +170,7 @@ class kdcnn(KernelDensityGraph):
                 dtype=float
             )
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
-                likelihoods += self._compute_log_likelihood(X_, label, polytope_idx)
+                likelihoods += self._compute_log_likelihood(X_.reshape(X_.shape[0],-1), label, polytope_idx)
 
             #likelihoods -= np.log(self.total_samples_this_label[label]
             self.bias[label] = np.min(likelihoods) - np.log(self.k*self.total_samples_this_label[label])
@@ -176,25 +183,20 @@ class kdcnn(KernelDensityGraph):
 
         self.is_fitted = True
 
-    def _compute_log_likelihood_1d(self, X, location, variance):                  
-        return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
+    def _compute_log_likelihood_1d(self, X, location, variance):  
+        if variance < 0.0039:
+            return 0
+        else:                 
+            return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
 
     def _compute_log_likelihood(self, X, label, polytope_idx):
-        polytope_mean = self.polytope_means[label][polytope_idx].reshape(-1)
-        polytope_cov = self.polytope_cov[label][polytope_idx].reshape(-1)
-        total_sample = X.shape[0]
-        X = X.reshape(total_sample,-1)
-        #likelihood = np.zeros(total_sample, dtype = float)
+        polytope_mean = self.polytope_means[label][polytope_idx]
+        polytope_cov = self.polytope_cov[label][polytope_idx]
+        likelihood = np.zeros(X.shape[0], dtype = float)
 
-        likelihood = Parallel(n_jobs=-1,verbose=1)(
-            delayed(self._compute_log_likelihood_1d)(
-                    X[:,ii],
-                    polytope_mean[ii],
-                    polytope_cov[ii]
-                    ) for ii in range(self.feature_dim)
-            )
-        likelihood = np.sum(likelihood, axis=0)
-        #print(likelihood)
+        for ii in range(self.feature_dim):
+            likelihood += self._compute_log_likelihood_1d(X[:,ii], polytope_mean[ii], polytope_cov[ii])
+
         likelihood += np.log(self.polytope_cardinality[label][polytope_idx]) -\
             np.log(self.total_samples_this_label[label])
 
@@ -210,7 +212,10 @@ class kdcnn(KernelDensityGraph):
         """
         
         #X = check_array(X)
-
+        X = X.reshape(
+            X.shape[0],
+            -1
+        )
         log_likelihoods = np.zeros(
             (np.size(X,0), len(self.labels)),
             dtype=float
