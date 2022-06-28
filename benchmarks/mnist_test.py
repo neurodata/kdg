@@ -2,7 +2,7 @@
 from __future__ import print_function
 import enum
 from tensorflow import keras
-from keras import Sequential
+from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation, MaxPooling2D
 from tensorflow.keras.layers import AveragePooling2D, Input, Flatten
 from tensorflow.keras.optimizers import Adam, SGD
