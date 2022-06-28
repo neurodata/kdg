@@ -14,7 +14,6 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.datasets import cifar10, mnist
 import numpy as np
-from torch import relu
 from kdg import kdcnn
 import os
 
