@@ -95,7 +95,6 @@ def define_model():
     x = Flatten()(x)
     x = Dense(10240, kernel_initializer='he_uniform')(x)
     x = Activation('relu')(x)
-    x = Dense(10, kernel_initializer='he_uniform')(x)
     outputs = Dense(num_classes,
                     activation='softmax',
                     kernel_initializer='he_normal')(x)
