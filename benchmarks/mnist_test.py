@@ -1,6 +1,7 @@
 #%%
 from __future__ import print_function
 import enum
+from cv2 import threshold
 from tensorflow import keras
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation, MaxPooling2D
@@ -102,7 +103,7 @@ def define_model():
     return model
 
 # %%
-initial_learning_rate = 0.001
+'''initial_learning_rate = 0.001
 lr_schedule = keras.optimizers.schedules.ExponentialDecay(
     initial_learning_rate,
     decay_steps=100000,
@@ -165,16 +166,17 @@ model.fit_generator(datagen.flow(x_train_, y_train_, batch_size=batch_size),
 scores = model.evaluate(x_test_, y_test_, verbose=1)
 print('Test loss:', scores[0])
 print('Test accuracy:', scores[1])
-model.save('mnist_test')
+model.save('mnist_test')'''
 # %%
-'''network = keras.models.load_model('mnist_test')
-print(np.mean(np.argmax(network.predict(x_test), axis=1)==y_test.reshape(-1)))
+network = keras.models.load_model('mnist_test')
+#print(np.mean(np.argmax(network.predict(x_test), axis=1)==y_test.reshape(-1)))
 model_kdn = kdcnn(
     network=network,
     k=1e300,
+    threshold=0.1,
     verbose=False,
 )
-model_kdn.fit(x_train_, y_train)
+model_kdn.fit(x_train_[:20], y_train[:20])
 
 # %%
 np.mean(model_kdn.predict(x_test)==y_test)
@@ -272,18 +274,20 @@ def predict(model, X):
 from numpy.random import multivariate_normal as pdf
 from matplotlib.pyplot import imshow
 
-digit= 5
-location = model_kdn.polytope_means[digit][10]
-cov = model_kdn.polytope_cov[digit][10]
+digit= 9
+polytope_id = 1
+location = model_kdn.polytope_means[digit][polytope_id]
+cov = model_kdn.polytope_cov[digit][polytope_id]
 pic = np.zeros(28*28, dtype=float)
 
 for ii, mn in enumerate(location):
-    if cov[ii] < 1e-3:
+    if cov[ii] < 0.0039:
         pic[ii] = mn
     else:
         pic[ii] = np.random.normal(location[ii], [cov[ii]], 1)
 #cov_mtrx = np.eye(len(location))*cov
 #pic = pdf(location, cov_mtrx, 1).reshape(28,28) + x_train_mean
 imshow(pic.reshape(28,28)+x_train_mean, cmap='gray')
-'''
+#%%
+imshow(location.reshape(28,28)+x_train_mean, cmap='gray')
 # %%

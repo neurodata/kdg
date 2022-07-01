@@ -5,6 +5,7 @@ from scipy.stats import multivariate_normal
 from sklearn.covariance import LedoitWolf
 from tensorflow.keras.models import Model
 from joblib import Parallel, delayed 
+from tensorflow.keras import backend as bknd
 
 class kdcnn(KernelDensityGraph):
     def __init__(
@@ -53,53 +54,34 @@ class kdcnn(KernelDensityGraph):
                         layer.output_shape[1:]
                     )
                 )
-            
-    def _get_layer_activation(self, X, layer):
-        total_samples = X.shape[0]
-        layer_name = self.network.layers[layer].name
-        
-        if 'activation' not in layer_name:
-            #print(layer_name)
-            return np.array([None])
 
-        intermediate_layer_model = Model(inputs=self.network.input,
-                                 outputs=self.network.get_layer(layer_name).output)
-        output = intermediate_layer_model.predict(X)
-        
-        if layer == len(self.network.layers) - 1:
-            binary_activation = (output > 0.5).astype("int")
-        else:
-            binary_activation = (output > 0).astype("int")
-
-        return binary_activation.reshape(total_samples,-1)
-                
     def _get_polytope_ids(self, X):
-        r"""
-        Obtain the polytope ID of each input sample
-        Parameters
-        ----------
-        X : ndarray
-            Input data matrix.
-        """
-        polytope_ids_tmp = []
+        total_samples = X.shape[0]
+           
+        outputs = [] 
+        inp = self.network.input
 
-        preactivation = X
-        # Iterate through neural network manually, getting node activations at each step
-        for l in range(len(self.network.layers)):
-            binary_activation = self._get_layer_activation(preactivation, l)
-            
-            if (
-                (l < len(self.network.layers) - 1)
-                and
-                (binary_activation != None).any()
-            ):  # record the activation patterns only upto the penultimate layer
-                polytope_ids_tmp.append(binary_activation)
+        for layer in self.network.layers:
+            if 'activation' in layer.name:
+                outputs.append(layer.output) 
 
-        # Concatenate all activations for given observation
-        polytope_ids = np.concatenate(polytope_ids_tmp, axis=1)
+        functor = bknd.function(inp, outputs)
+        layer_outs = functor(X)
 
+        activation = []
+        for layer_out in layer_outs:
+            activation.append(
+                (layer_out>0).astype('int').reshape(total_samples, -1)
+            )
+        polytope_ids = np.concatenate(activation, axis=1)
+        
         return polytope_ids
-
+    
+    def worker(self, X_, label):
+        polytope_means = []
+        polytope_cov = []
+        
+        
     def fit(self, X, y):
         r"""
         Fits the kernel density forest.
@@ -113,46 +95,51 @@ class kdcnn(KernelDensityGraph):
         #X, y = check_X_y(X, y)
         self.labels = np.unique(y)
         self.feature_dim = np.product(X.shape[1:])
+        self.total_sample = X.shape[0]
 
         for label in self.labels:
-            print('doing label ', label)
             self.polytope_means[label] = []
             self.polytope_cov[label] = []
-
-            X_ = X[np.where(y == label)[0]]  # data having the current label
+            # data having the current label
+            X_ = X[np.where(y == label)[0]]
             self.total_samples_this_label[label] = X_.shape[0]
 
             # get class prior probability
             self.prior[label] = \
-                self.total_samples_this_label[label] / X.shape[0]
-
+                self.total_samples_this_label[label] / self.total_sample 
+            
             # get polytope ids and unique polytope ids
             polytope_ids = self._get_polytope_ids(X_)
             unique_polytope_ids, polytope_samples_ = np.unique(polytope_ids, return_counts=True, axis=0)
             self.polytope_cardinality[label] = polytope_samples_
             
             for polytope in unique_polytope_ids:
-                matched_pattern = (polytope_ids==polytope)
-                matched_nodes = np.zeros((len(polytope_ids),self.total_layers-1))
+                indx = np.where(polytope==0)[0]
+                polytope_ = polytope.copy()
+                polytope_[indx] = 2
 
+                matched_pattern = (polytope_ids==polytope_)
+                matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
                 end_node = 0
                 normalizing_factor = 0
-                for layer in range(self.total_layers-1):
+                for layer in range(self.total_layers):
                     end_node += self.network_shape[layer]
                     matched_nodes[:, layer] = \
                         np.sum(matched_pattern[:,end_node-self.network_shape[layer]:end_node], axis=1)
 
                     normalizing_factor += \
-                        np.log(self.network_shape[layer])
+                        np.log(np.max(matched_nodes[:, layer]))
+                    #print(normalizing_factor, np.where(polytope[end_node-self.network_shape[layer]:end_node])[0])
                 scales = np.exp(np.sum(np.log(matched_nodes), axis=1)\
                     - normalizing_factor)
+                
                 threshold_indx = np.where(scales<=self.threshold)[0]
                 scales[threshold_indx] = 0
-
+                #print(len(scales)-len(threshold_indx))
                 # apply weights to the data
                 X_tmp = X_.reshape(
                     X_.shape[0], -1
-                )
+                ).copy()
                 polytope_mean_ = np.average(
                     X_tmp, axis=0, weights=scales
                 )  # compute the weighted average of the samples
