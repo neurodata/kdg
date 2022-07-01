@@ -176,7 +176,7 @@ model_kdn = kdcnn(
     threshold=0.3,
     verbose=False,
 )
-model_kdn.fit(x_train_[:200], y_train[:200])
+model_kdn.fit(x_train_, y_train)
 
 # %%
 print(np.mean(model_kdn.predict(x_test)==y_test))
