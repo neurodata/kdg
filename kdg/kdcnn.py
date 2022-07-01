@@ -98,6 +98,7 @@ class kdcnn(KernelDensityGraph):
         self.total_sample = X.shape[0]
 
         for label in self.labels:
+            print('doing label ',label)
             self.polytope_means[label] = []
             self.polytope_cov[label] = []
             # data having the current label

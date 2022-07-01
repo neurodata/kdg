@@ -173,13 +173,13 @@ network = keras.models.load_model('mnist_test')
 model_kdn = kdcnn(
     network=network,
     k=1e300,
-    threshold=0.1,
+    threshold=0.3,
     verbose=False,
 )
-model_kdn.fit(x_train_[:20], y_train[:20])
+model_kdn.fit(x_train_[:200], y_train[:200])
 
 # %%
-np.mean(model_kdn.predict(x_test)==y_test)
+print(np.mean(model_kdn.predict(x_test)==y_test))
 # %%
 def _compute_log_likelihood_1d(X, location, variance): 
     if variance < 1e-2:
@@ -271,11 +271,11 @@ def predict(model, X):
     """
     return np.argmax(predict_proba(model, X), axis = 1)
 # %%
-from numpy.random import multivariate_normal as pdf
+'''from numpy.random import multivariate_normal as pdf
 from matplotlib.pyplot import imshow
 
-digit= 9
-polytope_id = 1
+digit= 0
+polytope_id = 20
 location = model_kdn.polytope_means[digit][polytope_id]
 cov = model_kdn.polytope_cov[digit][polytope_id]
 pic = np.zeros(28*28, dtype=float)
@@ -289,5 +289,5 @@ for ii, mn in enumerate(location):
 #pic = pdf(location, cov_mtrx, 1).reshape(28,28) + x_train_mean
 imshow(pic.reshape(28,28)+x_train_mean, cmap='gray')
 #%%
-imshow(location.reshape(28,28)+x_train_mean, cmap='gray')
+imshow(location.reshape(28,28)+x_train_mean, cmap='gray')'''
 # %%
