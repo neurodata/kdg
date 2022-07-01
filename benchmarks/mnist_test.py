@@ -173,7 +173,7 @@ network = keras.models.load_model('mnist_test')
 model_kdn = kdcnn(
     network=network,
     k=1e300,
-    threshold=0.3,
+    threshold=0.1,
     verbose=False,
 )
 model_kdn.fit(x_train_, y_train)
@@ -271,11 +271,11 @@ def predict(model, X):
     """
     return np.argmax(predict_proba(model, X), axis = 1)
 # %%
-'''from numpy.random import multivariate_normal as pdf
+from numpy.random import multivariate_normal as pdf
 from matplotlib.pyplot import imshow
 
 digit= 0
-polytope_id = 20
+polytope_id = 80
 location = model_kdn.polytope_means[digit][polytope_id]
 cov = model_kdn.polytope_cov[digit][polytope_id]
 pic = np.zeros(28*28, dtype=float)
@@ -289,5 +289,5 @@ for ii, mn in enumerate(location):
 #pic = pdf(location, cov_mtrx, 1).reshape(28,28) + x_train_mean
 imshow(pic.reshape(28,28)+x_train_mean, cmap='gray')
 #%%
-imshow(location.reshape(28,28)+x_train_mean, cmap='gray')'''
+imshow(location.reshape(28,28)+x_train_mean, cmap='gray')
 # %%
