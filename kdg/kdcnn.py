@@ -172,7 +172,7 @@ class kdcnn(KernelDensityGraph):
         self.is_fitted = True
 
     def _compute_log_likelihood_1d(self, X, location, variance):  
-        if variance < 0.0039:
+        if variance < 1.53e-05:
             return 0
         else:                 
             return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
