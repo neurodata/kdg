@@ -173,10 +173,10 @@ network = keras.models.load_model('mnist_test')
 model_kdn = kdcnn(
     network=network,
     k=1e300,
-    threshold=0.05,
+    threshold=0.0,
     verbose=False,
 )
-model_kdn.fit(x_train_, y_train)
+model_kdn.fit(x_train_[:20000], y_train[:20000])
 
 # %%
 print(np.mean(model_kdn.predict(x_test)==y_test))
@@ -274,14 +274,14 @@ def predict(model, X):
 from numpy.random import multivariate_normal as pdf
 from matplotlib.pyplot import imshow
 
-digit= 9
-polytope_id = 10
+digit= 4
+polytope_id = 0
 location = model_kdn.polytope_means[digit][polytope_id]
 cov = model_kdn.polytope_cov[digit][polytope_id]
 pic = np.zeros(28*28, dtype=float)
 
 for ii, mn in enumerate(location):
-    if cov[ii] < 0.0039:
+    if cov[ii] < 1e-3/255:
         pic[ii] = mn
     else:
         pic[ii] = np.random.normal(location[ii], [cov[ii]], 1)
