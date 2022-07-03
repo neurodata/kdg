@@ -176,7 +176,7 @@ model_kdn = kdcnn(
     threshold=0.0,
     verbose=False,
 )
-model_kdn.fit(x_train_[:20000], y_train[:20000])
+model_kdn.fit(x_train_, y_train)
 
 # %%
 print(np.mean(model_kdn.predict(x_test)==y_test))
@@ -271,7 +271,7 @@ def predict(model, X):
     """
     return np.argmax(predict_proba(model, X), axis = 1)
 # %%
-from numpy.random import multivariate_normal as pdf
+'''from numpy.random import multivariate_normal as pdf
 from matplotlib.pyplot import imshow
 
 digit= 4
@@ -290,4 +290,20 @@ for ii, mn in enumerate(location):
 imshow(pic.reshape(28,28)+x_train_mean, cmap='gray')
 #%%
 imshow(location.reshape(28,28)+x_train_mean, cmap='gray')
+# %%
+from matplotlib.pyplot import imshow
+
+digit= 2
+polytope_id = 0
+location = model_kdn.polytope_means[digit][polytope_id]
+cov = model_kdn.polytope_cov[digit][polytope_id]
+rng = np.random.default_rng()
+pic = rng.multivariate_normal(
+    mean = location,
+    cov = cov,
+    size=(1)
+)
+
+imshow(pic.reshape(28,28)+x_train_mean, cmap='gray')'''
+
 # %%
