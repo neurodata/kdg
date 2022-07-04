@@ -7,7 +7,7 @@ from tensorflow.keras.models import Model
 from joblib import Parallel, delayed 
 from tensorflow.keras import backend as bknd
 
-class kdcnn(KernelDensityGraph):
+class kdn(KernelDensityGraph):
     def __init__(
         self,
         network,
