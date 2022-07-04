@@ -15,7 +15,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.datasets import cifar10, mnist
 import numpy as np
-from kdg import kdcnn
+from kdg import kdn
 import os
 
 import ssl
@@ -170,13 +170,12 @@ model.save('mnist_test')'''
 # %%
 network = keras.models.load_model('mnist_test')
 #print(np.mean(np.argmax(network.predict(x_test), axis=1)==y_test.reshape(-1)))
-model_kdn = kdcnn(
+model_kdn = kdn(
     network=network,
     k=1e300,
-    threshold=0.0,
     verbose=False,
 )
-model_kdn.fit(x_train_, y_train)
+model_kdn.fit(x_train_[:5000], y_train[:5000])
 
 # %%
 print(np.mean(model_kdn.predict(x_test)==y_test))
@@ -271,7 +270,7 @@ def predict(model, X):
     """
     return np.argmax(predict_proba(model, X), axis = 1)
 # %%
-'''from numpy.random import multivariate_normal as pdf
+from numpy.random import multivariate_normal as pdf
 from matplotlib.pyplot import imshow
 
 digit= 4
@@ -292,9 +291,10 @@ imshow(pic.reshape(28,28)+x_train_mean, cmap='gray')
 imshow(location.reshape(28,28)+x_train_mean, cmap='gray')
 # %%
 from matplotlib.pyplot import imshow
+import cv2 
 
 digit= 2
-polytope_id = 0
+polytope_id = 1
 location = model_kdn.polytope_means[digit][polytope_id]
 cov = model_kdn.polytope_cov[digit][polytope_id]
 rng = np.random.default_rng()
@@ -303,7 +303,14 @@ pic = rng.multivariate_normal(
     cov = cov,
     size=(1)
 )
+pic = pic.reshape(28,28)+x_train_mean
+#pic = cv2.fastNlMeansDenoisingColored(pic)
+'''for ii in range(28):
+    for jj in range(28):
+        if cov[ii,jj] < 1/255:
+            print(cov[ii,jj])
+            pic[ii,jj] = 0'''
 
-imshow(pic.reshape(28,28)+x_train_mean, cmap='gray')'''
+imshow(pic, cmap='gray')
 
 # %%
