@@ -239,7 +239,8 @@ class kdn(KernelDensityGraph):
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
                 tmp_[:,polytope_idx] = self._compute_log_likelihood(X, label, polytope_idx) 
             
-            max_pow = np.max(
+            log_likelihood = np.max(tmp_, axis=1) 
+            '''max_pow = np.max(
                     np.concatenate(
                         (
                             tmp_,
@@ -254,10 +255,9 @@ class kdn(KernelDensityGraph):
             )
             tmp_ -= pow_exp
             likelihoods = np.sum(np.exp(tmp_), axis=1) +\
-                 np.exp(self.global_bias - pow_exp[:,0]) 
-                
-            likelihoods *= self.prior[label] 
-            log_likelihoods[:,ii] = np.log(likelihoods) + pow_exp[:,0]
+                 np.exp(self.global_bias - pow_exp[:,0]) '''
+
+            log_likelihoods[:,ii] = log_likelihood + np.log(self.prior[label])
 
         max_pow = np.nan_to_num(
             np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(self.labels)))
