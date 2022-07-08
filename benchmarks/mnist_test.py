@@ -176,100 +176,10 @@ model_kdn = kdn(
     k=1e300,
     verbose=False,
 )
-model_kdn.fit(x_train_, y_train)
+model_kdn.fit(x_train_[:11000], y_train[:11000])
 
 # %%
 print(np.mean(model_kdn.predict(x_test)==y_test))
-# %%
-def _compute_log_likelihood_1d(X, location, variance): 
-    if variance < 1e-2:
-        return 0
-    else:                 
-        return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
-
-def _compute_log_likelihood(model, X, label, polytope_idx):
-    polytope_mean = model.polytope_means[label][polytope_idx]
-    polytope_cov = model.polytope_cov[label][polytope_idx]
-    likelihood = np.zeros(X.shape[0], dtype = float)
-
-    for ii in range(model.feature_dim):
-        likelihood += _compute_log_likelihood_1d(X[:,ii], polytope_mean[ii], polytope_cov[ii])
-
-    likelihood += np.log(model.polytope_cardinality[label][polytope_idx]) -\
-        np.log(model.total_samples_this_label[label])
-
-    return likelihood
-        
-def predict_proba(model, X, return_likelihood=False):
-    r"""
-    Calculate posteriors using the kernel density forest.
-    Parameters
-    ----------
-    X : ndarray
-        Input data matrix.
-    """
-    
-    #X = check_array(X)
-    X = X.reshape(
-        X.shape[0],
-        -1
-    )
-    log_likelihoods = np.zeros(
-        (np.size(X,0), len(model.labels)),
-        dtype=float
-    )
-    
-    for ii,label in enumerate(model.labels):
-        total_polytope_this_label = len(model.polytope_means[label])
-        tmp_ = np.zeros((X.shape[0],total_polytope_this_label), dtype=float)
-
-        for polytope_idx,_ in enumerate(model.polytope_means[label]):
-            tmp_[:,polytope_idx] = _compute_log_likelihood(model, X, label, polytope_idx) 
-        
-        max_pow = np.max(
-                np.concatenate(
-                    (
-                        tmp_,
-                        model.global_bias*np.ones((X.shape[0],1), dtype=float)
-                    ),
-                    axis=1
-                ),
-                axis=1
-            )
-        pow_exp = np.nan_to_num(
-            max_pow.reshape(-1,1)@np.ones((1,total_polytope_this_label), dtype=float)
-        )
-        tmp_ -= pow_exp
-        likelihoods = np.sum(np.exp(tmp_), axis=1) +\
-                np.exp(model.global_bias - pow_exp[:,0]) 
-            
-        likelihoods *= model.prior[label] 
-        log_likelihoods[:,ii] = np.log(likelihoods) + pow_exp[:,0]
-
-    max_pow = np.nan_to_num(
-        np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(model.labels)))
-    )
-    log_likelihoods -= max_pow
-    likelihoods = np.exp(log_likelihoods)
-
-    total_likelihoods = np.sum(likelihoods, axis=1)
-
-    proba = (likelihoods.T/total_likelihoods).T
-    
-    if return_likelihood:
-        return proba, likelihoods
-    else:
-        return proba 
-
-def predict(model, X):
-    r"""
-    Perform inference using the kernel density forest.
-    Parameters
-    ----------
-    X : ndarray
-        Input data matrix.
-    """
-    return np.argmax(predict_proba(model, X), axis = 1)
 # %%
 from numpy.random import multivariate_normal as pdf
 from matplotlib.pyplot import imshow
@@ -294,8 +204,8 @@ imshow(location.reshape(28,28)+x_train_mean, cmap='gray')
 from matplotlib.pyplot import imshow
 import cv2 
 
-digit= 2
-polytope_id = 0
+digit= 9
+polytope_id = 2
 location = model_kdn.polytope_means[digit][polytope_id]
 cov = model_kdn.polytope_cov[digit][polytope_id]
 rng = np.random.default_rng()
