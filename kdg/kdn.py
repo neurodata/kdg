@@ -1,3 +1,4 @@
+from matplotlib.pyplot import sca
 from .base import KernelDensityGraph
 from sklearn.utils.validation import check_array, check_X_y
 import numpy as np
@@ -6,12 +7,14 @@ from sklearn.covariance import LedoitWolf
 from tensorflow.keras.models import Model
 from joblib import Parallel, delayed 
 from tensorflow.keras import backend as bknd
+from scipy.sparse import csr_matrix
 
 class kdn(KernelDensityGraph):
     def __init__(
         self,
         network,
         k = 1.0,
+        threshold = 0.6,
         verbose=True
     ):
         r"""[summary]
@@ -31,10 +34,10 @@ class kdn(KernelDensityGraph):
         self.polytope_cov = {}
         self.polytope_cardinality = {}
         self.total_samples_this_label = {}
-        self.feature_to_consider = {}
         self.prior = {}
         self.network = network
         self.k = k
+        self.threshold = threshold
         self.bias = {}
         self.verbose = verbose
 
@@ -96,7 +99,7 @@ class kdn(KernelDensityGraph):
             print('doing label ',label)
             self.polytope_means[label] = []
             self.polytope_cov[label] = []
-            self.feature_to_consider[label] = []
+
             # data having the current label
             X_ = X[np.where(y == label)[0]]
             self.total_samples_this_label[label] = X_.shape[0]
@@ -122,60 +125,42 @@ class kdn(KernelDensityGraph):
                 for layer in range(self.total_layers):
                     end_node += self.network_shape[layer]
                     matched_nodes[:, layer] = \
-                        np.sum(matched_pattern[:,end_node-self.network_shape[layer]:end_node], axis=1)
+                        np.sum(matched_pattern[:,end_node-self.network_shape[layer]:end_node], axis=1)\
+                            + 1/self.network_shape[layer]
 
                     normalizing_factor += \
                         np.log(np.max(matched_nodes[:, layer]))
                     #print(normalizing_factor, np.where(polytope[end_node-self.network_shape[layer]:end_node])[0])
+                #print(normalizing_factor, np.sum(np.log(matched_nodes), axis=1), 'match')
                 scales = np.exp(np.sum(np.log(matched_nodes), axis=1)\
                     - normalizing_factor)
+                indx_to_consider = np.where(
+                    scales>self.threshold
+                )[0]
+                #print(np.sort(scales))
+                if indx_to_consider.shape[0] == 1:
+                    continue
                 
                 # apply weights to the data
                 X_tmp = X_.reshape(
                     X_.shape[0], -1
                 ).copy()
                 polytope_mean_ = np.average(
-                    X_tmp, axis=0, weights=scales
+                    X_tmp[indx_to_consider], axis=0, weights=scales[indx_to_consider]
                 )  # compute the weighted average of the samples
                 
-                X_tmp -= polytope_mean_  # center the data
-                sqrt_scales = np.sqrt(scales).reshape(-1,1) @ np.ones(self.feature_dim).reshape(1,-1)
-                X_tmp *= sqrt_scales
-
-                covariance_model = LedoitWolf(assume_centered=True)
-                covariance_model.fit(X_tmp)
-
-                polytope_cov_ = covariance_model.covariance_*X_tmp.shape[0]/sum(scales)
-                feature_to_consider = []
-
-                for val in range(self.feature_dim):
-                    if polytope_cov_[val,val] > 0.004:
-                        feature_to_consider.append(
-                            val
-                        )
-                polytope_cov__ = np.zeros(
-                    (len(feature_to_consider),
-                    len(feature_to_consider)),
-                    dtype=float
-                    )
-                polytope_mean__ = np.zeros(
-                    len(feature_to_consider),
-                    dtype=float
-                    )
-                
-                for idx, feature in enumerate(feature_to_consider):
-                    polytope_cov__[idx,:] = polytope_cov_[feature,feature_to_consider]
-                    polytope_cov__[:,idx] = polytope_cov_[feature_to_consider,feature]
-                    polytope_mean__[idx] = polytope_mean_[feature]
-
-                # store the mean, covariances, and polytope sample size
-                self.polytope_means[label].append(polytope_mean__)
-                self.polytope_cov[label].append(
-                        polytope_cov__
-                    )
-                self.feature_to_consider[label].append(
-                    feature_to_consider
+                X_tmp[indx_to_consider] -= polytope_mean_  # center the data
+                polytope_cov_ = np.average(
+                    X_tmp[indx_to_consider]**2,
+                    axis=0, 
+                    weights=scales[indx_to_consider]
                 )
+                
+                # store the mean, covariances, and polytope sample size
+                self.polytope_means[label].append(polytope_mean_)
+                self.polytope_cov[label].append(
+                        polytope_cov_
+                    )
                 
             ## calculate bias for each label
             likelihoods = np.zeros(
@@ -196,20 +181,23 @@ class kdn(KernelDensityGraph):
 
         self.is_fitted = True
 
+    def _compute_log_likelihood_1d(self, X, location, variance):  
+        if variance < 1e-200:
+            return 0
+        else:                
+            return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
+
     def _compute_log_likelihood(self, X, label, polytope_idx):
         polytope_mean = self.polytope_means[label][polytope_idx]
         polytope_cov = self.polytope_cov[label][polytope_idx]
-        feature_to_consider = self.feature_to_consider[label][polytope_idx]
-        X_ = X[:,feature_to_consider].copy()
-        
+        likelihood = np.zeros(X.shape[0], dtype = float)
 
-        var = multivariate_normal(
-            mean=polytope_mean, 
-            cov=polytope_cov, 
-            allow_singular=True
-            )
+        for ii in range(self.feature_dim):
+            likelihood += self._compute_log_likelihood_1d(X[:,ii], polytope_mean[ii], polytope_cov[ii])
 
-        likelihood = var.logpdf(X_)
+        likelihood += np.log(self.polytope_cardinality[label][polytope_idx]) -\
+            np.log(self.total_samples_this_label[label])
+
         return likelihood
 
 

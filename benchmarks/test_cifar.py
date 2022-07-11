@@ -1,150 +1,226 @@
 #%%
-from numpy import dtype
-from kdg import kdf
-from kdg.utils import get_ece
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-import os 
-import numpy as np
-import openml
-from sklearn.metrics import cohen_kappa_score
-from kdg.utils import get_ece
-from numpy import min_scalar_type
-from sklearn.mixture import GaussianMixture
-from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
-from sklearn.ensemble import RandomForestClassifier as rf 
-import numpy as np
-from scipy.stats import multivariate_normal
-import warnings
-from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
+from __future__ import print_function
+import enum
+#from cv2 import threshold
 from tensorflow import keras
-#%%
-def cross_val_data(data_x, data_y, num_points_per_task, total_task=10, shift=1):
-    x = data_x.copy()
-    y = data_y.copy()
-    idx = [np.where(data_y == u)[0] for u in np.unique(data_y)]
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation, MaxPooling2D
+from tensorflow.keras.layers import AveragePooling2D, Input, Flatten
+from tensorflow.keras.optimizers import Adam, SGD
+from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
+from tensorflow.keras.callbacks import ReduceLROnPlateau
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras import backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras.datasets import cifar10, mnist
+import numpy as np
+from kdg import kdn
+import os
+from kdg.utils import get_ece
 
-    batch_per_task = 5000 // num_points_per_task
-    sample_per_class = num_points_per_task // total_task
-    test_data_slot = 100 // batch_per_task
-
-    for task in range(total_task):
-        for batch in range(batch_per_task):
-            for class_no in range(task * 10, (task + 1) * 10, 1):
-                indx = np.roll(idx[class_no], (shift - 1) * 100)
-
-                if batch == 0 and class_no == 0 and task == 0:
-                    train_x = x[
-                        indx[batch * sample_per_class : (batch + 1) * sample_per_class],
-                        :,
-                    ]
-                    train_y = y[
-                        indx[batch * sample_per_class : (batch + 1) * sample_per_class]
-                    ]
-                    test_x = x[
-                        indx[
-                            batch * test_data_slot
-                            + 500 : (batch + 1) * test_data_slot
-                            + 500
-                        ],
-                        :,
-                    ]
-                    test_y = y[
-                        indx[
-                            batch * test_data_slot
-                            + 500 : (batch + 1) * test_data_slot
-                            + 500
-                        ]
-                    ]
-                else:
-                    train_x = np.concatenate(
-                        (
-                            train_x,
-                            x[
-                                indx[
-                                    batch
-                                    * sample_per_class : (batch + 1)
-                                    * sample_per_class
-                                ],
-                                :,
-                            ],
-                        ),
-                        axis=0,
-                    )
-                    train_y = np.concatenate(
-                        (
-                            train_y,
-                            y[
-                                indx[
-                                    batch
-                                    * sample_per_class : (batch + 1)
-                                    * sample_per_class
-                                ]
-                            ],
-                        ),
-                        axis=0,
-                    )
-                    test_x = np.concatenate(
-                        (
-                            test_x,
-                            x[
-                                indx[
-                                    batch * test_data_slot
-                                    + 500 : (batch + 1) * test_data_slot
-                                    + 500
-                                ],
-                                :,
-                            ],
-                        ),
-                        axis=0,
-                    )
-                    test_y = np.concatenate(
-                        (
-                            test_y,
-                            y[
-                                indx[
-                                    batch * test_data_slot
-                                    + 500 : (batch + 1) * test_data_slot
-                                    + 500
-                                ]
-                            ],
-                        ),
-                        axis=0,
-                    )
-
-    return train_x, train_y, test_x, test_y
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 #%%
-(X_train, y_train), (X_test, y_test) = keras.datasets.cifar100.load_data()
-data_x = np.concatenate([X_train, X_test])
-data_x = data_x.reshape(
-        (data_x.shape[0], data_x.shape[1] * data_x.shape[2] * data_x.shape[3])
+# Training parameters
+batch_size = 120  # orig paper trained all networks with batch_size=128
+epochs = 150
+data_augmentation = True
+num_classes = 10
+
+# Subtracting pixel mean improves accuracy
+subtract_pixel_mean = True
+
+# Load the MNIST data.
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+
+# Input image dimensions.
+input_shape = x_train.shape[1:]
+
+# Normalize data.
+x_train = x_train.astype('float32') / 255
+x_test = x_test.astype('float32') / 255
+
+# If subtract pixel mean is enabled
+if subtract_pixel_mean:
+    x_train_mean = np.mean(x_train, axis=0)
+    x_train -= x_train_mean
+    x_test -= x_train_mean
+
+print('x_train shape:', x_train.shape)
+print(x_train.shape[0], 'train samples')
+print(x_test.shape[0], 'test samples')
+print('y_train shape:', y_train.shape)
+
+x_train_ = x_train.reshape((x_train.shape[0], 32, 32, 3))
+x_test_ = x_test.reshape((x_test.shape[0], 32, 32, 3))
+# Convert class vectors to binary class matrices.
+y_train_ = keras.utils.to_categorical(y_train, num_classes)
+y_test_ = keras.utils.to_categorical(y_test, num_classes)
+
+input_shape = x_train_.shape[1:]
+#%%
+'''def define_model():
+    inputs = Input(shape=input_shape)
+    x = Conv2D(32, (3,3), kernel_initializer='he_uniform')(inputs)
+    x = Activation('relu')(x)
+    x = MaxPooling2D((2,2))(x)
+    x = Flatten()(x)
+    x = Dense(100, kernel_initializer='he_uniform')(x)
+    x = Activation('relu')(x)
+    x = Dense(10, kernel_initializer='he_uniform')(x)
+    outputs = Dense(num_classes,
+                    activation='softmax',
+                    kernel_initializer='he_normal')(x)
+    model = Model(inputs=inputs, outputs=outputs)
+    return model'''
+
+def define_model():
+    inputs = Input(shape=input_shape)
+    x = Conv2D(32, (5,5), kernel_initializer='he_uniform')(inputs)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = Conv2D(64, (5,5), kernel_initializer='he_uniform')(x)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = Conv2D(96, (5,5), kernel_initializer='he_uniform')(x)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = Conv2D(128, (5,5), kernel_initializer='he_uniform')(x)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = Conv2D(160, (5,5), kernel_initializer='he_uniform')(x)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+
+    x = Flatten()(x)
+    x = Dense(10240, kernel_initializer='he_uniform')(x)
+    x = Activation('relu')(x)
+    outputs = Dense(num_classes,
+                    activation='softmax',
+                    kernel_initializer='he_normal')(x)
+    model = Model(inputs=inputs, outputs=outputs)
+    return model
+
+# %%
+'''initial_learning_rate = 0.001
+lr_schedule = keras.optimizers.schedules.ExponentialDecay(
+    initial_learning_rate,
+    decay_steps=100000,
+    decay_rate=0.98
     )
-data_y = np.concatenate([y_train, y_test])
-data_y = data_y[:, 0]
 
-train_x, train_y, test_x, test_y = cross_val_data(
-        data_x, data_y, 500, shift=1
-    )
+model = define_model()
+opt = Adam(learning_rate=lr_schedule, beta_1=.98)
+model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
 
-X=train_x[
-                0 * 5000
-                + 0 * 500 : 0 * 5000
-                + (0 + 1) * 500
-            ],
-y=train_y[
-    0 * 5000
-    + 0 * 500 : 0 * 5000
-    + (0 + 1) * 500
-]
-X_t, y_t = test_x[0 * 1000 : (0+ 1) * 1000, :], test_y[0 * 1000 : (0+ 1) * 1000]
+datagen = ImageDataGenerator(
+        # set input mean to 0 over the dataset
+        featurewise_center=False,
+        # set each sample mean to 0
+        samplewise_center=False,
+        # divide inputs by std of dataset
+        featurewise_std_normalization=False,
+        # divide each input by its std
+        samplewise_std_normalization=False,
+        # apply ZCA whitening
+        zca_whitening=False,
+        # epsilon for ZCA whitening
+        zca_epsilon=1e-06,
+        # randomly rotate images in the range (deg 0 to 180)
+        rotation_range=20,
+        # randomly shift images horizontally
+        width_shift_range=0.2,
+        # randomly shift images vertically
+        height_shift_range=0.2,
+        # set range for random shear
+        shear_range=0.,
+        # set range for random zoom
+        zoom_range=0.,
+        # set range for random channel shifts
+        channel_shift_range=0.,
+        # set mode for filling points outside the input boundaries
+        fill_mode='nearest',
+        # value used for fill_mode = "constant"
+        cval=0.,
+        # randomly flip images
+        horizontal_flip=True,
+        # randomly flip images
+        vertical_flip=False,
+        # set rescaling factor (applied before any other transformation)
+        rescale=None,
+        # set function that will be applied on each input
+        preprocessing_function=None,
+        # image data format, either "channels_first" or "channels_last"
+        data_format=None,
+        # fraction of images reserved for validation (strictly between 0 and 1)
+        validation_split=0.0,
+        )
+datagen.fit(x_train_)
+model.fit_generator(datagen.flow(x_train_, y_train_, batch_size=batch_size),
+                        validation_data=(x_test_, y_test_),
+                        epochs=epochs, verbose=1, workers=4,
+                        use_multiprocessing=True)
+#history = model.fit(x_train_, y_train_, epochs=epochs, batch_size=batch_size, validation_data=(x_test_, y_test_), verbose=1)
 # %%
-model_kdf = kdf(k=1e300,kwargs={'n_estimators':500})
-model_kdf.fit(X[0].astype(float), y)
+scores = model.evaluate(x_test_, y_test_, verbose=1)
+print('Test loss:', scores[0])
+print('Test accuracy:', scores[1])
+model.save('mnist_test')'''
 # %%
-np.mean(model_kdf.predict(X[0])==y)
-# %%
-np.mean(model_kdf.predict(X_t)==y_t)
+network = keras.models.load_model('cifar_model')
+#print(np.mean(np.argmax(network.predict(x_test), axis=1)==y_test.reshape(-1)))
+model_kdn = kdn(
+    network=network,
+    k=1e300,
+    threshold=1e-40,
+    verbose=False,
+)
+model_kdn.fit(x_train_[:50000], y_train[:50000])
 
+# %%
+print(np.mean(model_kdn.predict(x_test)==y_test))
+# %%
+from matplotlib.pyplot import imshow
+#import cv2 
+
+digit= 0
+polytope_id = 0
+location = model_kdn.polytope_means[digit][polytope_id]
+cov = model_kdn.polytope_cov[digit][polytope_id].toarray()
+rng = np.random.default_rng()
+pic = rng.multivariate_normal(
+    mean = location,
+    cov = cov,
+    size=(1)
+)
+pic = pic.reshape(32, 32, 3)+x_train_mean
+#pic = cv2.fastNlMeansDenoisingColored(pic)
+'''for ii in range(28):
+    for jj in range(28):
+        if cov[ii,jj] < 1/255:
+            print(cov[ii,jj])
+            pic[ii,jj] = 0'''
+
+imshow(pic)
+
+# %%
+from numpy.random import multivariate_normal as pdf
+from matplotlib.pyplot import imshow
+
+digit= 0
+polytope_id = 15
+location = model_kdn.polytope_means[digit][polytope_id]
+cov = model_kdn.polytope_cov[digit][polytope_id]
+pic = np.zeros(32*32*3, dtype=float)
+
+for ii, mn in enumerate(location):
+    if cov[ii] < 1e-300/255:
+        pic[ii] = mn
+    else:
+        pic[ii] = np.random.normal(location[ii], [cov[ii]], 1)
+#cov_mtrx = np.eye(len(location))*cov
+#pic = pdf(location, cov_mtrx, 1).reshape(28,28) + x_train_mean
+imshow(pic.reshape(32,32,3)+x_train_mean, cmap='gray')
 # %%
