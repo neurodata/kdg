@@ -139,3 +139,4 @@ dmypy.json
 
 #large files
 benchmarks/mnist_test
+benchmarks/cifar_model

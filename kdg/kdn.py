@@ -8,6 +8,7 @@ from tensorflow.keras.models import Model
 from joblib import Parallel, delayed 
 from tensorflow.keras import backend as bknd
 from scipy.sparse import csr_matrix
+from numba import njit
 
 class kdn(KernelDensityGraph):
     def __init__(
@@ -79,7 +80,7 @@ class kdn(KernelDensityGraph):
         
         return polytope_ids
     
-        
+    @njit   
     def fit(self, X, y):
         r"""
         Fits the kernel density forest.
