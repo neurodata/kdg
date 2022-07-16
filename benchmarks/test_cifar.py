@@ -210,7 +210,7 @@ from numpy.random import multivariate_normal as pdf
 from matplotlib.pyplot import imshow
 
 digit= 0
-polytope_id = 15
+polytope_id = 720
 location = model_kdn.polytope_means[digit][polytope_id]
 cov = model_kdn.polytope_cov[digit][polytope_id]
 pic = np.zeros(32*32*3, dtype=float)

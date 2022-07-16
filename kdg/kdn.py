@@ -7,8 +7,7 @@ from sklearn.covariance import LedoitWolf
 from tensorflow.keras.models import Model
 from joblib import Parallel, delayed 
 from tensorflow.keras import backend as bknd
-from scipy.sparse import csr_matrix
-from numba import njit
+#from scipy.sparse import csr_matrix
 
 class kdn(KernelDensityGraph):
     def __init__(
@@ -79,8 +78,7 @@ class kdn(KernelDensityGraph):
         polytope_ids = np.concatenate(activation, axis=1)
         
         return polytope_ids
-    
-    @njit   
+       
     def fit(self, X, y):
         r"""
         Fits the kernel density forest.
@@ -135,9 +133,9 @@ class kdn(KernelDensityGraph):
                 #print(normalizing_factor, np.sum(np.log(matched_nodes), axis=1), 'match')
                 scales = np.exp(np.sum(np.log(matched_nodes), axis=1)\
                     - normalizing_factor)
-                indx_to_consider = np.where(
-                    scales>self.threshold
-                )[0]
+                
+                sorted_indx = np.argsort(scales)[::-1]
+                indx_to_consider = sorted_indx[:1000]
                 #print(np.sort(scales))
                 if indx_to_consider.shape[0] == 1:
                     continue
@@ -175,15 +173,15 @@ class kdn(KernelDensityGraph):
             self.bias[label] = np.min(likelihoods) - np.log(self.k*self.total_samples_this_label[label])
 
         self.global_bias = min(self.bias.values())
-        min_bias = -10**(np.log10(np.product(X.shape[1:])) +1)- np.log(self.k) -np.log(X.shape[0])
+        '''min_bias = -10**(np.log10(np.product(X.shape[1:])) +1)- np.log(self.k) -np.log(X.shape[0])
         
         if self.global_bias < min_bias:
-            self.global_bias = min_bias
+            self.global_bias = min_bias'''
 
         self.is_fitted = True
 
     def _compute_log_likelihood_1d(self, X, location, variance):  
-        if variance < 1e-200:
+        if variance < (1/255):
             return 0
         else:                
             return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
@@ -228,8 +226,7 @@ class kdn(KernelDensityGraph):
             for polytope_idx,_ in enumerate(self.polytope_means[label]):
                 tmp_[:,polytope_idx] = self._compute_log_likelihood(X, label, polytope_idx) 
             
-            log_likelihood = np.max(tmp_, axis=1) 
-            '''max_pow = np.max(
+            max_pow = np.max(
                     np.concatenate(
                         (
                             tmp_,
@@ -244,9 +241,10 @@ class kdn(KernelDensityGraph):
             )
             tmp_ -= pow_exp
             likelihoods = np.sum(np.exp(tmp_), axis=1) +\
-                 np.exp(self.global_bias - pow_exp[:,0]) '''
-
-            log_likelihoods[:,ii] = log_likelihood + np.log(self.prior[label])
+                 np.exp(self.global_bias - pow_exp[:,0]) 
+                
+            likelihoods *= self.prior[label] 
+            log_likelihoods[:,ii] = np.log(likelihoods) + pow_exp[:,0]
 
         max_pow = np.nan_to_num(
             np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(self.labels)))
