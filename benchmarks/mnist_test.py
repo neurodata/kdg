@@ -226,3 +226,27 @@ pic = pic.reshape(28,28)+x_train_mean
 imshow(pic, cmap='gray')
 
 # %%
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+fig, ax = plt.subplots(10, 10, figsize=(18, 18))
+
+for digit in range(10):
+    for polytope_id in range(10):
+        location = model_kdn.polytope_means[digit][polytope_id]
+        cov = model_kdn.polytope_cov[digit][polytope_id]
+        pic = np.zeros(28*28, dtype=float)
+
+        for ii, mn in enumerate(location):
+            if cov[ii] < (1/255):
+                pic[ii] = mn
+            else:
+                pic[ii] = np.random.normal(location[ii], [cov[ii]], 1)
+
+        pic = pic.reshape(28,28)+x_train_mean
+        ax[digit,polytope_id].imshow(pic, cmap='gray')
+        ax[digit,polytope_id].set_xticks([])
+        ax[digit,polytope_id].set_yticks([])
+
+plt.savefig('mnist_learned_digits.pdf')
+# %%

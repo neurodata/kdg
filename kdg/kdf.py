@@ -14,8 +14,8 @@ class kdf(KernelDensityGraph):
     def __init__(self, k = 1, kwargs={}):
         super().__init__()
 
-        self.polytope_means = {}
-        self.polytope_cov = {}
+        self.polytope_means = []
+        self.polytope_cov = []
         self.polytope_cardinality = {}
         self.total_samples_this_label = {}
         self.polytope_mean_cov = {}
@@ -49,75 +49,74 @@ class kdf(KernelDensityGraph):
         self.rf_model = rf(**self.kwargs).fit(X, y)
         self.feature_dim = X.shape[1]
 
+        ### change code to calculate one kernel per polytope
         for label in self.labels:
-            self.polytope_means[label] = []
-            self.polytope_cov[label] = []
             self.polytope_cardinality[label] = []
+            self.total_samples_this_label[label] = len(
+                    np.where(y==label)[0]
+                )
 
-            X_ = X[np.where(y==label)[0]]
-            predicted_leaf_ids_across_trees = np.array(
-                [tree.apply(X_) for tree in self.rf_model.estimators_]
+
+        predicted_leaf_ids_across_trees = np.array(
+                [tree.apply(X) for tree in self.rf_model.estimators_]
                 ).T
-            polytopes, polytope_count = np.unique(
-                predicted_leaf_ids_across_trees, return_counts=True, axis=0
-            )
-            self.polytope_cardinality[label].extend(
-                polytope_count
-            )
-            total_polytopes_this_label = len(polytopes)
-            self.total_samples_this_label[label] = X_.shape[0]
-            self.prior[label] = self.total_samples_this_label[label]/X.shape[0]
 
-            for polytope in range(total_polytopes_this_label):
-                matched_samples = np.sum(
+        polytopes = np.unique(
+                predicted_leaf_ids_across_trees, axis=0
+            )
+        total_polytopes = len(polytopes)
+
+
+        for polytope in range(total_polytopes):
+            matched_samples = np.sum(
                     predicted_leaf_ids_across_trees == polytopes[polytope],
                     axis=1
                 )
-                
-                idx = np.where(
-                    matched_samples>0
+            
+            scales = matched_samples/np.max(matched_samples)
+            #X_tmp = X[idx].copy()
+            idx_with_scale_1 = np.where(
+                    scales==1
                 )[0]
-                scales = matched_samples[idx]/np.max(matched_samples[idx])
-                X_tmp = X_[idx].copy()
-                
-                location = np.average(X_tmp, axis=0, weights=scales)
-                X_tmp -= location
+            idx_with_scale_alpha = np.where(
+                    scales>0.05
+                )[0]
 
+            location = np.mean(X[idx_with_scale_1], axis=0)
+            X_tmp = X[idx_with_scale_alpha].copy() - location
+            covariance = np.average(X_tmp**2, axis=0, weights=scales[idx_with_scale_alpha])
+            self.polytope_cov.append(covariance)
+            self.polytope_means.append(location)
 
-                covariance = np.average(X_tmp**2, axis=0, weights=scales)
-                self.polytope_means[label].append(
-                    location
+            y_tmp = y[idx_with_scale_1]
+            for label in self.labels:
+                self.polytope_cardinality[label].append(
+                    len(np.where(y_tmp==label)[0])
                 )
-                self.polytope_cov[label].append(
-                    covariance
-                )
 
+        #########################################################
+        for label in self.labels:
             ## calculate bias for each label
             likelihoods = np.zeros(
-                (np.size(X_,0)),
+                (np.size(X,0)),
                 dtype=float
             )
-            for polytope_idx,_ in enumerate(self.polytope_means[label]):
-                likelihoods += self._compute_log_likelihood(X_, label, polytope_idx)
+            for polytope_idx,_ in enumerate(self.polytope_means):
+                likelihoods += self._compute_log_likelihood(X, label, polytope_idx)
 
             #likelihoods -= np.log(self.total_samples_this_label[label]
             self.bias[label] = np.min(likelihoods) - np.log(self.k*self.total_samples_this_label[label])
 
         self.global_bias = min(self.bias.values())
-        min_bias = -10**(np.log10(X.shape[1]) +1)- np.log(self.k) -np.log(X.shape[0])
-
-        if self.global_bias < min_bias:
-            self.global_bias = min_bias
-
         self.is_fitted = True
         
 
     def _compute_log_likelihood_1d(self, X, location, variance):                   
-        return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
+        return -(X-location)**2/(2*(variance+1e-100)) - .5*np.log(2*np.pi*(variance+1e-100))
 
     def _compute_log_likelihood(self, X, label, polytope_idx):
-        polytope_mean = self.polytope_means[label][polytope_idx]
-        polytope_cov = self.polytope_cov[label][polytope_idx]
+        polytope_mean = self.polytope_means[polytope_idx]
+        polytope_cov = self.polytope_cov[polytope_idx]
         likelihood = np.zeros(X.shape[0], dtype = float)
 
         for ii in range(self.feature_dim):
