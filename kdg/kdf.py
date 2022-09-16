@@ -55,6 +55,7 @@ class kdf(KernelDensityGraph):
             self.total_samples_this_label[label] = len(
                     np.where(y==label)[0]
                 )
+            self.prior[label] = self.total_samples_this_label[label]/X.shape[0]
 
 
         predicted_leaf_ids_across_trees = np.array(
@@ -97,12 +98,14 @@ class kdf(KernelDensityGraph):
         #########################################################
         for label in self.labels:
             ## calculate bias for each label
+            idx = np.where(y==label)[0]
             likelihoods = np.zeros(
-                (np.size(X,0)),
+                (np.size(X[idx],0)),
                 dtype=float
             )
             for polytope_idx,_ in enumerate(self.polytope_means):
-                likelihoods += self._compute_log_likelihood(X, label, polytope_idx)
+                if self.polytope_cardinality[label][polytope_idx] != 0:
+                    likelihoods += self._compute_log_likelihood(X[idx], label, polytope_idx)
 
             #likelihoods -= np.log(self.total_samples_this_label[label]
             self.bias[label] = np.min(likelihoods) - np.log(self.k*self.total_samples_this_label[label])
@@ -115,13 +118,16 @@ class kdf(KernelDensityGraph):
         return -(X-location)**2/(2*(variance+1e-100)) - .5*np.log(2*np.pi*(variance+1e-100))
 
     def _compute_log_likelihood(self, X, label, polytope_idx):
+        if self.polytope_cardinality[label][polytope_idx] == 0:
+            return -1e300
+
         polytope_mean = self.polytope_means[polytope_idx]
         polytope_cov = self.polytope_cov[polytope_idx]
         likelihood = np.zeros(X.shape[0], dtype = float)
 
         for ii in range(self.feature_dim):
             likelihood += self._compute_log_likelihood_1d(X[:,ii], polytope_mean[ii], polytope_cov[ii])
-
+        
         likelihood += np.log(self.polytope_cardinality[label][polytope_idx]) -\
             np.log(self.total_samples_this_label[label])
 
@@ -143,10 +149,10 @@ class kdf(KernelDensityGraph):
         )
         
         for ii,label in enumerate(self.labels):
-            total_polytope_this_label = len(self.polytope_means[label])
-            tmp_ = np.zeros((X.shape[0],total_polytope_this_label), dtype=float)
+            total_polytope = len(self.polytope_means)
+            tmp_ = np.zeros((X.shape[0],total_polytope), dtype=float)
 
-            for polytope_idx,_ in enumerate(self.polytope_means[label]):
+            for polytope_idx,_ in enumerate(self.polytope_means):
                 tmp_[:,polytope_idx] = self._compute_log_likelihood(X, label, polytope_idx) 
             
             max_pow = np.max(
@@ -160,7 +166,7 @@ class kdf(KernelDensityGraph):
                     axis=1
                 )
             pow_exp = np.nan_to_num(
-                max_pow.reshape(-1,1)@np.ones((1,total_polytope_this_label), dtype=float)
+                max_pow.reshape(-1,1)@np.ones((1,total_polytope), dtype=float)
             )
             tmp_ -= pow_exp
             likelihoods = np.sum(np.exp(tmp_), axis=1) +\
