@@ -38,7 +38,7 @@ plt.savefig('plots/test_ece.pdf')
 X, y = generate_gaussian_parity(1000)
 X_test, y_test = generate_gaussian_parity(1000)
 
-model_kdf = kdf(k=1e30, kwargs={'n_estimators':500})
+model_kdf = kdf(k=1e1, kwargs={'n_estimators':500})
 model_kdf.fit(X, y)
 print(np.mean(model_kdf.predict(X_test)==y_test))
 print(np.mean(model_kdf.predict(X)==y))
