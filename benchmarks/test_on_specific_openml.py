@@ -10,7 +10,7 @@ import openml
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 #%%
-dataset_id = 12
+dataset_id = 182
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -160,4 +160,43 @@ folder = 'openml_res'
 
 for ii in range(X.shape[1]):
     experiment(X, y, folder, feature=ii)
+# %%
+dataset_id = 4538
+dataset = openml.datasets.get_dataset(dataset_id)
+X, y, is_categorical, _ = dataset.get_data(
+                dataset_format="array", target=dataset.default_target_attribute
+            )
+
+#X = np.concatenate((X[:,:4],X[:,5:15]), axis=1)
+total_sample = X.shape[0]
+test_sample = total_sample//3
+max_sample = total_sample - test_sample
+train_samples = np.logspace(
+        np.log10(2),
+        np.log10(max_sample),
+        num=10,
+        endpoint=True,
+        dtype=int
+        )
+indices = list(range(total_sample))
+np.random.shuffle(indices)
+indx_to_take_train = indices[:train_samples[-1]]
+indx_to_take_test = indices[-test_sample:]
+model_kdf = kdf(k=1, kwargs={'n_estimators':500})
+model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
+proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
+proba_rf = model_kdf.rf_model.predict_proba(X[indx_to_take_test])
+predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
+predicted_label_rf = np.argmax(proba_rf, axis = 1)
+
+print(1 - np.mean( predicted_label_kdf==y[indx_to_take_test]))
+print(1 - np.mean( predicted_label_rf==y[indx_to_take_test]))
+# %%
+total_dim = X.shape[1]
+idx = indx_to_take_train[0]
+for ii in range(total_dim):
+    print('doing ',ii)
+    print(model_kdf._compute_log_likelihood_1d(X[idx,ii], model_kdf.polytope_means[5253][ii], model_kdf.polytope_cov[5253][ii]))
+    print(model_kdf._compute_log_likelihood_1d(X[idx,ii], model_kdf.polytope_means[6465][ii], model_kdf.polytope_cov[6465][ii]))
+
 # %%

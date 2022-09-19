@@ -114,12 +114,12 @@ class kdf(KernelDensityGraph):
         self.is_fitted = True
         
 
-    def _compute_log_likelihood_1d(self, X, location, variance):                   
-        return -(X-location)**2/(2*(variance+1e-100)) - .5*np.log(2*np.pi*(variance+1e-100))
+    def _compute_log_likelihood_1d(self, X, location, variance):        
+        return -(X-location)**2/(2*(variance+1e-30)) - .5*np.log(2*np.pi*(variance+1e-30))
 
     def _compute_log_likelihood(self, X, label, polytope_idx):
         if self.polytope_cardinality[label][polytope_idx] == 0:
-            return -1e300
+            return -np.inf*np.ones(X.shape[0], dtype = float)
 
         polytope_mean = self.polytope_means[polytope_idx]
         polytope_cov = self.polytope_cov[polytope_idx]
