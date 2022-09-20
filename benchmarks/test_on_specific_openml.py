@@ -10,7 +10,7 @@ import openml
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 #%%
-dataset_id = 182
+dataset_id = 32
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -161,7 +161,7 @@ folder = 'openml_res'
 for ii in range(X.shape[1]):
     experiment(X, y, folder, feature=ii)
 # %%
-dataset_id = 4538
+dataset_id = 182
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -191,12 +191,57 @@ predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
 print(1 - np.mean( predicted_label_kdf==y[indx_to_take_test]))
 print(1 - np.mean( predicted_label_rf==y[indx_to_take_test]))
+
+
 # %%
 total_dim = X.shape[1]
-idx = indx_to_take_train[0]
+idx = indx_to_take_train[21]
 for ii in range(total_dim):
     print('doing ',ii)
-    print(model_kdf._compute_log_likelihood_1d(X[idx,ii], model_kdf.polytope_means[5253][ii], model_kdf.polytope_cov[5253][ii]))
-    print(model_kdf._compute_log_likelihood_1d(X[idx,ii], model_kdf.polytope_means[6465][ii], model_kdf.polytope_cov[6465][ii]))
+    print(model_kdf._compute_log_likelihood_1d(X[idx,ii], model_kdf.polytope_means[1445][ii], model_kdf.polytope_cov[1445][ii]))
+    print(model_kdf._compute_log_likelihood_1d(X[idx,ii], model_kdf.polytope_means[1460][ii], model_kdf.polytope_cov[1460][ii]))
 
+# %%
+for dim in range(X.shape[1]):
+    cov = []
+
+    for polytope, _ in enumerate(model_kdf.polytope_means):
+        cov.append(
+            model_kdf.polytope_cov[polytope][dim]
+        )
+    threshold = np.percentile(cov,50)
+    print(threshold)
+    for polytope, _ in enumerate(model_kdf.polytope_means):
+        if model_kdf.polytope_cov[polytope][dim] < threshold:
+            model_kdf.polytope_cov[polytope][dim] = threshold
+
+# %%
+idx = 65
+
+for label in range(6):
+    mx = -np.inf
+    for polytope, _ in enumerate(model_kdf.polytope_means):
+        a = model_kdf._compute_log_likelihood(X[indx_to_take_train[idx]:indx_to_take_train[idx]+1], label, polytope)
+        if mx < a:
+            mx = a
+            pl = polytope
+
+        if (np.sum(X[indx_to_take_train[idx]]-model_kdf.polytope_means[polytope])==0):
+            indx = polytope
+            lk_ = a
+
+    print('label ', label, 'max likelihood ', mx, 'polytope ', pl, 'cardinality ', model_kdf.polytope_cardinality[label][pl], 'perfect match', indx, 'matched likelihood', lk_)
+
+
+# %%
+proba_kdf = model_kdf.predict_proba(X[indx_to_take_train])
+proba_rf = model_kdf.rf_model.predict_proba(X[indx_to_take_train])
+predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
+predicted_label_rf = np.argmax(proba_rf, axis = 1)
+
+print(1 - np.mean( predicted_label_kdf==y[indx_to_take_train]))
+print(1 - np.mean( predicted_label_rf==y[indx_to_take_train]))
+
+match = predicted_label_kdf==predicted_label_rf
+print(np.where(match==False)[0])
 # %%

@@ -80,7 +80,7 @@ class kdf(KernelDensityGraph):
                     scales==1
                 )[0]
             idx_with_scale_alpha = np.where(
-                    scales>0.05
+                    scales>0
                 )[0]
 
             location = np.mean(X[idx_with_scale_1], axis=0)
@@ -95,6 +95,19 @@ class kdf(KernelDensityGraph):
                     len(np.where(y_tmp==label)[0])
                 )
 
+        ##############correct the cov value###############
+        for dim in range(self.feature_dim):
+            cov = []
+
+            for polytope, _ in enumerate(self.polytope_means):
+                cov.append(
+                    self.polytope_cov[polytope][dim]
+                )
+            threshold = np.percentile(cov,50)
+
+            for polytope, _ in enumerate(self.polytope_means):
+                if self.polytope_cov[polytope][dim] < threshold:
+                    self.polytope_cov[polytope][dim] = threshold
         #########################################################
         for label in self.labels:
             ## calculate bias for each label
