@@ -161,7 +161,7 @@ folder = 'openml_res'
 for ii in range(X.shape[1]):
     experiment(X, y, folder, feature=ii)
 # %%
-dataset_id = 182
+dataset_id = 4538
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -182,6 +182,13 @@ indices = list(range(total_sample))
 np.random.shuffle(indices)
 indx_to_take_train = indices[:train_samples[-1]]
 indx_to_take_test = indices[-test_sample:]
+
+'''for ii in range(X.shape[1]):
+    max_val = np.max(X[indx_to_take_train,ii])
+    min_val = np.min(X[indx_to_take_train,ii])
+    X[indx_to_take_train,ii] = (X[indx_to_take_train,ii] - min_val)/(max_val-min_val)
+    X[indx_to_take_test,ii] = (X[indx_to_take_test,ii] - min_val)/(max_val-min_val)'''
+
 model_kdf = kdf(k=1, kwargs={'n_estimators':500})
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
 proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
@@ -209,16 +216,16 @@ for dim in range(X.shape[1]):
         cov.append(
             model_kdf.polytope_cov[polytope][dim]
         )
-    threshold = np.percentile(cov,50)
+    threshold = np.percentile(cov,90)
     print(threshold)
     for polytope, _ in enumerate(model_kdf.polytope_means):
         if model_kdf.polytope_cov[polytope][dim] < threshold:
             model_kdf.polytope_cov[polytope][dim] = threshold
 
 # %%
-idx = 65
+idx = 1
 
-for label in range(6):
+for label in model_kdf.labels:
     mx = -np.inf
     for polytope, _ in enumerate(model_kdf.polytope_means):
         a = model_kdf._compute_log_likelihood(X[indx_to_take_train[idx]:indx_to_take_train[idx]+1], label, polytope)
