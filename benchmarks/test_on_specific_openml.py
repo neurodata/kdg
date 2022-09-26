@@ -9,6 +9,7 @@ import numpy as np
 import openml
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
+from joblib import Parallel, delayed
 #%%
 dataset_id = 32
 dataset = openml.datasets.get_dataset(dataset_id)
@@ -161,7 +162,7 @@ folder = 'openml_res'
 for ii in range(X.shape[1]):
     experiment(X, y, folder, feature=ii)
 # %%
-dataset_id = 12
+dataset_id = 182
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute

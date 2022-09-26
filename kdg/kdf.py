@@ -7,6 +7,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 import warnings
 from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
+from joblib import Parallel, delayed
 warnings.filterwarnings("ignore")
 
 class kdf(KernelDensityGraph):
@@ -26,7 +27,7 @@ class kdf(KernelDensityGraph):
         self.k = k
         self.is_fitted = False
 
-    def fit(self, X, y, epsilon=1e-8, alpha=0.5):
+    def fit(self, X, y, epsilon=1e-8, alpha=0.5, n_jobs=-1):
         r"""
         Fits the kernel density forest.
         Parameters
@@ -92,42 +93,29 @@ class kdf(KernelDensityGraph):
             X_tmp = X[idx_with_scale_alpha].copy() - location
             covariance = np.average(X_tmp**2+epsilon, axis=0, weights=scales[idx_with_scale_alpha])
 
-            cardinality = []
+            cardinality = {}
             y_tmp = y[idx_with_scale_1]
             for label in self.labels:      
-                cardinality[label].append(
-                    len(np.where(y_tmp==label)[0])
-                )
+                cardinality[label]=len(np.where(y_tmp==label)[0])
             
             return location, covariance, cardinality
 
-            
-        for polytope in range(total_polytopes):
-            matched_samples = np.sum(
-                    predicted_leaf_ids_across_trees == polytopes[polytope],
-                    axis=1
-                )
-            
-            scales = matched_samples/np.max(matched_samples)
-            #X_tmp = X[idx].copy()
-            idx_with_scale_1 = np.where(
-                    scales==1
-                )[0]
-            idx_with_scale_alpha = np.where(
-                    scales>alpha
-                )[0]
+        res = Parallel(n_jobs=n_jobs)(delayed(worker)(
+                    polytope
+                ) for polytope in range(total_polytopes)
+        )
+        location = [item[0] for item in res]
+        covariance = [item[1] for item in res]
+        cardinality = [item[2] for item in res]
 
-            location = np.mean(X[idx_with_scale_1], axis=0)
-            X_tmp = X[idx_with_scale_alpha].copy() - location
-            covariance = np.average(X_tmp**2+epsilon, axis=0, weights=scales[idx_with_scale_alpha])
-            self.polytope_cov.append(covariance)
-            self.polytope_means.append(location)
+        self.polytope_cov.extend(covariance)
+        self.polytope_means.extend(location)
 
-            y_tmp = y[idx_with_scale_1]
+        for polytope_cardinality in cardinality:
             for label in self.labels:      
                 self.polytope_cardinality[label].append(
-                    len(np.where(y_tmp==label)[0])
-                )
+                        polytope_cardinality[label]
+                    )
 
         #########################################################
         for label in self.labels:
