@@ -25,8 +25,9 @@ def count_kdf_param(kdf_model):
 
     for label in kdf_model.labels:
         total_param += len(kdf_model.polytope_cardinality[label])
-        total_param += len(kdf_model.polytope_cardinality[label])\
-            *(kdf_model.feature_dim + 1)
+    
+    total_param += len(kdf_model.polytope_cardinality[label])\
+            *(kdf_model.feature_dim*2)
 
     return total_param
 
@@ -82,9 +83,9 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=40):
             indx_to_take_test = indices[-test_sample:]
 
             model_kdf = kdf(k=1e30, kwargs={'n_estimators':n_estimators})
-            model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
+            model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train], epsilon=1e-8)
             proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
-            proba_rf = model_kdf.rf_model.predict_proba(X[indx_to_take_test])
+            proba_rf = model_kdf.rf_model.predict_proba((X[indx_to_take_test]-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val+1e-8))
             predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
             predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
@@ -354,6 +355,12 @@ Parallel(n_jobs=-1,verbose=1)(
                 folder
                 ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
             )
+'''for dataset_id in openml.study.get_suite("OpenML-CC18").data:
+    print('doing ',dataset_id)
+    experiment_random_sample(
+                    dataset_id,
+                    folder
+                    ) '''
 
 '''Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment_rf)(

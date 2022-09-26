@@ -161,7 +161,7 @@ folder = 'openml_res'
 for ii in range(X.shape[1]):
     experiment(X, y, folder, feature=ii)
 # %%
-dataset_id = 4538
+dataset_id = 12
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -190,9 +190,9 @@ indx_to_take_test = indices[-test_sample:]
     X[indx_to_take_test,ii] = (X[indx_to_take_test,ii] - min_val)/(max_val-min_val)'''
 
 model_kdf = kdf(k=1, kwargs={'n_estimators':500})
-model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
+model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train], epsilon=1e-8, alpha=0.1)
 proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
-proba_rf = model_kdf.rf_model.predict_proba(X[indx_to_take_test])
+proba_rf = model_kdf.rf_model.predict_proba((X[indx_to_take_test]-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val+1e-8))
 predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
 predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
@@ -202,11 +202,18 @@ print(1 - np.mean( predicted_label_rf==y[indx_to_take_test]))
 
 # %%
 total_dim = X.shape[1]
-idx = indx_to_take_train[21]
+idx = indx_to_take_train[0]
+X_ = (X[indx_to_take_train[idx]] - model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val)
+
+sum1 = 0
+sum2 = 0
+
 for ii in range(total_dim):
     print('doing ',ii)
-    print(model_kdf._compute_log_likelihood_1d(X[idx,ii], model_kdf.polytope_means[1445][ii], model_kdf.polytope_cov[1445][ii]))
-    print(model_kdf._compute_log_likelihood_1d(X[idx,ii], model_kdf.polytope_means[1460][ii], model_kdf.polytope_cov[1460][ii]))
+    sum1 += model_kdf._compute_log_likelihood_1d(X_[ii], model_kdf.polytope_means[1544][ii], model_kdf.polytope_cov[1544][ii])
+    sum2 += model_kdf._compute_log_likelihood_1d(X_[ii], model_kdf.polytope_means[1223][ii], model_kdf.polytope_cov[1223][ii])
+    print(model_kdf._compute_log_likelihood_1d(X_[ii], model_kdf.polytope_means[1544][ii], model_kdf.polytope_cov[1544][ii]))
+    print(model_kdf._compute_log_likelihood_1d(X_[ii], model_kdf.polytope_means[1223][ii], model_kdf.polytope_cov[1223][ii]))
 
 # %%
 for dim in range(X.shape[1]):
@@ -216,33 +223,40 @@ for dim in range(X.shape[1]):
         cov.append(
             model_kdf.polytope_cov[polytope][dim]
         )
-    threshold = np.percentile(cov,90)
+    threshold = np.percentile(cov,50)
     print(threshold)
     for polytope, _ in enumerate(model_kdf.polytope_means):
         if model_kdf.polytope_cov[polytope][dim] < threshold:
             model_kdf.polytope_cov[polytope][dim] = threshold
 
 # %%
-idx = 1
+idx = 8
+indx = 0
+lk_ = np.inf 
+min_dis = np.inf
 
+X_ = (X[indx_to_take_train[idx]:indx_to_take_train[idx]+1] - model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val)
 for label in model_kdf.labels:
     mx = -np.inf
     for polytope, _ in enumerate(model_kdf.polytope_means):
-        a = model_kdf._compute_log_likelihood(X[indx_to_take_train[idx]:indx_to_take_train[idx]+1], label, polytope)
+        a = model_kdf._compute_log_likelihood(X_, label, polytope)
+        distance = np.sum((X_-model_kdf.polytope_means[polytope])**2)
         if mx < a:
             mx = a
             pl = polytope
+            dis = distance
 
-        if (np.sum(X[indx_to_take_train[idx]]-model_kdf.polytope_means[polytope])==0):
+        if min_dis>distance:
             indx = polytope
             lk_ = a
+            min_dis = distance
 
-    print('label ', label, 'max likelihood ', mx, 'polytope ', pl, 'cardinality ', model_kdf.polytope_cardinality[label][pl], 'perfect match', indx, 'matched likelihood', lk_)
+    print('distance ', dis, 'label ', label, 'max likelihood ', mx, 'polytope ', pl, 'cardinality ', model_kdf.polytope_cardinality[label][pl], 'perfect match', indx, 'matched likelihood', lk_, 'min distance ', min_dis, '\n')
 
 
 # %%
 proba_kdf = model_kdf.predict_proba(X[indx_to_take_train])
-proba_rf = model_kdf.rf_model.predict_proba(X[indx_to_take_train])
+proba_rf = model_kdf.rf_model.predict_proba((X[indx_to_take_train]-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val+1e-8))
 predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
 predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
@@ -251,4 +265,37 @@ print(1 - np.mean( predicted_label_rf==y[indx_to_take_train]))
 
 match = predicted_label_kdf==predicted_label_rf
 print(np.where(match==False)[0])
+
+# %%
+X_ = (X[indx_to_take_train]-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val+1e-8)
+
+predicted_leaf_ids_across_trees = np.array(
+                [tree.apply(X_) for tree in model_kdf.rf_model.estimators_]
+                ).T
+
+polytopes = np.unique(
+                predicted_leaf_ids_across_trees, axis=0
+            )
+matched_samples = np.sum(
+                    predicted_leaf_ids_across_trees == predicted_leaf_ids_across_trees[0],
+                    axis=1
+                )
+scales = matched_samples/np.max(matched_samples)
+idx_with_scale_1 = np.where(
+                    scales==1
+                )[0]
+# %%
+sum1 = []
+sum2 = []
+for polytope, _ in enumerate(model_kdf.polytope_means):
+    sum1.append(model_kdf._compute_log_likelihood(X_.reshape(1,-1),0,polytope))
+    sum2.append(model_kdf._compute_log_likelihood(X_.reshape(1,-1),1,polytope))
+# %%
+dim = 0
+print(X_[0][dim] - model_kdf.polytope_means[1278][dim])
+print(model_kdf._compute_log_likelihood_1d(X_[0][dim], model_kdf.polytope_means[1278][dim], model_kdf.polytope_cov[1278][dim]), "new line\n")
+
+print(X_[0][dim] - model_kdf.polytope_means[1257][dim])
+print(model_kdf._compute_log_likelihood_1d(X_[0][dim], model_kdf.polytope_means[1257][dim], model_kdf.polytope_cov[1257][dim]))
+
 # %%
