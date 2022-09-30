@@ -83,7 +83,7 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=40):
             indx_to_take_test = indices[-test_sample:]
 
             model_kdf = kdf(k=1e30, kwargs={'n_estimators':n_estimators})
-            model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train], epsilon=1e-8)
+            model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train], epsilon=1e-6, alpha=0.0)
             proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
             proba_rf = model_kdf.rf_model.predict_proba((X[indx_to_take_test]-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val+1e-8))
             predicted_label_kdf = np.argmax(proba_kdf, axis = 1)

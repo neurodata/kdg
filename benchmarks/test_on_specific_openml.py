@@ -162,7 +162,7 @@ folder = 'openml_res'
 for ii in range(X.shape[1]):
     experiment(X, y, folder, feature=ii)
 # %%
-dataset_id = 182
+dataset_id = 12
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -191,7 +191,7 @@ indx_to_take_test = indices[-test_sample:]
     X[indx_to_take_test,ii] = (X[indx_to_take_test,ii] - min_val)/(max_val-min_val)'''
 
 model_kdf = kdf(k=1, kwargs={'n_estimators':500})
-model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train], epsilon=1e-8, alpha=0.1)
+model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train], epsilon=1e-6, alpha=0.0)
 proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
 proba_rf = model_kdf.rf_model.predict_proba((X[indx_to_take_test]-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val+1e-8))
 predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
@@ -199,7 +199,6 @@ predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
 print(1 - np.mean( predicted_label_kdf==y[indx_to_take_test]))
 print(1 - np.mean( predicted_label_rf==y[indx_to_take_test]))
-
 
 # %%
 total_dim = X.shape[1]
@@ -216,6 +215,7 @@ for ii in range(total_dim):
     print(model_kdf._compute_log_likelihood_1d(X_[ii], model_kdf.polytope_means[1544][ii], model_kdf.polytope_cov[1544][ii]))
     print(model_kdf._compute_log_likelihood_1d(X_[ii], model_kdf.polytope_means[1223][ii], model_kdf.polytope_cov[1223][ii]))
 
+
 # %%
 for dim in range(X.shape[1]):
     cov = []
@@ -231,17 +231,17 @@ for dim in range(X.shape[1]):
             model_kdf.polytope_cov[polytope][dim] = threshold
 
 # %%
-idx = 8
+idx = 0
 indx = 0
 lk_ = np.inf 
 min_dis = np.inf
 
-X_ = (X[indx_to_take_train[idx]:indx_to_take_train[idx]+1] - model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val)
+X_ = (X[indx_to_take_train[idx]] - model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val)
 for label in model_kdf.labels:
     mx = -np.inf
     for polytope, _ in enumerate(model_kdf.polytope_means):
         a = model_kdf._compute_log_likelihood(X_, label, polytope)
-        distance = np.sum((X_-model_kdf.polytope_means[polytope])**2)
+        distance = np.sum((X_-model_kdf.polytope_means[polytope])**2 * (1/model_kdf.polytope_cov[polytope]))**.5
         if mx < a:
             mx = a
             pl = polytope
@@ -292,11 +292,11 @@ for polytope, _ in enumerate(model_kdf.polytope_means):
     sum1.append(model_kdf._compute_log_likelihood(X_.reshape(1,-1),0,polytope))
     sum2.append(model_kdf._compute_log_likelihood(X_.reshape(1,-1),1,polytope))
 # %%
-dim = 0
-print(X_[0][dim] - model_kdf.polytope_means[1278][dim])
-print(model_kdf._compute_log_likelihood_1d(X_[0][dim], model_kdf.polytope_means[1278][dim], model_kdf.polytope_cov[1278][dim]), "new line\n")
+dim = 4
+print(X_[0][dim] - model_kdf.polytope_means[2508][dim])
+print(model_kdf._compute_log_likelihood_1d(X_[0][dim], model_kdf.polytope_means[2508][dim], model_kdf.polytope_cov[2508][dim]), "new line\n")
 
-print(X_[0][dim] - model_kdf.polytope_means[1257][dim])
-print(model_kdf._compute_log_likelihood_1d(X_[0][dim], model_kdf.polytope_means[1257][dim], model_kdf.polytope_cov[1257][dim]))
+print(X_[0][dim] - model_kdf.polytope_means[2514][dim])
+print(model_kdf._compute_log_likelihood_1d(X_[0][dim], model_kdf.polytope_means[2514][dim], model_kdf.polytope_cov[2514][dim]))
 
 # %%
