@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, k = 1, kwargs={}):
+    def __init__(self, kwargs={}):
         super().__init__()
 
         self.polytope_means = []
@@ -23,7 +23,6 @@ class kdf(KernelDensityGraph):
         self.bias = {}
         self.global_bias = -1e100
         self.kwargs = kwargs
-        self.k = k
         self.is_fitted = False
 
     def fit(self, X, y, epsilon=1e-6):
@@ -155,16 +154,13 @@ class kdf(KernelDensityGraph):
         for ii,label in enumerate(self.labels):
             for jj in range(X.shape[0]):
                 log_likelihoods[jj, ii] = self._compute_log_likelihood(X[jj], label, polytope_idx[jj])
-                #print(log_likelihoods[jj, ii], jj, ii)
                 max_pow = max(log_likelihoods[jj, ii], self.global_bias)
-                #print(max_pow, 'max')
                 log_likelihoods[jj, ii] = np.log(
                     (np.exp(log_likelihoods[jj, ii] - max_pow)\
                         + np.exp(self.global_bias - max_pow))
                         *self.prior[label]
                 ) + max_pow
-                #print(log_likelihoods[jj,ii],'log')
-        #print(log_likelihoods)
+                
         max_pow = np.nan_to_num(
             np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(self.labels)))
         )
