@@ -96,7 +96,8 @@ class kdf(KernelDensityGraph):
                 self.polytope_cardinality[label].append(
                     len(np.where(y_tmp==label)[0])
                 )
-    
+
+        self.global_bias = self.global_bias/X.shape[0]
         self.is_fitted = True
         
     def _compute_mahalanobis(self, X, polytope):
