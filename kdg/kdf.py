@@ -87,7 +87,7 @@ class kdf(KernelDensityGraph):
             
             location = np.mean(X[idx_with_scale_1], axis=0)
             X_tmp = X[idx_with_scale_alpha].copy() - location
-            covariance = np.average(X_tmp**2+epsilon, axis=0, weights=scales[idx_with_scale_alpha])
+            covariance = np.average(X_tmp**2+epsilon/np.sum(scales[idx_with_scale_alpha]), axis=0, weights=scales[idx_with_scale_alpha])
             self.polytope_cov.append(covariance)
             self.polytope_means.append(location)
 

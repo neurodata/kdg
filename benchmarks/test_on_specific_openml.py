@@ -162,7 +162,7 @@ folder = 'openml_res'
 for ii in range(X.shape[1]):
     experiment(X, y, folder, feature=ii)
 # %%
-dataset_id = 28
+dataset_id = 4538
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -191,7 +191,7 @@ indx_to_take_test = indices[-test_sample:]
     X[indx_to_take_test,ii] = (X[indx_to_take_test,ii] - min_val)/(max_val-min_val)'''
 
 model_kdf = kdf(kwargs={'n_estimators':500})
-model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train], epsilon=1e-8)
+model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train], epsilon=1e-6)
 proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
 proba_rf = model_kdf.rf_model.predict_proba((X[indx_to_take_test]-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val+1e-8))
 predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
