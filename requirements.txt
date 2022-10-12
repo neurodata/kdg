@@ -3,5 +3,6 @@ keras<2.11,>=2.10.0
 scipy>=1.4.1
 numpy<1.23.0,>=1.16.5
 joblib>=0.14.1
-tensorflow-macos
-tensorflow-metal
+tensorflow
+#tensorflow-macos
+#tensorflow-metal
