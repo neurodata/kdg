@@ -2,7 +2,8 @@ scikit-learn>=0.22.0
 #keras<2.11,>=2.10.0
 keras<2.9,>=2.8.0rc0
 scipy>=1.4.1
-numpy<1.23.0,>=1.16.5
+#numpy<1.23.0,>=1.16.5
+numpy>=1.20
 joblib>=0.14.1
 tensorflow
 #tensorflow-macos
