@@ -1,3 +1,3 @@
 # !/bin/sh
-python3 openml_cc18_wmle_nn.py 
+python3 openml_cc18_wmle.py 
 sudo shutdown now
