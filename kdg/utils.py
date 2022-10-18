@@ -21,7 +21,7 @@ def get_ece(predicted_posterior, predicted_label, true_label, R=20):
 
             indx_k = np.where(true_label_ == k)[0]
             acc = (
-                np.nan_to_num(np.mean(predicted_label[indx_k] == k))
+                np.nan_to_num(np.mean(predicted_label_[indx_k] == k))
                 if indx_k.size != 0
                 else 0
             )

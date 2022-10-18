@@ -9,17 +9,24 @@ from sklearn.ensemble import RandomForestClassifier as rf
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 from tensorflow import keras
-from keras import layers
+from keras.models import Model
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
+from tensorflow.keras import activations
 import os
 from os import listdir, getcwd 
 # %%
 def getNN(compile_kwargs, input_size, num_classes):
     network_base = keras.Sequential()
     initializer = keras.initializers.GlorotNormal(seed=0)
-    network_base.add(keras.layers.Dense(500, activation="relu", kernel_initializer=initializer, input_shape=(input_size,)))
-    network_base.add(keras.layers.Dense(500, activation="relu", kernel_initializer=initializer))
-    network_base.add(keras.layers.Dense(500, activation="relu", kernel_initializer=initializer))
-    network_base.add(keras.layers.Dense(500, activation="relu", kernel_initializer=initializer))
+    network_base.add(keras.layers.Dense(500, kernel_initializer=initializer, input_shape=(input_size,)))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(500, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(500, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(500, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
     network_base.add(keras.layers.Dense(units=num_classes, activation="softmax", kernel_initializer=initializer))
     network_base.compile(**compile_kwargs)
     return network_base
@@ -37,7 +44,7 @@ def count_kdn_param(kdn_model):
 
     return total_param
 
-def experiment_random_sample(dataset_id, folder, reps=40):
+def experiment_random_sample(dataset_id, folder, reps=10):
     #print(dataset_id)
     dataset = openml.datasets.get_dataset(dataset_id)
     X, y, is_categorical, _ = dataset.get_data(
@@ -52,10 +59,6 @@ def experiment_random_sample(dataset_id, folder, reps=40):
 
     if np.isnan(np.sum(X)):
         return
-
-    for ii in range(X.shape[1]):
-        if len(np.unique(X[:,ii])) < 50:
-            return
     
     total_sample = X.shape[0]
 
@@ -103,17 +106,18 @@ def experiment_random_sample(dataset_id, folder, reps=40):
 
             unique_y, y_converted = np.unique(y[indx_to_take_train], return_inverse=True)
             total_class = len(unique_y)
-
+            
             vanilla_nn = getNN(compile_kwargs, X.shape[-1], total_class)
             vanilla_nn.fit(
                 X[indx_to_take_train], 
                 keras.utils.to_categorical(y_converted, num_classes=total_class), 
                 **fit_kwargs
                 )
+            print(vanilla_nn)
+
 
             model_kdn = kdn(
                         network=vanilla_nn,
-                        k=1e300,
                         verbose=False,
                     )
             model_kdn.fit(X[indx_to_take_train], y_converted)
@@ -177,7 +181,6 @@ def experiment_random_sample(dataset_id, folder, reps=40):
 
 #%%
 folder = 'openml_res'
-folder_rf = 'openml_res_rf'
 #os.mkdir(folder)
 #os.mkdir(folder_rf)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
@@ -185,6 +188,7 @@ benchmark_suite = openml.study.get_suite('OpenML-CC18')
 #files = listdir(current_dir+'/'+folder)
 
 for dataset_id in openml.study.get_suite("OpenML-CC18").data:
+    print('doing ', dataset_id)
     experiment_random_sample(
                 dataset_id,
                 folder
