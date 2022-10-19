@@ -129,7 +129,7 @@ grid_samples = np.concatenate(
             axis=1
     ) 
     
-X, y = generate_gaussian_parity(1000)
+X, y = generate_gaussian_parity(10000)
 model_kdf = kdf(kwargs={'n_estimators':500})
 model_kdf.fit(X, y)
 proba_kdf = model_kdf.predict_proba(grid_samples)

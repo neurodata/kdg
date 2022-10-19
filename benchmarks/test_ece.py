@@ -1,6 +1,7 @@
 #%%
-from statistics import mode
+from statistics import mode, quantiles
 import numpy as np
+from torch import quantile
 from kdg import kdf
 from kdg.utils import get_ece, generate_gaussian_parity
 from sklearn.ensemble import RandomForestClassifier as rf
@@ -19,16 +20,18 @@ def generate_parity(n, d=2, invert_labels=False,acorn=None):
 
 #%%
 def get_ece_(predicted_posterior, predicted_label, true_label, R=20):
-    bin_size = 1/R
     total_sample = len(true_label)
     K = predicted_posterior.shape[1]
 
     score = 0
+    bin_size = total_sample//R
     for k in range(K):
         posteriors = predicted_posterior[:,k]
         sorted_indx = np.argsort(posteriors)
+        #print(sorted_indx, len(sorted_indx))
         for r in range(R):        
-            indx = sorted_indx[r*R:(r+1)*R]
+            indx = sorted_indx[r*bin_size:(r+1)*bin_size]
+            #print(indx)
             predicted_label_ = predicted_label[indx]
             true_label_ = true_label[indx]
 
@@ -40,7 +43,7 @@ def get_ece_(predicted_posterior, predicted_label, true_label, R=20):
             )
             conf = np.nan_to_num(np.mean(posteriors[indx_k])) if indx_k.size != 0 else 0
 
-            print(acc, conf)
+            #print(acc, conf)
             score += len(indx) * np.abs(acc - conf)
 
     score /= (K*total_sample)
@@ -52,23 +55,38 @@ test_sample = 1000
 reps = 10
 performance_indx = []
 performance_indx_rf = []
+kdf_25 = []
+kdf_75 = []
+rf_25 = []
+rf_75 = []
 
 for samples in train_samples:
-    ECE = []
+    ECE_kdf = []
     ECE_rf = []
+
     for _ in range(reps):
         X, y = generate_parity(samples)
         X_test, y_test = generate_parity(test_sample)
         model_kdf = kdf(kwargs={'n_estimators':500})
         model_kdf.fit(X, y)
         proba_kdf = model_kdf.predict_proba(X_test)
-        proba_rf = model_kdf.rf_model.predict_proba(X_test)
+        proba_rf = model_kdf.rf_model.predict_proba((X_test-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val))
 
-        ECE.append(get_ece(proba_kdf, np.argmax(proba_kdf,axis=1), y_test))
-        ECE_rf.append(get_ece(proba_rf, np.argmax(proba_rf,axis=1), y_test))
+        ece_kdf = get_ece_(proba_kdf, np.argmax(proba_kdf,axis=1), y_test)
+        ece_rf = get_ece_(proba_rf, np.argmax(proba_rf,axis=1), y_test)
+        ECE_kdf.append(ece_kdf)
+        ECE_rf.append(ece_rf)
+
+    quantiles = np.quantile(ECE_kdf,[.25,.75],axis=0)
+    kdf_25.append(quantiles[0])
+    kdf_75.append(quantiles[1])
+
+    quantiles = np.quantile(ECE_rf,[.25,.75],axis=0)
+    rf_25.append(quantiles[0])
+    rf_75.append(quantiles[1])
 
     performance_indx.append(
-        np.mean(ECE)
+        np.mean(ECE_kdf)
     )
     performance_indx_rf.append(
         np.mean(ECE_rf)
@@ -79,8 +97,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 8))
-ax.plot(train_samples, performance_indx, c='r', linewidth=3, label='kdf')
-ax.plot(train_samples, performance_indx_rf, c='b', linewidth=3, label='rf')
+ax.plot(train_samples, performance_indx, c='r', linewidth=2, label='kdf')
+ax.fill_between(train_samples, kdf_25, kdf_75, facecolor='r', alpha=.3)
+
+ax.plot(train_samples, performance_indx_rf, c='b', linewidth=2, label='rf')
+ax.fill_between(train_samples, rf_25, rf_75, facecolor='b', alpha=.3)
 
 ax.set_xlabel('Sample #')
 ax.set_ylabel('ECE')
