@@ -19,7 +19,7 @@ class kdf(KernelDensityGraph):
         self.polytope_cardinality = {}
         self.total_samples_this_label = {}
         self.prior = {}
-        self.global_bias = -10000
+        self.global_bias = -10
         self.kwargs = kwargs
         self.is_fitted = False
 

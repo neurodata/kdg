@@ -120,7 +120,7 @@ model_kdf.fit(X, y)
 print(np.mean(model_kdf.predict(X_test)==y_test))
 print(np.mean(model_kdf.rf_model.predict((X_test-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val))==y_test))
 # %%
-dataset = openml.datasets.get_dataset(1467)
+dataset = openml.datasets.get_dataset(40979)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
             )
