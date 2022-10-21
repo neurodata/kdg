@@ -52,6 +52,9 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=10):
     total_sample = X.shape[0]
 
     test_sample = total_sample//3
+    _, tmp_y = np.unique(y, return_counts=True)
+    noise_labels = (np.ones(test_sample)*np.argmax(tmp_y)).astype(int)
+    noise_input = np.random.uniform(size=(test_sample, X.shape[1]))
 
     max_sample = total_sample - test_sample
     train_samples = np.logspace(
@@ -74,6 +77,7 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=10):
     param_rf = []
     indices = list(range(total_sample))
 
+
     for train_sample in train_samples:     
         for rep in range(reps):
             np.random.shuffle(indices)
@@ -83,7 +87,10 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=10):
             model_kdf = kdf(kwargs={'n_estimators':n_estimators})
             model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train], epsilon=1e-6)
             proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
+            proba_kdf_noise = model_kdf.predict_proba(noise_input)
             proba_rf = model_kdf.rf_model.predict_proba((X[indx_to_take_test]-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val+1e-8))
+            proba_rf_noise = model_kdf.rf_model.predict_proba((noise_input-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val+1e-8))
+
             predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
             predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
@@ -97,6 +104,20 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=10):
                     predicted_label_rf==y[indx_to_take_test]
                 )
             )
+
+            proba_kdf = np.concatenate(
+                (proba_kdf,
+                proba_kdf_noise),
+                axis=0
+            )
+            proba_rf = np.concatenate(
+                (proba_rf,
+                proba_rf_noise),
+                axis=1
+            )
+            predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
+            predicted_label_rf = np.argmax(proba_rf, axis = 1)
+            
             kappa.append(
                 cohen_kappa_score(predicted_label_kdf, y[indx_to_take_test])
             )

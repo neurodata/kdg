@@ -3,7 +3,8 @@ from statistics import mode, quantiles
 import numpy as np
 from torch import quantile
 from kdg import kdf
-from kdg.utils import get_ece, generate_gaussian_parity
+import openml
+from kdg.utils import get_ece, generate_gaussian_parity, generate_spirals, generate_ellipse
 from sklearn.ensemble import RandomForestClassifier as rf
 # %%
 def generate_parity(n, d=2, invert_labels=False,acorn=None):
@@ -65,8 +66,8 @@ for samples in train_samples:
     ECE_rf = []
 
     for _ in range(reps):
-        X, y = generate_parity(samples)
-        X_test, y_test = generate_parity(test_sample)
+        X, y = generate_ellipse(samples)
+        X_test, y_test = generate_ellipse(test_sample)
         model_kdf = kdf(kwargs={'n_estimators':500})
         model_kdf.fit(X, y)
         proba_kdf = model_kdf.predict_proba(X_test)
@@ -106,7 +107,7 @@ ax.fill_between(train_samples, rf_25, rf_75, facecolor='b', alpha=.3)
 ax.set_xlabel('Sample #')
 ax.set_ylabel('ECE')
 plt.legend()
-plt.savefig('plots/test_ece.pdf')
+plt.savefig('plots/test_ece_ellipse.pdf')
 # %%
 X, y = generate_gaussian_parity(1000)
 X_test, y_test = generate_gaussian_parity(1000)
@@ -115,4 +116,26 @@ model_kdf = kdf(k=1e1, kwargs={'n_estimators':500})
 model_kdf.fit(X, y)
 print(np.mean(model_kdf.predict(X_test)==y_test))
 print(np.mean(model_kdf.predict(X)==y))
+# %%
+dataset = openml.datasets.get_dataset(40499)
+X, y, is_categorical, _ = dataset.get_data(
+                dataset_format="array", target=dataset.default_target_attribute
+            )
+
+model_kdf = kdf(kwargs={'n_estimators':500})
+total_sample = X.shape[0]
+test_sample = total_sample//3
+train_sample = total_sample - test_sample
+indices = list(range(total_sample))
+indx_to_take_train = indices[:train_sample]
+indx_to_take_test = indices[-test_sample:]
+
+model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
+model_kdf.global_bias = -10
+proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
+get_ece_(proba_kdf, np.argmax(proba_kdf,axis=1), y[indx_to_take_test])
+# %%
+proba_rf = model_kdf.rf_model.predict_proba(X[indx_to_take_test])
+get_ece_(proba_rf, np.argmax(proba_rf,axis=1), y[indx_to_take_test])
+
 # %%
