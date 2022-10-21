@@ -42,9 +42,10 @@ def get_ece_(predicted_posterior, predicted_label, true_label, R=20):
                 if indx_k.size != 0
                 else 0
             )
-            conf = np.nan_to_num(np.mean(posteriors[indx_k])) if indx_k.size != 0 else 0
+            #print(posteriors[indx], 'posteriors')
+            conf = np.nan_to_num(np.mean(posteriors[indx])) if indx.size != 0 else 0
 
-            #print(acc, conf)
+            #print(acc, conf, k, r)
             score += len(indx) * np.abs(acc - conf)
 
     score /= (K*total_sample)
@@ -66,10 +67,12 @@ for samples in train_samples:
     ECE_rf = []
 
     for _ in range(reps):
-        X, y = generate_ellipse(samples)
-        X_test, y_test = generate_ellipse(test_sample)
+        X, y = generate_gaussian_parity(samples)
+        X_test, y_test = generate_gaussian_parity(test_sample)
         model_kdf = kdf(kwargs={'n_estimators':500})
         model_kdf.fit(X, y)
+        model_kdf.global_bias = -100
+
         proba_kdf = model_kdf.predict_proba(X_test)
         proba_rf = model_kdf.rf_model.predict_proba((X_test-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val))
 
@@ -107,17 +110,17 @@ ax.fill_between(train_samples, rf_25, rf_75, facecolor='b', alpha=.3)
 ax.set_xlabel('Sample #')
 ax.set_ylabel('ECE')
 plt.legend()
-plt.savefig('plots/test_ece_ellipse.pdf')
+plt.savefig('plots/test_ece_gaussian.pdf')
 # %%
-X, y = generate_gaussian_parity(1000)
+X, y = generate_gaussian_parity(10000)
 X_test, y_test = generate_gaussian_parity(1000)
 
-model_kdf = kdf(k=1e1, kwargs={'n_estimators':500})
+model_kdf = kdf(kwargs={'n_estimators':500})
 model_kdf.fit(X, y)
 print(np.mean(model_kdf.predict(X_test)==y_test))
-print(np.mean(model_kdf.predict(X)==y))
+print(np.mean(model_kdf.rf_model.predict((X_test-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val))==y_test))
 # %%
-dataset = openml.datasets.get_dataset(40499)
+dataset = openml.datasets.get_dataset(1467)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
             )
@@ -131,7 +134,7 @@ indx_to_take_train = indices[:train_sample]
 indx_to_take_test = indices[-test_sample:]
 
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
-model_kdf.global_bias = -10
+model_kdf.global_bias = -100
 proba_kdf = model_kdf.predict_proba(X[indx_to_take_test])
 get_ece_(proba_kdf, np.argmax(proba_kdf,axis=1), y[indx_to_take_test])
 # %%
