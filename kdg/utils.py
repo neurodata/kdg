@@ -5,7 +5,7 @@ from numpy.random import uniform, normal, shuffle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def get_ece(predicted_posterior, predicted_label, true_label, R=20):
+def get_ece(predicted_posterior, predicted_label, true_label, R=15):
     total_sample = len(true_label)
     K = predicted_posterior.shape[1]
 

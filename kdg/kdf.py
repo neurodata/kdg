@@ -23,7 +23,7 @@ class kdf(KernelDensityGraph):
         self.kwargs = kwargs
         self.is_fitted = False
 
-    def fit(self, X, y, epsilon=1e-6):
+    def fit(self, X, y, epsilon=1e-4):
         r"""
         Fits the kernel density forest.
         Parameters
