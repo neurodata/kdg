@@ -53,8 +53,8 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=10):
 
     test_sample = total_sample//3
     _, tmp_y = np.unique(y, return_counts=True)
-    noise_labels = (np.ones(test_sample)*np.argmax(tmp_y)).astype(int)
-    noise_input = np.random.uniform(size=(test_sample, X.shape[1]))
+    #noise_labels = (np.ones(test_sample)*np.argmax(tmp_y)).astype(int)
+    #noise_input = np.random.uniform(size=(test_sample, X.shape[1]))
 
     max_sample = total_sample - test_sample
     train_samples = np.logspace(
@@ -91,6 +91,7 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=10):
             proba_rf = model_kdf.rf_model.predict_proba((X[indx_to_take_test]-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val+1e-8))
             proba_rf_noise = model_kdf.rf_model.predict_proba((noise_input-model_kdf.min_val)/(model_kdf.max_val-model_kdf.min_val+1e-8))
 
+            #print(proba_kdf_noise, 'acc1', proba_rf_noise, 'acc')
             predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
             predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
@@ -111,8 +112,8 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=10):
                 cohen_kappa_score(predicted_label_rf, y[indx_to_take_test])
             )
 
-            
-            proba_kdf = np.concatenate(
+
+            '''proba_kdf = np.concatenate(
                 (proba_kdf,
                 proba_kdf_noise),
                 axis=0
@@ -120,17 +121,17 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=10):
             proba_rf = np.concatenate(
                 (proba_rf,
                 proba_rf_noise),
-                axis=1
+                axis=0
             )
             predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
             predicted_label_rf = np.argmax(proba_rf, axis = 1)
-            y_test = np.concatenate((y[indx_to_take_test], noise_labels))
+            y_test = np.concatenate((y[indx_to_take_test], noise_labels))'''
 
             ece.append(
-                get_ece(proba_kdf, predicted_label_kdf, y_test)
+                get_ece(proba_kdf, predicted_label_kdf, y[indx_to_take_test])
             )
             ece_rf.append(
-                get_ece(proba_rf, predicted_label_rf, y_test)
+                get_ece(proba_rf, predicted_label_rf, y[indx_to_take_test])
             )
             samples.append(
                 train_sample
