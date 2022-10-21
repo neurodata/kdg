@@ -6,26 +6,31 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def get_ece(predicted_posterior, predicted_label, true_label, R=20):
-    bin_size = 1/R
     total_sample = len(true_label)
     K = predicted_posterior.shape[1]
 
     score = 0
+    bin_size = total_sample//R
     for k in range(K):
         posteriors = predicted_posterior[:,k]
         sorted_indx = np.argsort(posteriors)
+        #print(sorted_indx, len(sorted_indx))
         for r in range(R):        
-            indx = sorted_indx[r*R:(r+1)*R]
+            indx = sorted_indx[r*bin_size:(r+1)*bin_size]
+            #print(indx)
             predicted_label_ = predicted_label[indx]
             true_label_ = true_label[indx]
 
             indx_k = np.where(true_label_ == k)[0]
             acc = (
-                np.nan_to_num(np.mean(predicted_label[indx_k] == k))
+                np.nan_to_num(np.mean(predicted_label_[indx_k] == k))
                 if indx_k.size != 0
                 else 0
             )
-            conf = np.nan_to_num(np.mean(posteriors[indx_k])) if indx_k.size != 0 else 0
+            #print(posteriors[indx], 'posteriors')
+            conf = np.nan_to_num(np.mean(posteriors[indx])) if indx.size != 0 else 0
+
+            #print(acc, conf, k, r)
             score += len(indx) * np.abs(acc - conf)
 
     score /= (K*total_sample)
