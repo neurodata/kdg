@@ -104,7 +104,14 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=10):
                     predicted_label_rf==y[indx_to_take_test]
                 )
             )
+            kappa.append(
+                cohen_kappa_score(predicted_label_kdf, y[indx_to_take_test])
+            )
+            kappa_rf.append(
+                cohen_kappa_score(predicted_label_rf, y[indx_to_take_test])
+            )
 
+            
             proba_kdf = np.concatenate(
                 (proba_kdf,
                 proba_kdf_noise),
@@ -117,18 +124,13 @@ def experiment_random_sample(dataset_id, folder, n_estimators=500, reps=10):
             )
             predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
             predicted_label_rf = np.argmax(proba_rf, axis = 1)
-            
-            kappa.append(
-                cohen_kappa_score(predicted_label_kdf, y[indx_to_take_test])
-            )
-            kappa_rf.append(
-                cohen_kappa_score(predicted_label_rf, y[indx_to_take_test])
-            )
+            y_test = np.concatenate((y[indx_to_take_test], noise_labels))
+
             ece.append(
-                get_ece(proba_kdf, predicted_label_kdf, y[indx_to_take_test])
+                get_ece(proba_kdf, predicted_label_kdf, y_test)
             )
             ece_rf.append(
-                get_ece(proba_rf, predicted_label_rf, y[indx_to_take_test])
+                get_ece(proba_rf, predicted_label_rf, y_test)
             )
             samples.append(
                 train_sample
