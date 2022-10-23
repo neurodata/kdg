@@ -19,7 +19,6 @@ class kdf(KernelDensityGraph):
         self.polytope_cardinality = {}
         self.total_samples_this_label = {}
         self.prior = {}
-        self.global_bias = -1e100
         self.kwargs = kwargs
         self.is_fitted = False
 
@@ -48,7 +47,8 @@ class kdf(KernelDensityGraph):
         
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
-        self.feature_dim = X.shape[1]   
+        self.feature_dim = X.shape[1] 
+        self.global_bias = -10**(np.sqrt(self.feature_dim))  
 
         ### change code to calculate one kernel per polytope
         for label in self.labels:
