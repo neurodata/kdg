@@ -31,7 +31,6 @@ class kdn(KernelDensityGraph):
         self.polytope_cardinality = {}
         self.total_samples_this_label = {}
         self.prior = {}
-        self.global_bias = -1e100
         self.network = network
         self.verbose = verbose
 
@@ -92,7 +91,8 @@ class kdn(KernelDensityGraph):
 
         self.labels = np.unique(y)
         self.feature_dim = np.product(X.shape[1:])
-
+        self.global_bias = -10**(np.sqrt(self.feature_dim))
+        
         for label in self.labels:
             self.polytope_cardinality[label] = []
             self.total_samples_this_label[label] = len(

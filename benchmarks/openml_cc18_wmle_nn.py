@@ -180,7 +180,7 @@ def experiment_random_sample(dataset_id, folder, reps=10):
 
 
 #%%
-folder = 'openml_res'
+folder = 'openml_res/openml_nn'
 #os.mkdir(folder)
 #os.mkdir(folder_rf)
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
