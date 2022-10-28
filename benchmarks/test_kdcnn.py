@@ -16,7 +16,7 @@ x_train_mean = np.mean(X_train, axis=0)
 X_train -= x_train_mean
 X_test -= x_train_mean
 #%%
-'''network = Sequential()
+network = Sequential()
 network.add(
     Conv2D(
         filters=16,
@@ -89,9 +89,9 @@ fit_kwargs = {
 network.compile(**compile_kwargs)
 network.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
 # %%
-network.save('cnn_test')'''
+network.save('cnn_test')
 # %%
-network = keras.models.load_model('saved_models/cifar10_ResNet164v1_model.130.h5')
+#network = keras.models.load_model('saved_models/cifar10_ResNet164v1_model.130.h5')
 print(np.mean(np.argmax(network.predict(X_test), axis=1)==y_test.reshape(-1)))
 # %%
 def output_from_model(model, layer_name, x):
