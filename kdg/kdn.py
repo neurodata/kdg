@@ -113,11 +113,12 @@ class kdn(KernelDensityGraph):
                 axis=0
             )
         
-        polytope_ids = np.concatenate(
-                (polytope_ids,
-                self._get_polytope_ids(X[indx_X2:])),
-                axis=0
-            )
+        if indx_X2 < X.shape[0]:
+            polytope_ids = np.concatenate(
+                    (polytope_ids,
+                    self._get_polytope_ids(X[indx_X2:])),
+                    axis=0
+                )
 
         polytopes = np.unique(
             polytope_ids, axis=0
