@@ -1,4 +1,5 @@
 # %%
+from bitarray import bitarray
 import numpy as np
 from tensorflow import keras
 from tensorflow.keras.models import Sequential, Model
@@ -118,25 +119,26 @@ if np.isnan(proba).any():
 print(np.mean(np.argmax(proba, axis=1) == y_test.reshape(-1)))
 # %%
 def _get_polytope_ids(X):
-        total_samples = X.shape[0]
-           
-        outputs = [] 
-        inp = model_kdn.network.input
-
-        for layer in model_kdn.network.layers:
-            if 'activation' in layer.name:
-                outputs.append(layer.output) 
-
-        functor = bknd.function(inp, outputs)
-        layer_outs = functor(X)
-
-        activation = []
-        for layer_out in layer_outs:
-            #print((layer_out>0).astype('int').reshape(total_samples, -1))
-            activation.append(
-                (layer_out>0).astype('int').reshape(total_samples, -1)
-            )
-        polytope_ids = np.concatenate(activation, axis=1)
+    total_samples = X.shape[0]
         
-        return polytope_ids
+    outputs = [] 
+    inp = model_kdn.network.input
+
+    for layer in model_kdn.network.layers:
+        if 'activation' in layer.name:
+            outputs.append(layer.output) 
+
+    functor = bknd.function(inp, outputs)
+    layer_outs = functor(X)
+
+    activation = []
+    for layer_out in layer_outs:
+        #print(layer_out.shape)
+        #print((layer_out>0).astype('int').reshape(total_samples, -1))
+        activation.append(
+            (layer_out>0).astype('int').reshape(total_samples, -1)
+        )
+    polytope_ids = np.concatenate(activation, axis=1)
+
+    return polytope_ids
 # %%

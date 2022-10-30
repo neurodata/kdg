@@ -67,7 +67,7 @@ class kdn(KernelDensityGraph):
         activation = []
         for layer_out in layer_outs:
             activation.append(
-                (layer_out>0).astype('int').reshape(total_samples, -1)
+                (layer_out>0).astype('bool').reshape(total_samples, -1)
             )
         polytope_ids = np.concatenate(activation, axis=1)
         
