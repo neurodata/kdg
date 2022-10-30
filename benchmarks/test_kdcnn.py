@@ -109,7 +109,7 @@ model_kdn = kdn(
     network=network,
     verbose=False,
 )
-model_kdn.fit(X_train[:5000], y_train[:5000])
+model_kdn.fit(X_train, y_train)
 # %%
 proba = model_kdn.predict_proba(X_test)
 
