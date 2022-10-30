@@ -31,7 +31,6 @@ class kdn(KernelDensityGraph):
         self.polytope_cardinality = {}
         self.total_samples_this_label = {}
         self.prior = {}
-        self.global_bias = -1e100
         self.network = network
         self.verbose = verbose
 
@@ -73,7 +72,7 @@ class kdn(KernelDensityGraph):
         
         return polytope_ids
        
-    def fit(self, X, y, epsilon=1e-6):
+    def fit(self, X, y, epsilon=1e-6, batch=100):
         r"""
         Fits the kernel density forest.
         Parameters
@@ -92,7 +91,8 @@ class kdn(KernelDensityGraph):
 
         self.labels = np.unique(y)
         self.feature_dim = np.product(X.shape[1:])
-
+        self.global_bias = -10**(np.sqrt(self.feature_dim))
+        
         for label in self.labels:
             self.polytope_cardinality[label] = []
             self.total_samples_this_label[label] = len(
@@ -101,7 +101,24 @@ class kdn(KernelDensityGraph):
             self.prior[label] = self.total_samples_this_label[label]/X.shape[0]
 
         # get polytope ids and unique polytope ids
-        polytope_ids = self._get_polytope_ids(X)
+        batchsize = X.shape[0]//batch
+        polytope_ids = self._get_polytope_ids(X[:batchsize])
+
+        for ii in range(1,batch):
+            indx_X1 = ii*batchsize
+            indx_X2 = (ii+1)*batchsize
+            polytope_ids = np.concatenate(
+                (polytope_ids,
+                self._get_polytope_ids(X[indx_X1:indx_X2])),
+                axis=0
+            )
+        
+        polytope_ids = np.concatenate(
+                (polytope_ids,
+                self._get_polytope_ids(X[indx_X2:])),
+                axis=0
+            )
+
         polytopes = np.unique(
             polytope_ids, axis=0
             )
