@@ -7,7 +7,7 @@ from sklearn.covariance import LedoitWolf
 from tensorflow.keras.models import Model
 from joblib import Parallel, delayed 
 from tensorflow.keras import backend as bknd
-#from scipy.sparse import csr_matrix
+from bitarray import bitarray
 
 class kdn(KernelDensityGraph):
     def __init__(
@@ -65,6 +65,7 @@ class kdn(KernelDensityGraph):
 
         activation = []
         for layer_out in layer_outs:
+            print((layer_out>0).astype('int').reshape(total_samples, -1))
             activation.append(
                 (layer_out>0).astype('int').reshape(total_samples, -1)
             )
@@ -72,7 +73,7 @@ class kdn(KernelDensityGraph):
         
         return polytope_ids
        
-    def fit(self, X, y, epsilon=1e-6, batch=100):
+    def fit(self, X, y, epsilon=1e-6):
         r"""
         Fits the kernel density forest.
         Parameters
@@ -101,7 +102,7 @@ class kdn(KernelDensityGraph):
             self.prior[label] = self.total_samples_this_label[label]/X.shape[0]
 
         # get polytope ids and unique polytope ids
-        batchsize = X.shape[0]//batch
+        '''batchsize = X.shape[0]//batch
         polytope_ids = self._get_polytope_ids(X[:batchsize])
 
         for ii in range(1,batch):
@@ -111,11 +112,11 @@ class kdn(KernelDensityGraph):
                 (polytope_ids,
                 self._get_polytope_ids(X[indx_X1:indx_X2])),
                 axis=0
-            )
+            )'''
         
         polytope_ids = np.concatenate(
                 (polytope_ids,
-                self._get_polytope_ids(X[indx_X2:])),
+                self._get_polytope_ids(X)),
                 axis=0
             )
 
