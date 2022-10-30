@@ -105,6 +105,7 @@ class kdn(KernelDensityGraph):
         polytope_ids = self._get_polytope_ids(X[:batchsize])
 
         for ii in range(1,batch):
+            print("doing batch ", ii)
             indx_X1 = ii*batchsize
             indx_X2 = (ii+1)*batchsize
             polytope_ids = np.concatenate(
