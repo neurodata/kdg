@@ -7,7 +7,7 @@ from sklearn.covariance import LedoitWolf
 from tensorflow.keras.models import Model
 from joblib import Parallel, delayed 
 from tensorflow.keras import backend as bknd
-from bitarray import bitarray
+#from scipy.sparse import csr_matrix
 
 class kdn(KernelDensityGraph):
     def __init__(
@@ -31,6 +31,7 @@ class kdn(KernelDensityGraph):
         self.polytope_cardinality = {}
         self.total_samples_this_label = {}
         self.prior = {}
+        self.global_bias = -1e100
         self.network = network
         self.verbose = verbose
 
@@ -65,7 +66,6 @@ class kdn(KernelDensityGraph):
 
         activation = []
         for layer_out in layer_outs:
-            print((layer_out>0).astype('int').reshape(total_samples, -1))
             activation.append(
                 (layer_out>0).astype('int').reshape(total_samples, -1)
             )
@@ -92,8 +92,7 @@ class kdn(KernelDensityGraph):
 
         self.labels = np.unique(y)
         self.feature_dim = np.product(X.shape[1:])
-        self.global_bias = -10**(np.sqrt(self.feature_dim))
-        
+
         for label in self.labels:
             self.polytope_cardinality[label] = []
             self.total_samples_this_label[label] = len(
@@ -102,24 +101,7 @@ class kdn(KernelDensityGraph):
             self.prior[label] = self.total_samples_this_label[label]/X.shape[0]
 
         # get polytope ids and unique polytope ids
-        '''batchsize = X.shape[0]//batch
-        polytope_ids = self._get_polytope_ids(X[:batchsize])
-
-        for ii in range(1,batch):
-            indx_X1 = ii*batchsize
-            indx_X2 = (ii+1)*batchsize
-            polytope_ids = np.concatenate(
-                (polytope_ids,
-                self._get_polytope_ids(X[indx_X1:indx_X2])),
-                axis=0
-            )'''
-        
-        polytope_ids = np.concatenate(
-                (polytope_ids,
-                self._get_polytope_ids(X)),
-                axis=0
-            )
-
+        polytope_ids = self._get_polytope_ids(X)
         polytopes = np.unique(
             polytope_ids, axis=0
             )
