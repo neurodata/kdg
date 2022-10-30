@@ -136,9 +136,33 @@ def _get_polytope_ids(X):
         #print(layer_out.shape)
         #print((layer_out>0).astype('int').reshape(total_samples, -1))
         activation.append(
-            (layer_out>0).astype('int').reshape(total_samples, -1)
+            (layer_out>0).astype('bool').reshape(total_samples, -1)
         )
     polytope_ids = np.concatenate(activation, axis=1)
 
     return polytope_ids
+# %%
+'''polytopes = np.unique(
+        polytope_ids, axis=0
+        )
+for polytope in polytopes:
+    #indx = np.where(polytope==0)[0]
+    polytope_ = polytope.copy()
+
+    matched_pattern = (polytope_ids==polytope_)
+    matched_nodes = np.zeros((len(polytope_ids),model_kdn.total_layers))
+    end_node = 0
+    normalizing_factor = 0
+    for layer in range(model_kdn.total_layers):
+        end_node += model_kdn.network_shape[layer]
+        matched_nodes[:, layer] = \
+            np.sum(matched_pattern[:,end_node-model_kdn.network_shape[layer]:end_node], axis=1)\
+                + 1/model_kdn.network_shape[layer]
+
+        normalizing_factor += \
+            np.log(np.max(matched_nodes[:, layer]))
+
+    scales = np.exp(np.sum(np.log(matched_nodes), axis=1)\
+        - normalizing_factor)
+    print(scales)'''
 # %%

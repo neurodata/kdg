@@ -72,7 +72,7 @@ class kdn(KernelDensityGraph):
         
         return polytope_ids
        
-    def fit(self, X, y, epsilon=1e-6, batch=100):
+    def fit(self, X, y, epsilon=1e-6, batch=10):
         r"""
         Fits the kernel density forest.
         Parameters
@@ -120,15 +120,15 @@ class kdn(KernelDensityGraph):
                     self._get_polytope_ids(X[indx_X2:])),
                     axis=0
                 )
-
+        #print(polytope_ids.shape)
         polytopes = np.unique(
             polytope_ids, axis=0
             )
-
+        
         for polytope in polytopes:
-            indx = np.where(polytope==0)[0]
+            #indx = np.where(polytope==0)[0]
             polytope_ = polytope.copy()
-            polytope_[indx] = 2
+            #polytope_[indx] = 2
 
             matched_pattern = (polytope_ids==polytope_)
             matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
@@ -147,7 +147,7 @@ class kdn(KernelDensityGraph):
                 - normalizing_factor)
 
             idx_with_scale_1 = np.where(
-                    scales==1
+                    scales>.99999999999
                 )[0]
             idx_with_scale_alpha = np.where(
                     scales>0
