@@ -127,10 +127,10 @@ class kdn(KernelDensityGraph):
         
         for polytope in polytopes:
             #indx = np.where(polytope==0)[0]
-            polytope_ = polytope.copy()
+            #polytope_ = polytope.copy()
             #polytope_[indx] = 2
 
-            matched_pattern = (polytope_ids==polytope_)
+            matched_pattern = (polytope_ids==polytope)
             matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
             end_node = 0
             normalizing_factor = 0

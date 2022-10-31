@@ -109,12 +109,12 @@ model_kdn = kdn(
     network=network,
     verbose=False,
 )
-model_kdn.fit(X_train, y_train)
+model_kdn.fit(X_train[:6000], y_train[:6000])
 # %%
 proba = model_kdn.predict_proba(X_test)
 
-if np.isnan(proba).any():
-    print("yes")
+'''if np.isnan(proba).any():
+    print("yes")'''
 
 print(np.mean(np.argmax(proba, axis=1) == y_test.reshape(-1)))
 # %%
