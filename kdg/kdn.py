@@ -7,7 +7,7 @@ from sklearn.covariance import LedoitWolf
 from tensorflow.keras.models import Model
 from joblib import Parallel, delayed 
 from tensorflow.keras import backend as bknd
-#from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, vstack
 
 class kdn(KernelDensityGraph):
     def __init__(
@@ -66,9 +66,9 @@ class kdn(KernelDensityGraph):
         activation = []
         for layer_out in layer_outs:
             activation.append(
-                (layer_out>0).astype('bool').reshape(total_samples, -1)
+                (layer_out>0).astype('int').reshape(total_samples, -1)
             )
-        polytope_ids = np.concatenate(activation, axis=1)
+        polytope_ids = csr_matrix(np.concatenate(activation, axis=1))
         
         return polytope_ids
        
@@ -90,6 +90,7 @@ class kdn(KernelDensityGraph):
         X = (X-self.min_val)/(self.max_val-self.min_val+1e-8)
 
         self.labels = np.unique(y)
+        self.total_samples = X.shape[0]
         self.feature_dim = np.product(X.shape[1:])
         self.global_bias = -10**(np.sqrt(self.feature_dim))
         
@@ -101,51 +102,65 @@ class kdn(KernelDensityGraph):
             self.prior[label] = self.total_samples_this_label[label]/X.shape[0]
 
         # get polytope ids and unique polytope ids
-        batchsize = X.shape[0]//batch
+        batchsize = self.total_samples//batch
         polytope_ids = self._get_polytope_ids(X[:batchsize])
 
         for ii in range(1,batch):
             print("doing batch ", ii)
             indx_X1 = ii*batchsize
             indx_X2 = (ii+1)*batchsize
-            polytope_ids = np.concatenate(
-                (polytope_ids,
-                self._get_polytope_ids(X[indx_X1:indx_X2])),
-                axis=0
+            polytope_ids = vstack(
+                [polytope_ids,
+                self._get_polytope_ids(X[indx_X1:indx_X2])]
             )
         
         if indx_X2 < X.shape[0]:
-            polytope_ids = np.concatenate(
-                    (polytope_ids,
-                    self._get_polytope_ids(X[indx_X2:])),
-                    axis=0
+            polytope_ids = vstack(
+                    [polytope_ids,
+                    self._get_polytope_ids(X[indx_X2:])]
                 )
-        #print(polytope_ids.shape)
-        polytopes = np.unique(
-            polytope_ids, axis=0
-            )
-        
-        for polytope in polytopes:
-            #indx = np.where(polytope==0)[0]
-            #polytope_ = polytope.copy()
-            #polytope_[indx] = 2
 
-            matched_pattern = (polytope_ids==polytope)
-            matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
-            end_node = 0
-            normalizing_factor = 0
-            for layer in range(self.total_layers):
-                end_node += self.network_shape[layer]
-                matched_nodes[:, layer] = \
-                    np.sum(matched_pattern[:,end_node-self.network_shape[layer]:end_node], axis=1)\
-                        + 1/self.network_shape[layer]
+        #create a matrix with mutual weights
+        w = np.zeros((self.total_samples, self.total_samples), dtype=float)
+        for ii in range(self.total_samples):
 
-                normalizing_factor += \
-                    np.log(np.max(matched_nodes[:, layer]))
+            activation1 = polytope_ids[ii].toarray()    
+            for jj in range(ii, self.total_samples):
+                activation2 = polytope_ids[jj].toarray()
 
-            scales = np.exp(np.sum(np.log(matched_nodes), axis=1)\
-                - normalizing_factor)
+                end_node = 0
+                scale = 0
+                for layer in range(self.total_layers):
+                    end_node += self.network_shape[layer]
+                    act1_indx = np.where(
+                        activation1[end_node-self.network_shape[layer]:end_node] == 1
+                        )[0]
+                    act2_indx = np.where(
+                        activation2[end_node-self.network_shape[layer]:end_node] == 1
+                        )[0]
 
+                    scale += np.log(len(
+                        (
+                            np.where(act1_indx==act2_indx)
+                        )[0]
+                    ))
+
+                    _tmp = set()
+                    _tmp.update(tuple(act1_indx))
+                    _tmp.update(tuple(act2_indx))
+                    scale -= np.log(len(_tmp))
+                
+                w[ii,jj] = np.exp(scale)
+                w[jj,ii] = w[ii,jj]
+
+        del polytope_ids #delete high memory using variables
+
+        used = [] 
+        for ii in range(self.total_samples):
+            if ii in used:
+                continue
+            
+            scales = w[ii,:]
             idx_with_scale_1 = np.where(
                     scales>.99999999999
                 )[0]
@@ -153,6 +168,7 @@ class kdn(KernelDensityGraph):
                     scales>0
                 )[0]
 
+            used.extend(idx_with_scale_1)
             location = np.mean(X[idx_with_scale_1], axis=0)
             X_tmp = X[idx_with_scale_alpha].copy() - location
             covariance = np.average(X_tmp**2+epsilon/np.sum(scales[idx_with_scale_alpha]), axis=0, weights=scales[idx_with_scale_alpha])

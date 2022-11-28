@@ -111,7 +111,7 @@ model_kdn = kdn(
 )
 model_kdn.fit(X_train, y_train)
 # %%
-proba = model_kdn.predict_proba(X_test)
+proba = predict_proba(X_test)
 
 '''if np.isnan(proba).any():
     print("yes")'''
@@ -165,4 +165,60 @@ for polytope in polytopes:
     scales = np.exp(np.sum(np.log(matched_nodes), axis=1)\
         - normalizing_factor)
     print(scales)'''
+# %%
+def predict_proba(X, return_likelihood=False):
+        r"""
+        Calculate posteriors using the kernel density forest.
+        Parameters
+        ----------
+        X : ndarray
+            Input data matrix.
+        """
+        #X = check_array(X)
+        X = (X-model_kdn.min_val)/(model_kdn.max_val-model_kdn.min_val+ 1e-8)
+
+        X = X.reshape(X.shape[0],-1)
+        total_polytope = len(model_kdn.polytope_means)
+        log_likelihoods = np.zeros(
+            (np.size(X,0), len(model_kdn.labels)),
+            dtype=float
+        )
+        distance = np.zeros(
+                (
+                    np.size(X,0),
+                    total_polytope
+                ),
+                dtype=float
+            )
+        
+        for polytope in range(total_polytope):
+            distance[:,polytope] = model_kdn._compute_mahalanobis(X, polytope)
+
+        polytope_idx = np.argmin(distance, axis=1)
+
+        for ii,label in enumerate(model_kdn.labels):
+            for jj in range(X.shape[0]):
+                log_likelihoods[jj, ii] = model_kdn._compute_log_likelihood(X[jj], label, polytope_idx[jj])
+                max_pow = max(log_likelihoods[jj, ii], model_kdn.global_bias)
+                log_likelihoods[jj, ii] = np.log(
+                    (np.exp(log_likelihoods[jj, ii] - max_pow)\
+                        + np.exp(model_kdn.global_bias - max_pow))
+                        *model_kdn.prior[label]
+                ) + max_pow
+                
+        max_pow = np.nan_to_num(
+            np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(model_kdn.labels)))
+        )
+        log_likelihoods -= max_pow
+        likelihoods = np.exp(log_likelihoods)
+
+        total_likelihoods = np.sum(likelihoods, axis=1)
+
+        proba = (likelihoods.T/total_likelihoods).T
+        
+        if return_likelihood:
+            return proba, likelihoods
+        else:
+            return proba 
+
 # %%
