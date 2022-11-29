@@ -104,7 +104,7 @@ def define_model():
     return model
 
 # %%
-'''initial_learning_rate = 0.001
+initial_learning_rate = 0.001
 lr_schedule = keras.optimizers.schedules.ExponentialDecay(
     initial_learning_rate,
     decay_steps=100000,
@@ -167,7 +167,7 @@ model.fit_generator(datagen.flow(x_train_, y_train_, batch_size=batch_size),
 scores = model.evaluate(x_test_, y_test_, verbose=1)
 print('Test loss:', scores[0])
 print('Test accuracy:', scores[1])
-model.save('mnist_test')'''
+model.save('mnist_test')
 # %%
 network = keras.models.load_model('mnist_test')
 #print(np.mean(np.argmax(network.predict(x_test), axis=1)==y_test.reshape(-1)))

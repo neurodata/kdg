@@ -238,3 +238,64 @@ for label in labels:
         break
     break
 # %%
+from kdg.utils import generate_gaussian_parity
+from kdg import kdn 
+from tensorflow import keras
+from keras.models import Model
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
+from tensorflow.keras import activations
+#%%
+def getNN(compile_kwargs, input_size, num_classes):
+    network_base = keras.Sequential()
+    initializer = keras.initializers.GlorotNormal(seed=0)
+    network_base.add(keras.layers.Dense(10, kernel_initializer=initializer, input_shape=(input_size,)))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(10, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(10, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(10, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(units=num_classes, activation="softmax", kernel_initializer=initializer))
+    network_base.compile(**compile_kwargs)
+    return network_base
+
+compile_kwargs = {
+        "loss": "binary_crossentropy",
+        "optimizer": keras.optimizers.Adam(3e-4),
+    }
+callback = keras.callbacks.EarlyStopping(monitor="loss", patience=10, verbose=True)
+fit_kwargs = {
+        "epochs": 200,
+        "batch_size": 64,
+        "verbose": False,
+        "callbacks": [callback],
+    }
+#%%
+X, y = generate_gaussian_parity(10000)
+
+vanilla_nn = getNN(compile_kwargs, X.shape[-1], 2)
+vanilla_nn.fit(X, 
+            keras.utils.to_categorical(y, num_classes=2), 
+            **fit_kwargs
+            )
+model_kdn = kdn(
+                network=vanilla_nn
+            )
+model_kdn.fit(X, y)
+# %%
+import numpy as np
+from kdg.utils import get_ece
+
+X_test, y_test = generate_gaussian_parity(1000)
+
+print(np.mean(model_kdn.predict(X_test)==y_test))
+print(np.mean(np.argmax(vanilla_nn.predict(X_test),axis=1)==y_test))
+# %%
+proba_kdn = model_kdn.predict_proba(X_test)
+get_ece(proba_kdn, np.argmax(proba_kdn, axis=1), y_test)
+# %%
+proba_nn = vanilla_nn.predict(X_test)
+get_ece(proba_kdn, np.argmax(proba_nn, axis=1), y_test)
+# %%
