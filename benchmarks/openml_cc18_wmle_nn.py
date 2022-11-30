@@ -18,7 +18,7 @@ from os import listdir, getcwd
 # %%
 def getNN(compile_kwargs, input_size, num_classes):
     network_base = keras.Sequential()
-    initializer = keras.initializers.GlorotNormal(seed=0)
+    #initializer = keras.initializers.GlorotNormal(seed=0)
     network_base.add(keras.layers.Dense(500, kernel_initializer=initializer, input_shape=(input_size,)))
     network_base.add(keras.layers.Activation(activations.relu))
     network_base.add(keras.layers.Dense(500, kernel_initializer=initializer))
