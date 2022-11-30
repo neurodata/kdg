@@ -119,7 +119,7 @@ def experiment_random_sample(dataset_id, folder, reps=10):
             model_kdn = kdn(
                         network=vanilla_nn
                     )
-            model_kdn.fit(X[indx_to_take_train], y_converted, batch=1)
+            model_kdn.fit(X[indx_to_take_train], y_converted, batch=2)
             #print(model_kdn.polytope_means)
             proba_kdn = model_kdn.predict_proba(X[indx_to_take_test])
             proba_nn = vanilla_nn.predict(X[indx_to_take_test])
