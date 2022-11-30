@@ -117,8 +117,7 @@ def experiment_random_sample(dataset_id, folder, reps=10):
 
 
             model_kdn = kdn(
-                        network=vanilla_nn,
-                        verbose=False,
+                        network=vanilla_nn
                     )
             model_kdn.fit(X[indx_to_take_train], y_converted)
             #print(model_kdn.polytope_means)
