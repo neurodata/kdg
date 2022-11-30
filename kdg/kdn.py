@@ -117,51 +117,35 @@ class kdn(KernelDensityGraph):
  
        #create a matrix with mutual weights
        w = np.zeros((self.total_samples, self.total_samples), dtype=float)
-       
-       #define worker for parallel processing
-       def worker(activation1, activation2, network_shape):
-            activation1 = activation1.toarray()[0]
-            activation2 = activation2.toarray()[0]
-            end_node = 0
-            scale = 0
-            
-            for layer in network_shape:
-                end_node += layer
-                act1_indx = set(np.where(
-                      activation1[end_node-layer:end_node] == 1
-                      )[0])
-                act2_indx = set(np.where(
-                      activation2[end_node-layer:end_node] == 1
-                      )[0])
-                scale += np.log(len
-                      (
-                          act1_indx.intersection(act2_indx)
-                      )
-                  )
-                scale -= np.log(len(act1_indx.union(act2_indx)))
-            return np.exp(scale)
-        
-       iterseq = []
        for ii in range(self.total_samples):
-            for jj in range(ii, self.total_samples):
-                iterseq.append((ii,jj))
-        
-       scales = Parallel(n_jobs=-1,verbose=1)(
-                    delayed(worker)(
-                   polytope_ids[ii],
-                   polytope_ids[jj],
-                   self.network_shape
-               ) for (ii,jj) in iterseq
-           )
-
-       indx = 0
-       for (ii,jj) in iterseq:
-            w[ii,jj] = scales[indx]
-            w[jj,ii] = scales[indx]
-            indx += 1
+ 
+           activation1 = polytope_ids[ii].toarray()[0]         
+           for jj in range(ii, self.total_samples):
+               activation2 = polytope_ids[jj].toarray()[0]
+ 
+               end_node = 0
+               scale = 0
+               for layer in range(self.total_layers):
+                   end_node += self.network_shape[layer]
+                   act1_indx = set(np.where(
+                       activation1[end_node-self.network_shape[layer]:end_node] == 1
+                       )[0])
+                   act2_indx = set(np.where(
+                       activation2[end_node-self.network_shape[layer]:end_node] == 1
+                       )[0])
+ 
+                   scale += np.log(len
+                       (
+                           act1_indx.intersection(act2_indx)
+                       )
+                   )
+                   scale -= np.log(len(act1_indx.union(act2_indx)))
+              
+               w[ii,jj] = np.exp(scale)
+               w[jj,ii] = w[ii,jj]
  
        del polytope_ids #delete high memory using variables
-       print(w)
+       
        used = []
        for ii in range(self.total_samples):
            if ii in used:
@@ -278,4 +262,3 @@ class kdn(KernelDensityGraph):
        """
       
        return np.argmax(self.predict_proba(X), axis = 1)
-
