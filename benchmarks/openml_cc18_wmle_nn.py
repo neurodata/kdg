@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier as rf
 from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 from tensorflow import keras
-from keras.models import Model
+from tensorflow.keras.models import Model
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
 from tensorflow.keras import activations
