@@ -1,5 +1,5 @@
 #%%
-from numpy import dtype
+'''from numpy import dtype
 from kdg import kdf
 from kdg.utils import get_ece
 import matplotlib.pyplot as plt
@@ -236,7 +236,7 @@ for label in labels:
 
         covariance = np.average(X_tmp**2, axis=0, weights=scales)
         break
-    break
+    break'''
 # %%
 from kdg.utils import generate_gaussian_parity
 from kdg import kdn 
@@ -288,14 +288,14 @@ model_kdn.fit(X, y)
 import numpy as np
 from kdg.utils import get_ece
 
-X_test, y_test = generate_gaussian_parity(1000)
+X_test, y_test = generate_gaussian_parity(10000)
 
 print(np.mean(model_kdn.predict(X_test)==y_test))
 print(np.mean(np.argmax(vanilla_nn.predict(X_test),axis=1)==y_test))
 # %%
 proba_kdn = model_kdn.predict_proba(X_test)
-get_ece(proba_kdn, np.argmax(proba_kdn, axis=1), y_test)
+print(get_ece(proba_kdn, np.argmax(proba_kdn, axis=1), y_test))
 # %%
 proba_nn = vanilla_nn.predict(X_test)
-get_ece(proba_kdn, np.argmax(proba_nn, axis=1), y_test)
+print(get_ece(proba_nn, np.argmax(proba_nn, axis=1), y_test))
 # %%

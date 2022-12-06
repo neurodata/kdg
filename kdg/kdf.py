@@ -95,7 +95,7 @@ class kdf(KernelDensityGraph):
                     len(np.where(y_tmp==label)[0])
                 )
 
-        self.global_bias = self.global_bias/X.shape[0]
+        self.global_bias = self.global_bias - np.log(X.shape[0])
         self.is_fitted = True
         
     def _compute_mahalanobis(self, X, polytope):

@@ -114,13 +114,19 @@ class kdn(KernelDensityGraph):
                    [polytope_ids,
                    self._get_polytope_ids(X[indx_X2:])]
                )
- 
+       
        #create a matrix with mutual weights
        w = np.zeros((self.total_samples, self.total_samples), dtype=float)
+       used_node = []
        for ii in range(self.total_samples):
- 
+           if ii in used_node:
+                continue
+            
+           tmp_node = []
+           w[ii,ii] = 1
+           tmp_node.append(ii)
            activation1 = polytope_ids[ii].toarray()[0]         
-           for jj in range(ii, self.total_samples):
+           for jj in range(ii+1, self.total_samples):
                activation2 = polytope_ids[jj].toarray()[0]
  
                end_node = 0
@@ -140,10 +146,20 @@ class kdn(KernelDensityGraph):
                        )
                    )
                    scale -= np.log(len(act1_indx.union(act2_indx)))
-              
+                   
                w[ii,jj] = np.exp(scale)
+
+               if w[ii,jj] > 0.9999:
+                    tmp_node.append(jj)
+               print(w[ii,jj])
                w[jj,ii] = w[ii,jj]
- 
+           
+           for node in tmp_node:
+              w[node, :] = w[ii,:]
+              w[:, node] = w[:,ii]
+
+           used_node.extend(tmp_node)
+       
        del polytope_ids #delete high memory using variables
        
        used = []
