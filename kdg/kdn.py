@@ -151,7 +151,7 @@ class kdn(KernelDensityGraph):
 
                if w[ii,jj] > 0.9999:
                     tmp_node.append(jj)
-               print(w[ii,jj])
+               
                w[jj,ii] = w[ii,jj]
            
            for node in tmp_node:
