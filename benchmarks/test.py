@@ -238,8 +238,8 @@ for label in labels:
         break
     break'''
 # %%
-from kdg.utils import generate_gaussian_parity
-from kdg import kdn 
+from kdg.utils import generate_gaussian_parity, generate_spirals
+from kdg import kdn, kdf
 from tensorflow import keras
 from keras.models import Model
 from tensorflow.keras.models import Sequential
@@ -249,13 +249,13 @@ from tensorflow.keras import activations
 def getNN(compile_kwargs, input_size, num_classes):
     network_base = keras.Sequential()
     initializer = keras.initializers.GlorotNormal(seed=0)
-    network_base.add(keras.layers.Dense(10, kernel_initializer=initializer, input_shape=(input_size,)))
+    network_base.add(keras.layers.Dense(50, kernel_initializer=initializer, input_shape=(input_size,)))
     network_base.add(keras.layers.Activation(activations.relu))
-    network_base.add(keras.layers.Dense(10, kernel_initializer=initializer))
+    network_base.add(keras.layers.Dense(50, kernel_initializer=initializer))
     network_base.add(keras.layers.Activation(activations.relu))
-    network_base.add(keras.layers.Dense(10, kernel_initializer=initializer))
+    network_base.add(keras.layers.Dense(50, kernel_initializer=initializer))
     network_base.add(keras.layers.Activation(activations.relu))
-    network_base.add(keras.layers.Dense(10, kernel_initializer=initializer))
+    network_base.add(keras.layers.Dense(50, kernel_initializer=initializer))
     network_base.add(keras.layers.Activation(activations.relu))
     network_base.add(keras.layers.Dense(units=num_classes, activation="softmax", kernel_initializer=initializer))
     network_base.compile(**compile_kwargs)
@@ -273,13 +273,19 @@ fit_kwargs = {
         "callbacks": [callback],
     }
 #%%
-X, y = generate_gaussian_parity(10000)
+X, y = generate_spirals(10000)
+max_val = np.max(X, axis=0)
+min_val = np.min(X, axis=0)
+ 
+X = (X-min_val)/(max_val-min_val+1e-8)
 
 vanilla_nn = getNN(compile_kwargs, X.shape[-1], 2)
 vanilla_nn.fit(X, 
             keras.utils.to_categorical(y, num_classes=2), 
             **fit_kwargs
             )
+
+#%%
 model_kdn = kdn(
                 network=vanilla_nn
             )
@@ -288,7 +294,8 @@ model_kdn.fit(X, y)
 import numpy as np
 from kdg.utils import get_ece
 
-X_test, y_test = generate_gaussian_parity(10000)
+X_test, y_test = generate_spirals(10000)
+X_test = (X_test-min_val)/(max_val-min_val+1e-8)
 
 print(np.mean(model_kdn.predict(X_test)==y_test))
 print(np.mean(np.argmax(vanilla_nn.predict(X_test),axis=1)==y_test))
@@ -298,4 +305,17 @@ print(get_ece(proba_kdn, np.argmax(proba_kdn, axis=1), y_test))
 # %%
 proba_nn = vanilla_nn.predict(X_test)
 print(get_ece(proba_nn, np.argmax(proba_nn, axis=1), y_test))
+# %%
+X, y = generate_spirals(10000)
+model_kdf = kdf(kwargs={'n_estimators':500})
+model_kdf.fit(X, y, epsilon=1e-20)
+# %%
+X_test, y_test = generate_spirals(10000)
+#%%
+proba_kdf = model_kdf.predict_proba(X_test)
+print(get_ece(proba_kdf, np.argmax(proba_kdf, axis=1), y_test))
+# %%
+#X_test = (X_test - np.min(X, axis=0))/(np.max(X, axis=0) - np.min(X, axis=0))
+proba_rf = model_kdf.rf_model.predict_proba((X_test - np.min(X, axis=0))/(np.max(X, axis=0) - np.min(X, axis=0)))
+print(get_ece(proba_rf, np.argmax(proba_rf, axis=1), y_test))
 # %%

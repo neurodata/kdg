@@ -30,21 +30,29 @@ class kdn(KernelDensityGraph):
 
  
        # total number of layers in the NN
-       self.total_layers = 0
+       self.total_layers = 1
  
        # get the sizes of each layer
        self.network_shape = []
        for layer in network.layers:
            layer_name = layer.name
- 
+           #print(self.network_shape)
            if 'activation' in layer_name:
                self.total_layers += 1
+               #print(layer.output_shape[1:],' fjeehe')
                self.network_shape.append(
                    np.product(
                        layer.output_shape[1:]
                    )
                )
- 
+
+       # add the final output layer
+       self.network_shape.append(
+            np.product(
+                    layer.output_shape[1:]
+                )
+           )
+       
    def _get_polytope_ids(self, X):
        total_samples = X.shape[0]
          
@@ -54,16 +62,23 @@ class kdn(KernelDensityGraph):
        for layer in self.network.layers:
            if 'activation' in layer.name:
                outputs.append(layer.output)
- 
+
+       # add the final layer
+       outputs.append(layer.output)
+
        functor = bknd.function(inp, outputs)
        layer_outs = functor(X)
  
        activation = []
-       for layer_out in layer_outs:
+       for layer_out in layer_outs[:-1]:
            activation.append(
                (layer_out>0).astype('int').reshape(total_samples, -1)
            )
-       polytope_ids = csr_matrix(np.concatenate(activation, axis=1))
+        # add the last layer
+       activation.append(
+               (layer_outs[-1]>0).astype('int').reshape(total_samples, -1)
+           )
+       polytope_ids = np.concatenate(activation, axis=1)
       
        return polytope_ids
      
@@ -79,10 +94,10 @@ class kdn(KernelDensityGraph):
        """
        #X, y = check_X_y(X, y)
        X = X.astype('double')
-       self.max_val = np.max(X, axis=0)
-       self.min_val = np.min(X, axis=0)
+       #self.max_val = np.max(X, axis=0)
+       #self.min_val = np.min(X, axis=0)
  
-       X = (X-self.min_val)/(self.max_val-self.min_val+1e-8)
+       #X = (X-self.min_val)/(self.max_val-self.min_val+1e-8)
  
        self.labels = np.unique(y)
        self.total_samples = X.shape[0]
@@ -104,78 +119,48 @@ class kdn(KernelDensityGraph):
            #print("doing batch ", ii)
            indx_X1 = ii*batchsize
            indx_X2 = (ii+1)*batchsize
-           polytope_ids = vstack(
-               [polytope_ids,
-               self._get_polytope_ids(X[indx_X1:indx_X2])]
+           polytope_ids = np.concatenate(
+               (polytope_ids,
+               self._get_polytope_ids(X[indx_X1:indx_X2])),
+               axis=0
            )
       
        if indx_X2 < X.shape[0]:
-           polytope_ids = vstack(
-                   [polytope_ids,
-                   self._get_polytope_ids(X[indx_X2:])]
+           polytope_ids = np.concatenate(
+                   (polytope_ids,
+                   self._get_polytope_ids(X[indx_X2:])),
+                   axis=0
                )
        
-       #create a matrix with mutual weights
-       w = np.zeros((self.total_samples, self.total_samples), dtype=float)
-       used_node = []
-       for ii in range(self.total_samples):
-           if ii in used_node:
-                continue
-            
-           tmp_node = []
-           w[ii,ii] = 1
-           tmp_node.append(ii)
-           activation1 = polytope_ids[ii].toarray()[0]         
-           for jj in range(ii+1, self.total_samples):
-               activation2 = polytope_ids[jj].toarray()[0]
- 
-               end_node = 0
-               scale = 0
-               for layer in range(self.total_layers):
-                   end_node += self.network_shape[layer]
-                   act1_indx = set(np.where(
-                       activation1[end_node-self.network_shape[layer]:end_node] == 1
-                       )[0])
-                   act2_indx = set(np.where(
-                       activation2[end_node-self.network_shape[layer]:end_node] == 1
-                       )[0])
- 
-                   scale += np.log(len
-                       (
-                           act1_indx.intersection(act2_indx)
-                       )
-                   )
-                   scale -= np.log(len(act1_indx.union(act2_indx)))
-                   
-               w[ii,jj] = np.exp(scale)
-
-               if w[ii,jj] > 0.9999:
-                    tmp_node.append(jj)
-               
-               w[jj,ii] = w[ii,jj]
+       polytopes = np.unique(
+            polytope_ids, axis=0
+            )
+       normalizing_factor = np.sum(np.log(self.network_shape))
+       for polytope in polytopes:      
+           matched_pattern = (polytope_ids==polytope)
+           matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
+           end_node = 0
            
-           for node in tmp_node:
-              w[node, :] = w[ii,:]
-              w[:, node] = w[:,ii]
+           for layer in range(self.total_layers):
+               end_node += self.network_shape[layer]
+               matched_nodes[:, layer] = \
+                    np.sum(
+                        matched_pattern[:,end_node-self.network_shape[layer]:end_node], 
+                        axis=1
+                        )
 
-           used_node.extend(tmp_node)
-       
-       del polytope_ids #delete high memory using variables
-       
-       used = []
-       for ii in range(self.total_samples):
-           if ii in used:
-               continue
-          
-           scales = w[ii,:]
+           scales = np.exp(np.sum(np.log(matched_nodes), axis=1)\
+                - normalizing_factor)
+
+
            idx_with_scale_1 = np.where(
-                   scales>.99999999999
+                   scales>.9999999
                )[0]
            idx_with_scale_alpha = np.where(
                    scales>0
                )[0]
  
-           used.extend(idx_with_scale_1)
+           
            location = np.mean(X[idx_with_scale_1], axis=0)
            X_tmp = X[idx_with_scale_alpha].copy() - location
            covariance = np.average(X_tmp**2+epsilon/np.sum(scales[idx_with_scale_alpha]), axis=0, weights=scales[idx_with_scale_alpha])
@@ -223,7 +208,7 @@ class kdn(KernelDensityGraph):
            Input data matrix.
        """
        X = check_array(X)
-       X = (X-self.min_val)/(self.max_val-self.min_val+ 1e-8)
+       #X = (X-self.min_val)/(self.max_val-self.min_val+ 1e-8)
  
        total_polytope = len(self.polytope_means)
        log_likelihoods = np.zeros(
