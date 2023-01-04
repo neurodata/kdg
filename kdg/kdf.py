@@ -1,17 +1,14 @@
 from numpy import min_scalar_type
 from .base import KernelDensityGraph
-from sklearn.mixture import GaussianMixture
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
-from scipy.stats import multivariate_normal
 import warnings
-from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
 warnings.filterwarnings("ignore")
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, kwargs={}):
+    def __init__(self, k=1, kwargs={}):
         super().__init__()
 
         self.polytope_means = []
@@ -19,11 +16,11 @@ class kdf(KernelDensityGraph):
         self.polytope_cardinality = {}
         self.total_samples_this_label = {}
         self.prior = {}
-        self.global_bias = -1e100
         self.kwargs = kwargs
+        self.k = k
         self.is_fitted = False
 
-    def fit(self, X, y, epsilon=1e-6):
+    def fit(self, X, y, epsilon=1e-4):
         r"""
         Fits the kernel density forest.
         Parameters
@@ -41,22 +38,21 @@ class kdf(KernelDensityGraph):
 
         X, y = check_X_y(X, y)
         X = X.astype('double')
-        self.max_val = np.max(X, axis=0) 
-        self.min_val = np.min(X, axis=0)
-
-        X = (X-self.min_val)/(self.max_val-self.min_val+1e-8)
         
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
-        self.feature_dim = X.shape[1]   
+        self.feature_dim = X.shape[1] 
+        self.global_bias = -self.k*10**(self.feature_dim**(1/2))  
 
         ### change code to calculate one kernel per polytope
+        idx_with_label = {}
         for label in self.labels:
             self.polytope_cardinality[label] = []
-            self.total_samples_this_label[label] = len(
-                    np.where(y==label)[0]
-                )
-            self.prior[label] = self.total_samples_this_label[label]/X.shape[0]
+            self.total_samples_this_label[label] = 0 
+            idx_with_label[label] = np.where(y==label)[0]
+            self.prior[label] = len(
+                    idx_with_label[label]
+                )/X.shape[0]
 
 
         predicted_leaf_ids_across_trees = np.array(
@@ -75,27 +71,24 @@ class kdf(KernelDensityGraph):
                 )
             
             scales = matched_samples/np.max(matched_samples)
-            #X_tmp = X[idx].copy()
             idx_with_scale_1 = np.where(
                     scales==1
                 )[0]
-            idx_with_scale_alpha = np.where(
-                    scales>0
-                )[0]
             
             location = np.mean(X[idx_with_scale_1], axis=0)
-            X_tmp = X[idx_with_scale_alpha].copy() - location
-            covariance = np.average(X_tmp**2+epsilon/np.sum(scales[idx_with_scale_alpha]), axis=0, weights=scales[idx_with_scale_alpha])
+            X_tmp = X.copy() - location
+            covariance = np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales)
             self.polytope_cov.append(covariance)
             self.polytope_means.append(location)
 
-            y_tmp = y[idx_with_scale_1]
-            for label in self.labels:      
+            for label in self.labels:
+                idx = idx_with_label[label]      
                 self.polytope_cardinality[label].append(
-                    len(np.where(y_tmp==label)[0])
+                    np.sum(scales[idx])
                 )
+                self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
 
-        self.global_bias = self.global_bias/X.shape[0]
+        self.global_bias = self.global_bias - np.log10(X.shape[0])
         self.is_fitted = True
         
     def _compute_mahalanobis(self, X, polytope):
@@ -130,7 +123,6 @@ class kdf(KernelDensityGraph):
             Input data matrix.
         """
         X = check_array(X)
-        X = (X-self.min_val)/(self.max_val-self.min_val+ 1e-8)
 
         total_polytope = len(self.polytope_means)
         log_likelihoods = np.zeros(
@@ -163,6 +155,10 @@ class kdf(KernelDensityGraph):
         max_pow = np.nan_to_num(
             np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(self.labels)))
         )
+
+        if return_likelihood:
+            likelihood = np.exp(log_likelihoods)
+
         log_likelihoods -= max_pow
         likelihoods = np.exp(log_likelihoods)
 
@@ -171,7 +167,7 @@ class kdf(KernelDensityGraph):
         proba = (likelihoods.T/total_likelihoods).T
         
         if return_likelihood:
-            return proba, likelihoods
+            return proba, likelihood
         else:
             return proba 
 

@@ -1,36 +1,31 @@
 import numpy as np
 from sklearn.datasets import make_blobs
 from numpy.random import uniform, normal, shuffle
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def get_ece(predicted_posterior, predicted_label, true_label, R=20):
+def get_ece(predicted_posterior, predicted_label, true_label, R=15):
     total_sample = len(true_label)
     K = predicted_posterior.shape[1]
-
     score = 0
     bin_size = total_sample//R
+
     for k in range(K):
         posteriors = predicted_posterior[:,k]
         sorted_indx = np.argsort(posteriors)
-        #print(sorted_indx, len(sorted_indx))
+        
         for r in range(R):        
             indx = sorted_indx[r*bin_size:(r+1)*bin_size]
-            #print(indx)
             predicted_label_ = predicted_label[indx]
             true_label_ = true_label[indx]
-
             indx_k = np.where(true_label_ == k)[0]
             acc = (
                 np.nan_to_num(np.mean(predicted_label_[indx_k] == k))
                 if indx_k.size != 0
                 else 0
             )
-            #print(posteriors[indx], 'posteriors')
+            
             conf = np.nan_to_num(np.mean(posteriors[indx])) if indx.size != 0 else 0
-
-            #print(acc, conf, k, r)
             score += len(indx) * np.abs(acc - conf)
 
     score /= (K*total_sample)
@@ -754,3 +749,18 @@ def generate_ood_samples(n, inbound=[1, -1], outbound=[5, -5]):
             break
     Xood = np.array(Xood)
     return Xood
+
+def sample_unifrom_circle(n = 1000, r=1):
+    theta = np.random.uniform(
+        low=-np.pi,
+        high=np.pi,
+        size=n
+    )
+
+    x1 = r*np.cos(theta).reshape(-1,1)
+    x2 = r*np.sin(theta).reshape(-1,1)
+
+    return np.concatenate(
+        (x1,x2),
+        axis=1
+    )
