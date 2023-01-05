@@ -93,8 +93,7 @@ class kdf(KernelDensityGraph):
         
     def _compute_mahalanobis(self, X, polytope):
         return np.sum(
-            (X - self.polytope_means[polytope])**2\
-                *(1/self.polytope_cov[polytope]),
+            (X - self.polytope_means[polytope])**2,
             axis=1
         )
 

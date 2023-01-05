@@ -1,5 +1,5 @@
 scikit-learn>=0.22.0
-keras<2.10.0,>=2.9.0rc0
+keras<2.12,>=2.11.0 
 scipy>=1.4.1
 numpy<1.23.0,>=1.16.5
 joblib>=0.14.1
