@@ -12,7 +12,8 @@ from scipy.sparse import csr_matrix, vstack
 class kdn(KernelDensityGraph):
    def __init__(
        self,
-       network
+       network,
+       k=1
    ):
        r"""
        Parameters
@@ -26,6 +27,7 @@ class kdn(KernelDensityGraph):
        self.polytope_cardinality = {}
        self.total_samples_this_label = {}
        self.prior = {}
+       self.k = k
        self.network = network
 
  
@@ -94,23 +96,21 @@ class kdn(KernelDensityGraph):
        """
        #X, y = check_X_y(X, y)
        X = X.astype('double')
-       #self.max_val = np.max(X, axis=0)
-       #self.min_val = np.min(X, axis=0)
- 
-       #X = (X-self.min_val)/(self.max_val-self.min_val+1e-8)
- 
+       
        self.labels = np.unique(y)
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
-       self.global_bias = -10**(np.sqrt(self.feature_dim))
-      
+       self.global_bias = -self.k*10**(self.feature_dim**(1/2))
+       
+       idx_with_label = {}
        for label in self.labels:
            self.polytope_cardinality[label] = []
-           self.total_samples_this_label[label] = len(
-                   np.where(y==label)[0]
-               )
-           self.prior[label] = self.total_samples_this_label[label]/X.shape[0]
- 
+           self.total_samples_this_label[label] = 0 
+           idx_with_label[label] = np.where(y==label)[0]
+           self.prior[label] = len(
+                    idx_with_label[label]
+                )/X.shape[0]
+
        # get polytope ids and unique polytope ids
        batchsize = self.total_samples//batch
        polytope_ids = self._get_polytope_ids(X[:batchsize])
@@ -167,11 +167,12 @@ class kdn(KernelDensityGraph):
            self.polytope_cov.append(covariance)
            self.polytope_means.append(location)
  
-           y_tmp = y[idx_with_scale_1]
-           for label in self.labels:     
+           for label in self.labels: 
+               idx = idx_with_label[label]      
                self.polytope_cardinality[label].append(
-                   len(np.where(y_tmp==label)[0])
-               )
+                    np.sum(scales[idx])
+                )
+               self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
  
        self.global_bias = self.global_bias -np.log(X.shape[0])
        self.is_fitted = True   
