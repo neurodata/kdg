@@ -134,7 +134,7 @@ class kdn(KernelDensityGraph):
        # get polytope ids and unique polytope ids
        batch = self.total_samples//batchsize
        polytope_ids = self._get_polytope_ids(X[:batchsize])
- 
+       indx_X2 = 0
        for ii in range(1,batch):
            #print("doing batch ", ii)
            indx_X1 = ii*batchsize
@@ -172,6 +172,9 @@ class kdn(KernelDensityGraph):
                        matched_activation[end_node-self.network_shape[layer]:end_node]
                        )
                    )
+                   print(self._count_ones(
+                       matched_activation[end_node-self.network_shape[layer]:end_node]
+                       ))
                scale -= normalizing_factor
                w[ii,jj] = np.exp(scale)
 
@@ -184,7 +187,7 @@ class kdn(KernelDensityGraph):
               w[node, :] = w[ii,:]
               w[:, node] = w[:,ii]
 
-       
+       print(w)
        used = []
        for ii in range(self.total_samples):
            if ii in used:
