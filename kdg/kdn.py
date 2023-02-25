@@ -57,34 +57,44 @@ class kdn(KernelDensityGraph):
        
    def _get_polytope_ids(self, X):
        total_samples = X.shape[0]
-         
+       polytope_ids = np.zeros(total_samples, dtype=object)
        outputs = []
        inp = self.network.input
  
        for layer in self.network.layers:
-           if 'activation' in layer.name:
-               outputs.append(layer.output)
-
-       # add the final layer
+            if 'activation' in layer.name:
+                outputs.append(layer.output)
+                
+        # add the final layer
        outputs.append(layer.output)
 
        functor = bknd.function(inp, outputs)
        layer_outs = functor(X)
- 
-       activation = []
+
+       prev_node_count = 0
+       post_node_count = 0
        for layer_out in layer_outs[:-1]:
-           activation.append(
-               (layer_out>0).astype('int').reshape(total_samples, -1)
-           )
-        # add the last layer
-       activation.append(
-               (layer_outs[-1]>1/len(self.labels)).astype('int').reshape(total_samples, -1)
-           )
-       polytope_ids = np.concatenate(activation, axis=1)
+            activations = (layer_out>0).astype('object').reshape(total_samples, -1)
+            post_node_count += activations.shape[1]
+            polytope_ids += np.sum(activations<< np.arange(prev_node_count, post_node_count), axis=1)
+            prev_node_count = post_node_count
+
+       # add the last layer
+       activations = (layer_outs[-1]>1/len(self.labels)).astype('object').reshape(total_samples, -1)
+       post_node_count += activations.shape[1]
+       polytope_ids += np.sum(activations\
+                << np.arange(prev_node_count, post_node_count), axis=1)
       
        return polytope_ids
-     
-   def fit(self, X, y, epsilon=1e-6, batch=10):
+    
+   def _count_ones(self, s):
+       count = 0
+       for ii in s:
+           if ii == '1':
+               count += 1
+       return count
+   
+   def fit(self, X, y, epsilon=1e-6, batchsize=1000):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -95,11 +105,19 @@ class kdn(KernelDensityGraph):
            Output (i.e. response) data matrix.
        """
        X = X.astype('double') 
- 
        self.labels = np.unique(y)
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
        self.global_bias = -self.k*10**(np.sqrt(self.feature_dim))
+       w = np.zeros(
+                (
+                    self.total_samples,
+                    self.total_samples
+                ),
+                dtype=float
+            )
+       normalizing_factor = np.sum(np.log(self.network_shape))
+       
       
        idx_with_label = {}
        for label in self.labels:
@@ -114,7 +132,7 @@ class kdn(KernelDensityGraph):
                 )[0] 
  
        # get polytope ids and unique polytope ids
-       batchsize = self.total_samples//batch
+       batch = self.total_samples//batchsize
        polytope_ids = self._get_polytope_ids(X[:batchsize])
  
        for ii in range(1,batch):
@@ -134,32 +152,50 @@ class kdn(KernelDensityGraph):
                    axis=0
                )
        
-       polytopes = np.unique(
-            polytope_ids, axis=0
-            )
-       normalizing_factor = np.sum(np.log(self.network_shape))
-       for polytope in polytopes:      
-           matched_pattern = (polytope_ids==polytope)
-           matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
-           end_node = 0
-           
-           for layer in range(self.total_layers):
-               end_node += self.network_shape[layer]
-               matched_nodes[:, layer] = \
-                    np.sum(
-                        matched_pattern[:,end_node-self.network_shape[layer]:end_node], 
-                        axis=1
-                        )
 
-           scales = (np.exp(np.sum(np.log(matched_nodes), axis=1)\
-                - normalizing_factor))**np.log2(X.shape[0])
+       used_node = []
+       for ii in range(self.total_samples):
+           if ii in used_node:
+                continue
+           tmp_node = []
+           w[ii,ii] = 1
+           tmp_node.append(ii)        
+           for jj in range(ii+1, self.total_samples):
+               matched_activation = bin(polytope_ids[ii] & polytope_ids[jj])[2:]
 
+               end_node = 0
+               scale = 0
+               for layer in range(self.total_layers):
+                   end_node += self.network_shape[layer]
+                   scale += np.log(
+                       self._count_ones(
+                       matched_activation[end_node-self.network_shape[layer]:end_node]
+                       )
+                   )
+               scale -= normalizing_factor
+               w[ii,jj] = np.exp(scale)
+
+               if w[ii,jj] == 1:
+                    tmp_node.append(jj)
+                
+               w[jj,ii] = w[ii,jj]
+
+           for node in tmp_node:
+              w[node, :] = w[ii,:]
+              w[:, node] = w[:,ii]
+
+       
+       used = []
+       for ii in range(self.total_samples):
+           if ii in used:
+               continue
+           scales = w[ii,:]**np.log2(self.total_samples)
 
            idx_with_scale_1 = np.where(
                    scales>.9999999
                )[0]
- 
-           
+           used.extend(idx_with_scale_1)
+
            location = np.mean(X[idx_with_scale_1], axis=0)
            X_tmp = X.copy() - location
            covariance = np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales)
@@ -173,7 +209,7 @@ class kdn(KernelDensityGraph):
                self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
  
  
-       self.global_bias = self.global_bias -np.log(X.shape[0])
+       self.global_bias = self.global_bias -np.log(self.total_samples)
        self.is_fitted = True   
       
    def _compute_distance(self, X, polytope):
