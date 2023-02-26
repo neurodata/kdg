@@ -87,6 +87,14 @@ class kdn(KernelDensityGraph):
       
        return polytope_ids
     
+   '''def _count_ones(n):
+       count = 0
+
+       while(n):
+           n = n & (n-1)
+           count += 1
+
+       return count'''
    def _count_ones(self, s):
        count = 0
        for ii in s:
@@ -94,7 +102,7 @@ class kdn(KernelDensityGraph):
                count += 1
        return count
    
-   def fit(self, X, y, epsilon=1e-6, batchsize=1000):
+   def fit(self, X, y, epsilon=1e-6, batch=1):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -109,7 +117,7 @@ class kdn(KernelDensityGraph):
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
        self.global_bias = -self.k*10**(np.sqrt(self.feature_dim))
-       w = np.zeros(
+       self.w = np.zeros(
                 (
                     self.total_samples,
                     self.total_samples
@@ -132,9 +140,9 @@ class kdn(KernelDensityGraph):
                 )[0] 
  
        # get polytope ids and unique polytope ids
-       batch = self.total_samples//batchsize
+       batchsize = self.total_samples//batch
        polytope_ids = self._get_polytope_ids(X[:batchsize])
-       indx_X2 = 0
+       indx_X2 = np.inf
        for ii in range(1,batch):
            #print("doing batch ", ii)
            indx_X1 = ii*batchsize
@@ -158,11 +166,10 @@ class kdn(KernelDensityGraph):
            if ii in used_node:
                 continue
            tmp_node = []
-           w[ii,ii] = 1
            tmp_node.append(ii)        
-           for jj in range(ii+1, self.total_samples):
+           for jj in range(ii, self.total_samples):
                matched_activation = bin(polytope_ids[ii] & polytope_ids[jj])[2:]
-
+               matched_activation = matched_activation[::-1]
                end_node = 0
                scale = 0
                for layer in range(self.total_layers):
@@ -172,27 +179,26 @@ class kdn(KernelDensityGraph):
                        matched_activation[end_node-self.network_shape[layer]:end_node]
                        )
                    )
-                   print(self._count_ones(
-                       matched_activation[end_node-self.network_shape[layer]:end_node]
-                       ))
+                   
                scale -= normalizing_factor
-               w[ii,jj] = np.exp(scale)
-
-               if w[ii,jj] == 1:
+               self.w[ii,jj] = np.exp(scale)
+               
+               if self.w[ii,jj] == self.w[ii,ii]:
                     tmp_node.append(jj)
                 
-               w[jj,ii] = w[ii,jj]
+               self.w[jj,ii] = self.w[ii,jj]
 
            for node in tmp_node:
-              w[node, :] = w[ii,:]
-              w[:, node] = w[:,ii]
+              self.w[node, :] = self.w[ii,:]
+              self.w[:, node] = self.w[:,ii]
 
-       print(w)
        used = []
        for ii in range(self.total_samples):
            if ii in used:
                continue
-           scales = w[ii,:]**np.log2(self.total_samples)
+           scales = self.w[ii,:]
+           scales = (scales/np.max(scales))**np.log(self.total_samples)
+           #**np.log2(self.total_samples)
 
            idx_with_scale_1 = np.where(
                    scales>.9999999
