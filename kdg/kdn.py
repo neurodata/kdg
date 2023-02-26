@@ -139,11 +139,7 @@ class kdn(KernelDensityGraph):
             )
        normalizing_factor = np.sum(np.log(self.network_shape))
        for polytope in polytopes: 
-           polytope_ = polytope.copy()
-           idx_with_zeros = np.where(polytope_==0)[0]
-           polytope_[idx_with_zeros] = 2
-
-           matched_pattern = (polytope_ids==polytope_)
+           matched_pattern = (polytope_ids==polytope)
            matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
            end_node = 0
            
