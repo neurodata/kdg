@@ -84,7 +84,7 @@ class kdn(KernelDensityGraph):
       
        return polytope_ids
      
-   def fit(self, X, y, epsilon=1e-6, batch=10):
+   def fit(self, X, y, epsilon=1e-6, batch=1):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -116,7 +116,7 @@ class kdn(KernelDensityGraph):
        # get polytope ids and unique polytope ids
        batchsize = self.total_samples//batch
        polytope_ids = self._get_polytope_ids(X[:batchsize])
- 
+       indx_X2 = np.inf
        for ii in range(1,batch):
            #print("doing batch ", ii)
            indx_X1 = ii*batchsize
@@ -138,8 +138,12 @@ class kdn(KernelDensityGraph):
             polytope_ids, axis=0
             )
        normalizing_factor = np.sum(np.log(self.network_shape))
-       for polytope in polytopes:      
-           matched_pattern = (polytope_ids==polytope)
+       for polytope in polytopes: 
+           polytope_ = polytope.copy()
+           idx_with_zeros = np.where(polytope_==0)[0]
+           polytope_[idx_with_zeros] = 2
+
+           matched_pattern = (polytope_ids==polytope_)
            matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
            end_node = 0
            
@@ -152,7 +156,8 @@ class kdn(KernelDensityGraph):
                         )
 
            scales = (np.exp(np.sum(np.log(matched_nodes), axis=1)\
-                - normalizing_factor))**np.log2(X.shape[0])
+                - normalizing_factor))
+           scales = (scales/np.max(scales))**np.log10(self.total_samples)
 
 
            idx_with_scale_1 = np.where(
