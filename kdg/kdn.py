@@ -57,7 +57,10 @@ class kdn(KernelDensityGraph):
        
    def _get_polytope_ids(self, X):
        total_samples = X.shape[0]
-       polytope_ids = np.zeros(total_samples, dtype=object)
+       polytope_ids = np.zeros(
+           (total_samples, self.total_layers),
+            dtype=object
+        )
        outputs = []
        inp = self.network.input
  
@@ -71,36 +74,27 @@ class kdn(KernelDensityGraph):
        functor = bknd.function(inp, outputs)
        layer_outs = functor(X)
 
-       prev_node_count = 0
-       post_node_count = 0
-       for layer_out in layer_outs[:-1]:
+       for ii, layer_out in enumerate(layer_outs[:-1]):
             activations = (layer_out>0).astype('object').reshape(total_samples, -1)
-            post_node_count += activations.shape[1]
-            polytope_ids += np.sum(activations<< np.arange(prev_node_count, post_node_count), axis=1)
-            prev_node_count = post_node_count
+            polytope_ids[:,ii] += np.sum(activations<< np.arange(activations.shape[1]), axis=1)
 
        # add the last layer
        activations = (layer_outs[-1]>1/len(self.labels)).astype('object').reshape(total_samples, -1)
-       post_node_count += activations.shape[1]
-       polytope_ids += np.sum(activations\
-                << np.arange(prev_node_count, post_node_count), axis=1)
+       polytope_ids[:,self.total_layers-1] += np.sum(activations\
+                << np.arange(activations.shape[1]), axis=1)
       
        return polytope_ids
     
-   '''def _count_ones(n):
-       count = 0
+   def _count_ones(self, n):
+       total_count = 0
+       for ii,n1 in enumerate(n):
+          count = self.network_shape[ii]
 
-       while(n):
-           n = n & (n-1)
-           count += 1
-
-       return count'''
-   def _count_ones(self, s):
-       count = 0
-       for ii in s:
-           if ii == '1':
-               count += 1
-       return count
+          while(n1):
+             n1 = n1 & (n1-1)
+             count -= 1
+          total_count += np.log(count)
+       return total_count
    
    def fit(self, X, y, epsilon=1e-6, batch=1):
        r"""
@@ -160,51 +154,39 @@ class kdn(KernelDensityGraph):
                    axis=0
                )
        
-
-       used_node = []
-       for ii in range(self.total_samples):
-           if ii in used_node:
-                continue
-           tmp_node = []
-           tmp_node.append(ii)        
-           for jj in range(ii, self.total_samples):
-               matched_activation = bin(polytope_ids[ii] & polytope_ids[jj])[2:]
-               matched_activation = matched_activation[::-1]
-               end_node = 0
-               scale = 0
-               for layer in range(self.total_layers):
-                   end_node += self.network_shape[layer]
-                   scale += np.log(
-                       self._count_ones(
-                       matched_activation[end_node-self.network_shape[layer]:end_node]
-                       )
+       def worker(polytopes, node):
+           total_samples = polytopes.shape[0]
+           weight = np.zeros(total_samples, dtype=float)
+           for jj in range(total_samples):
+               weight[jj] = self._count_ones(
+                   polytope_ids[node] ^ polytope_ids[jj]
                    )
-                   
-               scale -= normalizing_factor
-               self.w[ii,jj] = np.exp(scale)
                
-               if self.w[ii,jj] == self.w[ii,ii]:
-                    tmp_node.append(jj)
-                
-               self.w[jj,ii] = self.w[ii,jj]
+           return weight
+       
+       self.w = np.array(
+            Parallel(n_jobs=-2,verbose=1)(
+                    delayed(worker)(
+                            polytope_ids,
+                            ii
+                            ) for ii in range(self.total_samples)
+                    )  
+       )
+       self.w = np.exp(self.w - normalizing_factor)
 
-           for node in tmp_node:
-              self.w[node, :] = self.w[ii,:]
-              self.w[:, node] = self.w[:,ii]
-
+       
        used = []
        for ii in range(self.total_samples):
            if ii in used:
                continue
-           scales = self.w[ii,:]
-           scales = (scales/np.max(scales))**np.log(self.total_samples)
-           #**np.log2(self.total_samples)
-
+           scales = self.w[ii,:].copy()
+           scales = scales**np.log10(self.total_samples)
+           
            idx_with_scale_1 = np.where(
                    scales>.9999999
                )[0]
            used.extend(idx_with_scale_1)
-
+            
            location = np.mean(X[idx_with_scale_1], axis=0)
            X_tmp = X.copy() - location
            covariance = np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales)
