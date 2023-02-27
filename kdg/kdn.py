@@ -8,7 +8,8 @@ from tensorflow.keras.models import Model
 from joblib import Parallel, delayed
 from tensorflow.keras import backend as bknd
 from scipy.sparse import csr_matrix, vstack
- 
+np.seterr(divide = 'ignore') 
+
 class kdn(KernelDensityGraph):
    def __init__(
        self,
@@ -154,24 +155,29 @@ class kdn(KernelDensityGraph):
                    axis=0
                )
        
-       def worker(polytopes, node):
-           total_samples = polytopes.shape[0]
-           weight = np.zeros(total_samples, dtype=float)
-           for jj in range(total_samples):
-               weight[jj] = self._count_ones(
-                   polytope_ids[node] ^ polytope_ids[jj]
-                   )
+       def worker(unmatch, shape):
+           total_count = 0
+           for ii,n1 in enumerate(unmatch):
+                count = shape[ii]
+
+                while(n1):
+                    n1 = n1 & (n1-1)
+                    count -= 1
+                total_count += np.log(count)
                
-           return weight
+           return total_count
        
-       self.w = np.array(
+       for ii in range(self.total_samples):
+           unmatched_pattern = polytope_ids ^ polytope_ids[ii]
+           self.w[ii] = np.array(
             Parallel(n_jobs=-2,backend='loky')(
                     delayed(worker)(
-                            polytope_ids,
-                            ii
-                            ) for ii in range(self.total_samples)
+                            unmatch,
+                            self.network_shape
+                            ) for unmatch in unmatched_pattern
                     )  
-       )
+            )
+           
        self.w = np.exp(self.w - normalizing_factor)
 
        
