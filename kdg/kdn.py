@@ -8,7 +8,8 @@ from tensorflow.keras.models import Model
 from joblib import Parallel, delayed
 from tensorflow.keras import backend as bknd
 from scipy.sparse import csr_matrix, vstack
-np.seterr(divide = 'ignore') 
+import os
+os.environ["PYTHONWARNINGS"] = "ignore"
 
 class kdn(KernelDensityGraph):
    def __init__(
@@ -168,9 +169,10 @@ class kdn(KernelDensityGraph):
            return total_count
        
        for ii in range(self.total_samples):
+           print('Calculating weight for ', ii)
            unmatched_pattern = polytope_ids ^ polytope_ids[ii]
            self.w[ii] = np.array(
-            Parallel(n_jobs=-2,backend='loky',verbose=1)(
+            Parallel(n_jobs=-2,backend='loky')(
                     delayed(worker)(
                             unmatch,
                             self.network_shape
