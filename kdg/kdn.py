@@ -165,7 +165,7 @@ class kdn(KernelDensityGraph):
            return weight
        
        self.w = np.array(
-            Parallel(n_jobs=-2,verbose=1)(
+            Parallel(n_jobs=-2,backend='loky')(
                     delayed(worker)(
                             polytope_ids,
                             ii
