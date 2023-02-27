@@ -170,7 +170,7 @@ class kdn(KernelDensityGraph):
        for ii in range(self.total_samples):
            unmatched_pattern = polytope_ids ^ polytope_ids[ii]
            self.w[ii] = np.array(
-            Parallel(n_jobs=-2,backend='loky')(
+            Parallel(n_jobs=-2,backend='loky',verbose=1)(
                     delayed(worker)(
                             unmatch,
                             self.network_shape
