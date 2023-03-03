@@ -9,14 +9,16 @@ from joblib import Parallel, delayed
 from tensorflow.keras import backend as bknd
 from scipy.sparse import csr_matrix, vstack
 import os
-import tqdm
+from tqdm import tqdm
+from numba import jit, cuda
 os.environ["PYTHONWARNINGS"] = "ignore"
 
 class kdn(KernelDensityGraph):
    def __init__(
        self,
        network,
-       k=1
+       k=1,
+       CUDA=False
    ):
        r"""
        Parameters
@@ -32,7 +34,7 @@ class kdn(KernelDensityGraph):
        self.prior = {}
        self.network = network
        self.k = k
-
+       self.cuda = CUDA
  
        # total number of layers in the NN
        self.total_layers = 1
@@ -87,7 +89,7 @@ class kdn(KernelDensityGraph):
                 << np.arange(activations.shape[1]), axis=1)
       
        return polytope_ids
-   
+    
    
    def fit(self, X, y, epsilon=1e-6, batch=1):
        r"""
@@ -147,30 +149,13 @@ class kdn(KernelDensityGraph):
                    axis=0
                )
        
-       def worker(unmatch, shape):
-           total_count = 0
-           for ii,n1 in enumerate(unmatch):
-                count = shape[ii]
-
-                while(n1):
-                    n1 = n1 & (n1-1)
-                    count -= 1
-                total_count += np.log(count)
-               
-           return total_count
        
        print('Calculating weight for ', self.total_samples, ' samples')
        for ii in tqdm(range(self.total_samples)):
            #print('Calculating weight for ', ii)
            unmatched_pattern = polytope_ids ^ polytope_ids[ii]
-           self.w[ii] = np.array(
-            Parallel(n_jobs=-2,backend='loky')(
-                    delayed(worker)(
-                            unmatch,
-                            self.network_shape
-                            ) for unmatch in unmatched_pattern
-                    )  
-            )
+           self.w[ii] = worker_gpu(unmatched_pattern, self.network_shape) if self.cuda else\
+                worker_cpu(unmatched_pattern, self.network_shape)
            
        self.w = np.exp(self.w - normalizing_factor)
 
@@ -293,3 +278,33 @@ class kdn(KernelDensityGraph):
         """
         
         return np.argmax(self.predict_proba(X), axis = 1)
+   
+@jit(target_backend='cuda')
+def worker_gpu(unmatched, shape):
+    w = np.zeros(unmatched.shape[0],dtype=float)
+    for jj,unmatch in enumerate(unmatched):
+        w[jj] = 0
+        for ii,n1 in enumerate(unmatch):
+            count = shape[ii]
+
+            while(n1):
+                n1 = n1 & (n1-1)
+                count -= 1
+            w[jj] += np.log(count)
+            
+    return w
+
+@jit
+def worker_cpu(unmatched, shape):
+    w = np.zeros(unmatched.shape[0],dtype=float)
+    for jj,unmatch in enumerate(unmatched):
+        w[jj] = 0
+        for ii,n1 in enumerate(unmatch):
+            count = shape[ii]
+
+            while(n1):
+                n1 = n1 & (n1-1)
+                count -= 1
+            w[jj] += np.log(count)
+            
+    return w
