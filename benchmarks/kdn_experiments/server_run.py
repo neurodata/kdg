@@ -92,7 +92,7 @@ def experiment_out(in_sample, r, n_test):
     nn = getNN(input_size=2, num_classes=2)
     history = nn.fit(X, keras.utils.to_categorical(y), **fit_kwargs)
     
-    model_kdn = kdn(k=1, network=nn, CUDA=False)
+    model_kdn = kdn(k=1, network=nn, CUDA=True)
     model_kdn.fit(X, y)
     
     for ii, r_ in enumerate(r):
