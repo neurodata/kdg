@@ -294,7 +294,7 @@ def worker_gpu(unmatched, shape):
             
     return w
 
-@jit(nopython=True)
+@jit
 def worker_cpu(unmatched, shape):
     w = np.zeros(unmatched.shape[0],dtype=float)
     for jj,unmatch in enumerate(unmatched):
