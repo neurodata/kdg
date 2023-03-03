@@ -91,36 +91,6 @@ class kdn(KernelDensityGraph):
        return polytope_ids
     
    
-   @jit(target_backend='cuda')
-   def worker_gpu(unmatched, shape):
-        w = np.zeros(unmatched.shape[0],dtype=float)
-        for jj,unmatch in enumerate(unmatched):
-            w[jj] = 0
-            for ii,n1 in enumerate(unmatch):
-                count = shape[ii]
-
-                while(n1):
-                    n1 = n1 & (n1-1)
-                    count -= 1
-                w[jj] += np.log(count)
-               
-        return w
-   
-   @jit(nopython=True)
-   def worker_cpu(unmatched, shape):
-        w = np.zeros(unmatched.shape[0],dtype=float)
-        for jj,unmatch in enumerate(unmatched):
-            w[jj] = 0
-            for ii,n1 in enumerate(unmatch):
-                count = shape[ii]
-
-                while(n1):
-                    n1 = n1 & (n1-1)
-                    count -= 1
-                w[jj] += np.log(count)
-               
-        return w
-   
    def fit(self, X, y, epsilon=1e-6, batch=1):
        r"""
        Fits the kernel density forest.
@@ -308,3 +278,33 @@ class kdn(KernelDensityGraph):
         """
         
         return np.argmax(self.predict_proba(X), axis = 1)
+   
+@jit(target_backend='cuda')
+def worker_gpu(unmatched, shape):
+    w = np.zeros(unmatched.shape[0],dtype=float)
+    for jj,unmatch in enumerate(unmatched):
+        w[jj] = 0
+        for ii,n1 in enumerate(unmatch):
+            count = shape[ii]
+
+            while(n1):
+                n1 = n1 & (n1-1)
+                count -= 1
+            w[jj] += np.log(count)
+            
+    return w
+
+@jit(nopython=True)
+def worker_cpu(unmatched, shape):
+    w = np.zeros(unmatched.shape[0],dtype=float)
+    for jj,unmatch in enumerate(unmatched):
+        w[jj] = 0
+        for ii,n1 in enumerate(unmatch):
+            count = shape[ii]
+
+            while(n1):
+                n1 = n1 & (n1-1)
+                count -= 1
+            w[jj] += np.log(count)
+            
+    return w
