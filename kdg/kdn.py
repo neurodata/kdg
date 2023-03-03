@@ -9,13 +9,16 @@ from joblib import Parallel, delayed
 from tensorflow.keras import backend as bknd
 from scipy.sparse import csr_matrix, vstack
 import os
+from tqdm import tqdm
+from numba import jit, cuda
 os.environ["PYTHONWARNINGS"] = "ignore"
 
 class kdn(KernelDensityGraph):
    def __init__(
        self,
        network,
-       k=1
+       k=1,
+       CUDA=False
    ):
        r"""
        Parameters
@@ -112,7 +115,7 @@ class kdn(KernelDensityGraph):
        self.labels = np.unique(y)
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
-       self.global_bias = -self.k*10**(np.sqrt(self.feature_dim))
+       self.global_bias = self.k*10.0**-self.feature_dim
        self.w = np.zeros(
                 (
                     self.total_samples,
@@ -156,29 +159,26 @@ class kdn(KernelDensityGraph):
                    axis=0
                )
        
-       def worker(unmatch, shape):
-           total_count = 0
-           for ii,n1 in enumerate(unmatch):
-                count = shape[ii]
+       @jit(target_backend='cuda')
+       def worker(unmatched, shape):
+           w = np.zeros(unmatched.shape[0],dtype=float)
+           for jj,unmatch in enumerate(unmatched):
+                w[jj] = 0
+                for ii,n1 in enumerate(unmatch):
+                    count = shape[ii]
 
-                while(n1):
-                    n1 = n1 & (n1-1)
-                    count -= 1
-                total_count += np.log(count)
+                    while(n1):
+                        n1 = n1 & (n1-1)
+                        count -= 1
+                    w[jj] += np.log(count)
                
-           return total_count
+           return w
        
-       for ii in range(self.total_samples):
-           print('Calculating weight for ', ii)
+       print('Calculating weight for ', self.total_samples, ' samples')
+       for ii in tqdm(range(self.total_samples)):
+           #print('Calculating weight for ', ii)
            unmatched_pattern = polytope_ids ^ polytope_ids[ii]
-           self.w[ii] = np.array(
-            Parallel(n_jobs=-2,backend='loky')(
-                    delayed(worker)(
-                            unmatch,
-                            self.network_shape
-                            ) for unmatch in unmatched_pattern
-                    )  
-            )
+           self.w[ii] = worker(unmatched_pattern, self.network_shape)
            
        self.w = np.exp(self.w - normalizing_factor)
 
@@ -188,7 +188,7 @@ class kdn(KernelDensityGraph):
            if ii in used:
                continue
            scales = self.w[ii,:].copy()
-           scales = scales**np.log10(self.total_samples)
+           scales = scales**np.log(self.total_samples)
            
            idx_with_scale_1 = np.where(
                    scales>.9999999
@@ -208,7 +208,7 @@ class kdn(KernelDensityGraph):
                self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
  
  
-       self.global_bias = self.global_bias -np.log(self.total_samples)
+       self.global_bias = np.log(self.global_bias) -np.log(self.total_samples)
        self.is_fitted = True   
       
    def _compute_distance(self, X, polytope):
