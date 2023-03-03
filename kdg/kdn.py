@@ -150,7 +150,7 @@ class kdn(KernelDensityGraph):
                )
        
        
-       print('Calculating weight for ', self.total_samples, ' samples')
+       print('Calculating weight for ', self.total_samples, ' samples, CUDA = ', self.cuda)
        for ii in tqdm(range(self.total_samples)):
            #print('Calculating weight for ', ii)
            unmatched_pattern = polytope_ids ^ polytope_ids[ii]
