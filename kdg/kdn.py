@@ -34,7 +34,7 @@ class kdn(KernelDensityGraph):
        self.prior = {}
        self.network = network
        self.k = k
-
+       self.cuda = CUDA
  
        # total number of layers in the NN
        self.total_layers = 1
@@ -90,16 +90,36 @@ class kdn(KernelDensityGraph):
       
        return polytope_ids
     
-   def _count_ones(self, n):
-       total_count = 0
-       for ii,n1 in enumerate(n):
-          count = self.network_shape[ii]
+   
+   @jit(target_backend='cuda')
+   def worker_gpu(unmatched, shape):
+        w = np.zeros(unmatched.shape[0],dtype=float)
+        for jj,unmatch in enumerate(unmatched):
+            w[jj] = 0
+            for ii,n1 in enumerate(unmatch):
+                count = shape[ii]
 
-          while(n1):
-             n1 = n1 & (n1-1)
-             count -= 1
-          total_count += np.log(count)
-       return total_count
+                while(n1):
+                    n1 = n1 & (n1-1)
+                    count -= 1
+                w[jj] += np.log(count)
+               
+        return w
+   
+   @jit(nopython=True)
+   def worker_cpu(unmatched, shape):
+        w = np.zeros(unmatched.shape[0],dtype=float)
+        for jj,unmatch in enumerate(unmatched):
+            w[jj] = 0
+            for ii,n1 in enumerate(unmatch):
+                count = shape[ii]
+
+                while(n1):
+                    n1 = n1 & (n1-1)
+                    count -= 1
+                w[jj] += np.log(count)
+               
+        return w
    
    def fit(self, X, y, epsilon=1e-6, batch=1):
        r"""
@@ -159,26 +179,13 @@ class kdn(KernelDensityGraph):
                    axis=0
                )
        
-       @jit(target_backend='cuda')
-       def worker(unmatched, shape):
-           w = np.zeros(unmatched.shape[0],dtype=float)
-           for jj,unmatch in enumerate(unmatched):
-                w[jj] = 0
-                for ii,n1 in enumerate(unmatch):
-                    count = shape[ii]
-
-                    while(n1):
-                        n1 = n1 & (n1-1)
-                        count -= 1
-                    w[jj] += np.log(count)
-               
-           return w
        
        print('Calculating weight for ', self.total_samples, ' samples')
        for ii in tqdm(range(self.total_samples)):
            #print('Calculating weight for ', ii)
            unmatched_pattern = polytope_ids ^ polytope_ids[ii]
-           self.w[ii] = worker(unmatched_pattern, self.network_shape)
+           self.w[ii] = worker_gpu(unmatched_pattern, self.network_shape) if self.cuda else\
+                worker_cpu(unmatched_pattern, self.network_shape)
            
        self.w = np.exp(self.w - normalizing_factor)
 
