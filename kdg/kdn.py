@@ -279,7 +279,7 @@ class kdn(KernelDensityGraph):
         
         return np.argmax(self.predict_proba(X), axis = 1)
    
-@jit(_target='cuda')
+@cuda.jit
 def worker_gpu(unmatched, shape):
     w = np.zeros(unmatched.shape[0],dtype=float)
     for jj,unmatch in enumerate(unmatched):
