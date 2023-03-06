@@ -10,7 +10,7 @@ from tensorflow.keras import backend as bknd
 from scipy.sparse import csr_matrix, vstack
 import os
 from tqdm import tqdm
-
+from numba import jit 
 os.environ["PYTHONWARNINGS"] = "ignore"
 
 class kdn(KernelDensityGraph):
@@ -149,18 +149,6 @@ class kdn(KernelDensityGraph):
                )
        
        
-       def worker(unmatch, shape):
-           total_count = 0
-           for ii,n1 in enumerate(unmatch):
-                count = shape[ii] 
-
-                while(n1):
-                    n1 = n1 & (n1-1)
-                    count -= 1
-                total_count += np.log(count)
-               
-           return total_count
-       
        print('Calculating weight for ', self.total_samples, ' samples')
        for ii in tqdm(range(self.total_samples)):
            #print('Calculating weight for ', ii)
@@ -295,3 +283,16 @@ class kdn(KernelDensityGraph):
         """
         
         return np.argmax(self.predict_proba(X), axis = 1)
+
+@jit(nopython=True)
+def worker(unmatch, shape):
+    total_count = 0
+    for ii,n1 in enumerate(unmatch):
+        count = shape[ii] 
+
+        while(n1):
+            n1 = n1 & (n1-1)
+            count -= 1
+        total_count += np.log(count)
+        
+    return total_count
