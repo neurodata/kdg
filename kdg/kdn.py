@@ -284,7 +284,7 @@ class kdn(KernelDensityGraph):
         
         return np.argmax(self.predict_proba(X), axis = 1)
 
-@jit(nopython=True)
+@jit
 def worker(unmatch, shape):
     total_count = 0
     for ii,n1 in enumerate(unmatch):
