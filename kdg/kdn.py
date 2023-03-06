@@ -80,12 +80,12 @@ class kdn(KernelDensityGraph):
 
        for ii, layer_out in enumerate(layer_outs[:-1]):
             activations = (layer_out>0).astype('object').reshape(total_samples, -1)
-            polytope_ids[:,ii] += np.sum(activations<< np.arange(activations.shape[1]), axis=1)
+            polytope_ids[:,ii] += np.sum(activations<< np.arange(activations.shape[1]), axis=1) + (1<<activations.shape[1])
 
        # add the last layer
        activations = (layer_outs[-1]>1/len(self.labels)).astype('object').reshape(total_samples, -1)
        polytope_ids[:,self.total_layers-1] += np.sum(activations\
-                << np.arange(activations.shape[1]), axis=1)
+                << np.arange(activations.shape[1]), axis=1) + (1<<activations.shape[1])
       
        return polytope_ids
    
@@ -152,7 +152,7 @@ class kdn(KernelDensityGraph):
        def worker(unmatch, shape):
            total_count = 0
            for ii,n1 in enumerate(unmatch):
-                count = shape[ii]
+                count = shape[ii] 
 
                 while(n1):
                     n1 = n1 & (n1-1)
@@ -182,7 +182,7 @@ class kdn(KernelDensityGraph):
            if ii in used:
                continue
            scales = self.w[ii,:].copy()
-           scales = scales**np.log10(self.total_samples)
+           scales = scales**np.log(self.total_samples)
            
            idx_with_scale_1 = np.where(
                    scales>.9999999
