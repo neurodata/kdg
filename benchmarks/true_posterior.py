@@ -27,7 +27,7 @@ mc_reps = 1000
 
 def posterior_calc(N, total_grid_points):
     posterior = np.zeros(total_grid_points, dtype=float)
-    X, y = generate_polynomial(N, a=(1,3))
+    X, y = generate_spirals(N, noise=.8)
     
     for jj in range(total_grid_points):
         points = 0
@@ -61,7 +61,7 @@ df = pd.DataFrame()
 df['posterior'] = posterior
 df['X1'] = grid_samples[:,0]
 df['X2'] = grid_samples[:,1]
-df.to_csv('true_posterior/polynomial_pdf.csv')
+df.to_csv('true_posterior/spiral_pdf.csv')
 # %%
 '''df = pd.read_csv('true_posterior/Gaussian_xor_pdf.csv')
 grid_samples0 = df['X1']
