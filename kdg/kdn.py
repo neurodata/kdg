@@ -10,7 +10,7 @@ from tensorflow.keras import backend as bknd
 from scipy.sparse import csr_matrix, vstack
 import os
 from tqdm import tqdm
-from numba import jit 
+
 os.environ["PYTHONWARNINGS"] = "ignore"
 
 class kdn(KernelDensityGraph):
