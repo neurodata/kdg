@@ -34,11 +34,14 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     if np.isnan(np.sum(X)):
         return
     
-    '''for ii in range(X.shape[1]):
-        unique_val = np.unique(X[:,ii])
+    min_val = np.min(X,axis=0)
+    max_val = np.max(X, axis=0)
+    X = (X-min_val)/(max_val-min_val)
 
+    for ii in range(X.shape[1]):
+        unique_val = np.unique(X[:,ii])
         if len(unique_val) < 10:
-            return'''
+            return
         
     total_sample = X.shape[0]
     test_sample = total_sample//3
@@ -61,7 +64,7 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
             X_train, X_test, y_train, y_test = train_test_split(
                      X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep)
             
-            model_kdf = kdf(k=1e-50, kwargs={'n_estimators':n_estimators})
+            model_kdf = kdf(k=1, kwargs={'n_estimators':n_estimators})
             model_kdf.fit(X_train, y_train)
             proba_kdf = model_kdf.predict_proba(X_test)
             proba_rf = model_kdf.rf_model.predict_proba(X_test)
