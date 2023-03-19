@@ -103,7 +103,7 @@ class kdn(KernelDensityGraph):
        self.labels = np.unique(y)
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
-       self.global_bias = self.k*10.0**-self.feature_dim
+       self.global_bias = np.log(self.k) - 10**(self.feature_dim**(1/2)) 
        self.w = np.zeros(
                 (
                     self.total_samples,
@@ -202,7 +202,7 @@ class kdn(KernelDensityGraph):
                self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
  
  
-       self.global_bias = np.log(self.global_bias) -np.log(self.total_samples)
+       self.global_bias = self.global_bias - np.log10(self.total_samples)
        self.is_fitted = True   
       
    def _compute_distance(self, X, polytope):

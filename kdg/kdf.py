@@ -20,7 +20,7 @@ class kdf(KernelDensityGraph):
         self.k = k
         self.is_fitted = False
 
-    def fit(self, X, y, epsilon=1e-6):
+    def fit(self, X, y, epsilon=1e-4):
         r"""
         Fits the kernel density forest.
         Parameters
@@ -38,12 +38,11 @@ class kdf(KernelDensityGraph):
 
         X, y = check_X_y(X, y)
         X = X.astype('double')
-        
         self.total_samples = X.shape[0]
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
         self.feature_dim = X.shape[1] 
-        self.global_bias = self.k*10.0**-self.feature_dim
+        self.global_bias = np.log(self.k) - 10**(self.feature_dim**(1/2)) 
 
         ### change code to calculate one kernel per polytope
         idx_with_label = {}
@@ -54,9 +53,7 @@ class kdf(KernelDensityGraph):
             self.prior[label] = len(
                     idx_with_label[label]
                 )/X.shape[0]
-            idx_with_label[label] = np.where(
-                    y == label
-                )[0] 
+
 
         predicted_leaf_ids_across_trees = np.array(
                 [tree.apply(X) for tree in self.rf_model.estimators_]
@@ -73,29 +70,31 @@ class kdf(KernelDensityGraph):
                     axis=1
                 )
             
-            scales = (matched_samples/np.max(matched_samples))**np.log2(X.shape[0])
+            scales = (matched_samples/np.max(matched_samples))**np.log10(X.shape[0])
             idx_with_scale_1 = np.where(
                     scales==1
                 )[0]
-
+            
             location = np.mean(X[idx_with_scale_1], axis=0)
             X_tmp = X.copy() - location
             covariance = np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales)
             self.polytope_cov.append(covariance)
             self.polytope_means.append(location)
 
-            for label in self.labels:    
+            for label in self.labels:
+                idx = idx_with_label[label]      
                 self.polytope_cardinality[label].append(
-                     np.sum(scales[idx_with_label[label]])
-                 )
+                    np.sum(scales[idx])
+                )
                 self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
 
-        self.global_bias = np.log(self.global_bias) -np.log(self.total_samples)
+        self.global_bias = self.global_bias - np.log10(self.total_samples)
         self.is_fitted = True
         
-    def _compute_distance(self, X, polytope):
+    def _compute_mahalanobis(self, X, polytope):
         return np.sum(
-            (X - self.polytope_means[polytope])**2,
+            (X - self.polytope_means[polytope])**2\
+                *(1/self.polytope_cov[polytope]),
             axis=1
         )
 
@@ -139,7 +138,7 @@ class kdf(KernelDensityGraph):
             )
         
         for polytope in range(total_polytope):
-            distance[:,polytope] = self._compute_distance(X, polytope)
+            distance[:,polytope] = self._compute_mahalanobis(X, polytope)
 
         polytope_idx = np.argmin(distance, axis=1)
 

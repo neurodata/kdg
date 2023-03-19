@@ -238,3 +238,27 @@ for label in labels:
         break
     break
 # %%
+dataset = openml.datasets.get_dataset(12)
+X, y, is_categorical, _ = dataset.get_data(
+                dataset_format="array", target=dataset.default_target_attribute
+            )
+
+total_sample = X.shape[0]
+train_samples = np.logspace(
+            np.log10(100),
+            np.log10(total_sample-1000),
+            num=5,
+            endpoint=True,
+            dtype=int
+        )
+X_train, X_test, y_train, y_test = train_test_split(
+                     X, y, test_size=.33, random_state=42)
+
+model_kdf = kdf(k=1, kwargs={'n_estimators':500})
+model_kdf.fit(X_train, y_train, epsilon=1e-4)
+
+# %%
+np.mean(model_kdf.predict(X_test)==y_test)
+# %%
+np.mean(model_kdf.rf_model.predict(X_test)==y_test)
+# %%
