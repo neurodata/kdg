@@ -34,11 +34,11 @@ def experiment(dataset_id, n_estimators=500, test_sample=1000, reps=10, random_s
     if np.isnan(np.sum(X)):
         return
     
-    for ii in range(X.shape[1]):
+    '''for ii in range(X.shape[1]):
         unique_val = np.unique(X[:,ii])
 
         if len(unique_val) < 10:
-            return
+            return'''
         
     total_sample = X.shape[0]
     train_samples = np.logspace(
