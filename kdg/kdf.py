@@ -39,6 +39,7 @@ class kdf(KernelDensityGraph):
         X, y = check_X_y(X, y)
         X = X.astype('double')
         
+        self.total_samples = X.shape[0]
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
         self.feature_dim = X.shape[1] 
