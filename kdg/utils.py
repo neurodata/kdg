@@ -281,7 +281,7 @@ def trunk_sim(n_samples, p_star=3, p=3, center_box=(-1.0, 1.0), random_state=Non
 def generate_spirals(
     n_samples,
     n_class=2,
-    noise=0.3,
+    noise=0.8,
     bounding_box = (-1.0,1.0),
     random_state=None,
 ):

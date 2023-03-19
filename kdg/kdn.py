@@ -8,7 +8,10 @@ from tensorflow.keras.models import Model
 from joblib import Parallel, delayed
 from tensorflow.keras import backend as bknd
 from scipy.sparse import csr_matrix, vstack
- 
+import os
+from tqdm import tqdm
+os.environ["PYTHONWARNINGS"] = "ignore"
+
 class kdn(KernelDensityGraph):
    def __init__(
        self,
@@ -57,33 +60,35 @@ class kdn(KernelDensityGraph):
        
    def _get_polytope_ids(self, X):
        total_samples = X.shape[0]
-         
+       polytope_ids = np.zeros(
+           (total_samples, self.total_layers),
+            dtype=object
+        )
        outputs = []
        inp = self.network.input
  
        for layer in self.network.layers:
-           if 'activation' in layer.name:
-               outputs.append(layer.output)
-
-       # add the final layer
+            if 'activation' in layer.name:
+                outputs.append(layer.output)
+                
+        # add the final layer
        outputs.append(layer.output)
 
        functor = bknd.function(inp, outputs)
        layer_outs = functor(X)
- 
-       activation = []
-       for layer_out in layer_outs[:-1]:
-           activation.append(
-               (layer_out>0).astype('int').reshape(total_samples, -1)
-           )
-        # add the last layer
-       activation.append(
-               (layer_outs[-1]>1/len(self.labels)).astype('int').reshape(total_samples, -1)
-           )
-       polytope_ids = np.concatenate(activation, axis=1)
+
+       for ii, layer_out in enumerate(layer_outs[:-1]):
+            activations = (layer_out>0).astype('object').reshape(total_samples, -1)
+            polytope_ids[:,ii] += np.sum(activations<< np.arange(activations.shape[1]), axis=1) + (1<<activations.shape[1])
+
+       # add the last layer
+       activations = (layer_outs[-1]>1/len(self.labels)).astype('object').reshape(total_samples, -1)
+       polytope_ids[:,self.total_layers-1] += np.sum(activations\
+                << np.arange(activations.shape[1]), axis=1) + (1<<activations.shape[1])
       
        return polytope_ids
-     
+   
+   
    def fit(self, X, y, epsilon=1e-6, batch=1):
        r"""
        Fits the kernel density forest.
@@ -95,11 +100,19 @@ class kdn(KernelDensityGraph):
            Output (i.e. response) data matrix.
        """
        X = X.astype('double') 
- 
        self.labels = np.unique(y)
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
-       self.global_bias = -self.k*10**(np.sqrt(self.feature_dim))
+       self.global_bias = self.k*10.0**-self.feature_dim
+       self.w = np.zeros(
+                (
+                    self.total_samples,
+                    self.total_samples
+                ),
+                dtype=float
+            )
+       normalizing_factor = np.sum(np.log(self.network_shape))
+       
       
        idx_with_label = {}
        for label in self.labels:
@@ -134,33 +147,48 @@ class kdn(KernelDensityGraph):
                    axis=0
                )
        
-       polytopes = np.unique(
-            polytope_ids, axis=0
+       
+       def worker(unmatch, shape):
+        total_count = 0
+        for ii,n1 in enumerate(unmatch):
+            count = shape[ii] 
+
+            while(n1):
+                n1 = n1 & (n1-1)
+                count -= 1
+            total_count += np.log(count)
+            
+        return total_count
+       
+       
+       print('Calculating weight for ', self.total_samples, ' samples')
+       for ii in tqdm(range(self.total_samples)):
+           #print('Calculating weight for ', ii)
+           unmatched_pattern = polytope_ids ^ polytope_ids[ii]
+           self.w[ii] = np.array(
+            Parallel(n_jobs=-1)(
+                    delayed(worker)(
+                            unmatch,
+                            self.network_shape
+                            ) for unmatch in unmatched_pattern
+                    )  
             )
-       normalizing_factor = np.sum(np.log(self.network_shape))
-       for polytope in polytopes: 
-           matched_pattern = (polytope_ids==polytope)
-           matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
-           end_node = 0
            
-           for layer in range(self.total_layers):
-               end_node += self.network_shape[layer]
-               matched_nodes[:, layer] = \
-                    np.sum(
-                        matched_pattern[:,end_node-self.network_shape[layer]:end_node], 
-                        axis=1
-                        )
+       self.w = np.exp(self.w - normalizing_factor)
 
-           scales = (np.exp(np.sum(np.log(matched_nodes), axis=1)\
-                - normalizing_factor))
-           scales = (scales/np.max(scales))**np.log10(self.total_samples)
-
-
+       
+       used = []
+       for ii in range(self.total_samples):
+           if ii in used:
+               continue
+           scales = self.w[ii,:].copy()
+           scales = scales**np.log(self.total_samples)
+           
            idx_with_scale_1 = np.where(
                    scales>.9999999
                )[0]
- 
-           
+           used.extend(idx_with_scale_1)
+            
            location = np.mean(X[idx_with_scale_1], axis=0)
            X_tmp = X.copy() - location
            covariance = np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales)
@@ -174,7 +202,7 @@ class kdn(KernelDensityGraph):
                self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
  
  
-       self.global_bias = self.global_bias -np.log(X.shape[0])
+       self.global_bias = np.log(self.global_bias) -np.log(self.total_samples)
        self.is_fitted = True   
       
    def _compute_distance(self, X, polytope):
@@ -267,3 +295,4 @@ class kdn(KernelDensityGraph):
         """
         
         return np.argmax(self.predict_proba(X), axis = 1)
+
