@@ -46,7 +46,7 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     total_sample = X.shape[0]
     test_sample = total_sample//3
     train_samples = np.logspace(
-            np.log10(2),
+            np.log10(10),
             np.log10(total_sample-test_sample),
             num=5,
             endpoint=True,
