@@ -89,7 +89,7 @@ class kdn(KernelDensityGraph):
        return polytope_ids
    
    
-   def fit(self, X, y, epsilon=1e-6, batch=1):
+   def fit(self, X, y, epsilon=1e-4, batch=1):
        r"""
        Fits the kernel density forest.
        Parameters
