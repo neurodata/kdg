@@ -70,7 +70,7 @@ class kdf(KernelDensityGraph):
                     axis=1
                 )
             
-            scales = (matched_samples/np.max(matched_samples))**np.log10(X.shape[0])
+            scales = (matched_samples/np.max(matched_samples))**np.log(X.shape[0])
             idx_with_scale_1 = np.where(
                     scales==1
                 )[0]
