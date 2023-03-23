@@ -31,6 +31,51 @@ def get_ece(predicted_posterior, predicted_label, true_label, R=15):
     score /= (K*total_sample)
     return score
 
+def plot_reliability(predicted_posterior, predicted_label, true_label, R=15):
+    total_sample = len(true_label)
+    K = predicted_posterior.shape[1]
+    score = 0
+    bin_size = total_sample//R
+    fig, ax = plt.subplots(1, K, figsize=(8*K, 8))
+    sns.set_context('talk')
+    
+    for k in range(K):
+        posteriors = predicted_posterior[:,k]
+        sorted_indx = np.argsort(posteriors)
+        
+        ax[k].hlines(0, 0, R, linewidth=1)
+        for r in range(R):
+            indx = sorted_indx[r*bin_size:(r+1)*bin_size]
+            predicted_label_ = predicted_label[indx]
+            true_label_ = true_label[indx]
+            indx_k = np.where(true_label_ == k)[0]
+            acc = (
+                np.nan_to_num(np.mean(predicted_label_[indx_k] == k))
+                if indx_k.size != 0
+                else 0
+            )
+            
+            conf = np.nan_to_num(np.mean(posteriors[indx])) if indx.size != 0 else 0
+            score += len(indx) * np.abs(acc - conf)
+
+            ax[k].hlines(acc, r, r+1, linewidth=3)
+            ax[k].hlines(conf, r, r+1, linewidth=3, color='r')
+            
+            if acc>conf:
+                ax[k].fill_between([r,r+1], conf, acc, facecolor='r', alpha=.3)
+            else:
+                ax[k].fill_between([r,r+1], acc, conf, facecolor='r', alpha=.3)
+                
+            
+            ax[k].vlines(r, 0, acc, linewidth=1)
+            ax[k].set_xticks(np.arange(16))
+            ax[k].set_xlabel('Bin number')
+            ax[k].set_ylabel('Accuracy(blue) or Confidence(red)')
+            ax[k].set_title('Label '+str(k))
+        ax[k].vlines(R, 0, acc, linewidth=1)
+
+    score /= (K*total_sample)
+    return score
 
 def hellinger(p, q):
     """Hellinger distance between two discrete distributions.
