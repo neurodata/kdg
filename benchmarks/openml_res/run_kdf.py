@@ -37,7 +37,8 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     min_val = np.min(X,axis=0)
     max_val = np.max(X, axis=0)
     X = (X-min_val)/(max_val-min_val)
-
+    _, y = np.unique(y, return_inverse=True)
+    
     '''for ii in range(X.shape[1]):
         unique_val = np.unique(X[:,ii])
         if len(unique_val) < 10:
