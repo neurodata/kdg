@@ -1,7 +1,11 @@
 #%%
 from numpy import dtype
-from kdg import kdf
-from kdg.utils import get_ece
+from kdg import kdf, kdn, kdcnn
+from kdg.utils import get_ece, plot_reliability
+from tensorflow import keras
+from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
+from tensorflow.keras import activations
+from tensorflow.keras import backend as bknd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -18,6 +22,8 @@ import numpy as np
 from scipy.stats import multivariate_normal
 import warnings
 from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split
 
 #%%
 dataset_id = 1067#44#1497#1067#1468#44#40979#1468#11#44#1050#
@@ -49,7 +55,7 @@ np.random.shuffle(indx)
 indx_to_take_train = indx[:train_sample]
 indx_to_take_test = indx[-test_sample:]       
 #%%
-model_kdf = kdf(k=1e300,kwargs={'n_estimators':500, 'min_samples_leaf':10})
+model_kdf = kdf(k=1e-300,kwargs={'n_estimators':500, 'min_samples_leaf':10})
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
 
 # %%
@@ -238,7 +244,7 @@ for label in labels:
         break
     break
 # %%
-dataset = openml.datasets.get_dataset(1485)
+dataset = openml.datasets.get_dataset(12)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
             )
@@ -259,6 +265,7 @@ train_samples = np.logspace(
 X_train, X_test, y_train, y_test = train_test_split(
                      X, y, test_size=.33, random_state=44)
 
+#%%
 model_kdf = kdf(k=1, kwargs={'n_estimators':500})
 model_kdf.fit(X_train, y_train, epsilon=1e-4)
 
@@ -266,4 +273,67 @@ model_kdf.fit(X_train, y_train, epsilon=1e-4)
 1 - np.mean(model_kdf.predict(X_test)==y_test)
 # %%
 1 - np.mean(model_kdf.rf_model.predict(X_test)==y_test)
+# %%
+#%%
+compile_kwargs = {
+        "loss": "binary_crossentropy",
+        "optimizer": keras.optimizers.Adam(3e-4),
+    }
+callback = keras.callbacks.EarlyStopping(monitor="loss", patience=10, verbose=True)
+fit_kwargs = {
+        "epochs": 2000,
+        "batch_size": 32,
+        "verbose": False,
+        "callbacks": [callback],
+    }
+# %%
+def getNN(input_size, num_classes, layer_size=2000):
+    network_base = keras.Sequential()
+    initializer = keras.initializers.random_normal(seed=0)
+    network_base.add(keras.layers.Dense(layer_size, kernel_initializer=initializer, input_shape=(input_size,)))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(layer_size, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(layer_size, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(layer_size, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(units=num_classes, activation="softmax", kernel_initializer=initializer))
+    network_base.compile(**compile_kwargs)
+    return network_base
+
+# %%
+nn = getNN(input_size=X.shape[1], num_classes=len(np.unique(y)), layer_size=1000)
+history = nn.fit(X, keras.utils.to_categorical(y), **fit_kwargs)
+model_kdn = kdn(network=nn)
+model_kdn.fit(X_train, y_train)
+proba_kdn = model_kdn.predict_proba(X_test)
+proba_dn = model_kdn.network.predict(X_test)
+predicted_label_kdn = np.argmax(proba_kdn, axis = 1)
+predicted_label_dn = np.argmax(proba_dn, axis = 1)
+# %%
+get_ece(proba_dn, predicted_label_dn, y_test)
+# %%
+get_ece(proba_kdn, predicted_label_kdn, y_test)
+
+# %%
+plot_reliability(proba_kdn, predicted_label_kdn, y_test)
+
+# %%
+plot_reliability(proba_dn, predicted_label_dn, y_test)
+# %%
+model_kdcnn = kdcnn(network=nn)
+model_kdcnn.fit(X_train, y_train)
+proba_kdcnn = model_kdcnn.predict_proba(X_test)
+proba_dn = model_kdcnn.network.predict(X_test)
+predicted_label_kdcnn = np.argmax(proba_kdcnn, axis = 1)
+predicted_label_dn = np.argmax(proba_dn, axis = 1)
+
+#%%
+get_ece(proba_dn, predicted_label_dn, y_test)
+#%%
+get_ece(proba_kdcnn, predicted_label_kdcnn, y_test)
+
+# %%
+plot_reliability(proba_kdcnn, predicted_label_kdcnn, y_test)
 # %%

@@ -68,7 +68,7 @@ def plot_reliability(predicted_posterior, predicted_label, true_label, R=15):
                 
             
             ax[k].vlines(r, 0, acc, linewidth=1)
-            ax[k].set_xticks(np.arange(16))
+            ax[k].set_xticks(np.arange(R+1))
             ax[k].set_xlabel('Bin number')
             ax[k].set_ylabel('Accuracy(blue) or Confidence(red)')
             ax[k].set_title('Label '+str(k))

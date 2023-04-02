@@ -36,7 +36,7 @@ fit_kwargs = {
         "callbacks": [callback],
     }
 # %%
-def getNN(input_size, num_classes, layer_size=2000):
+def getNN(input_size, num_classes, layer_size=1000):
     network_base = keras.Sequential()
     initializer = keras.initializers.random_normal(seed=0)
     network_base.add(keras.layers.Dense(layer_size, kernel_initializer=initializer, input_shape=(input_size,)))
