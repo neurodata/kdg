@@ -70,6 +70,7 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
     min_val = np.min(X,axis=0)
     max_val = np.max(X, axis=0)
     X = (X-min_val)/(max_val-min_val)
+    _, y = np.unique(y, return_inverse=True)
 
     '''for ii in range(X.shape[1]):
         unique_val = np.unique(X[:,ii])
@@ -97,10 +98,10 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
             X_train, X_test, y_train, y_test = train_test_split(
                      X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep)
             
-            nn = getNN(input_size=X.shape[1], num_classes=len(np.unique(y)), layer_size=layer_size)
-            history = nn.fit(X, keras.utils.to_categorical(y), **fit_kwargs)
+            nn = getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1, layer_size=layer_size)
+            history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
             model_kdn = kdn(network=nn)
-            model_kdn.fit(X_train, y_train)
+            model_kdn.fit(X_train, y_train, mul=10)
             proba_kdn = model_kdn.predict_proba(X_test)
             proba_dn = model_kdn.network.predict(X_test)
             predicted_label_kdn = np.argmax(proba_kdn, axis = 1)
@@ -141,6 +142,11 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
 # %%
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 
-for dataset_id in openml.study.get_suite("OpenML-CC18").data:
+'''for dataset_id in openml.study.get_suite("OpenML-CC18").data:
     print("Doing data ", dataset_id)
-    experiment(dataset_id) 
+    experiment(dataset_id) '''
+Parallel(n_jobs=-1,verbose=1)(
+        delayed(experiment)(
+                dataset_id,
+                ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
+            )

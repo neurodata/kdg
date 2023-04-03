@@ -304,11 +304,12 @@ def getNN(input_size, num_classes, layer_size=2000):
 
 # %%
 nn = getNN(input_size=X.shape[1], num_classes=len(np.unique(y)), layer_size=1000)
-history = nn.fit(X, keras.utils.to_categorical(y), **fit_kwargs)
+history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
 
 #%%
 model_kdn = kdn(network=nn)
-model_kdn.fit(X_train, y_train)
+model_kdn.fit(X_train, y_train, epsilon=1e-6, mul=10)
+#%%
 proba_kdn = model_kdn.predict_proba(X_test)
 proba_dn = model_kdn.network.predict(X_test)
 predicted_label_kdn = np.argmax(proba_kdn, axis = 1)
