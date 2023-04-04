@@ -144,9 +144,9 @@ class kdn(KernelDensityGraph):
                    axis=0
                )
            
-       print('Calculating weight for ', self.total_samples, ' samples')
+       #print('Calculating weight for ', self.total_samples, ' samples')
        normalizing_factor = np.sum(np.log(self.network_shape))
-       for ii in tqdm(range(self.total_samples)):
+       for ii in range(self.total_samples):
            matched_pattern = (polytope_ids==polytope_ids[ii])
            matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
            end_node = 0

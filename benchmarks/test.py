@@ -244,7 +244,7 @@ for label in labels:
         break
     break
 # %%
-dataset = openml.datasets.get_dataset(12)
+dataset = openml.datasets.get_dataset(182)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
             )
@@ -273,7 +273,16 @@ model_kdf.fit(X_train, y_train, epsilon=1e-4)
 1 - np.mean(model_kdf.predict(X_test)==y_test)
 # %%
 1 - np.mean(model_kdf.rf_model.predict(X_test)==y_test)
+
 # %%
+proba_kdf = model_kdf.predict_proba(X_test)
+proba_rf = model_kdf.rf_model.predict_proba(X_test)
+predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
+predicted_label_rf = np.argmax(proba_rf, axis = 1)
+# %%
+get_ece(proba_rf, predicted_label_rf, y_test)
+# %%
+get_ece(proba_kdf, predicted_label_kdf, y_test)
 #%%
 compile_kwargs = {
         "loss": "binary_crossentropy",
@@ -308,7 +317,7 @@ history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
 
 #%%
 model_kdn = kdn(network=nn)
-model_kdn.fit(X_train, y_train, epsilon=1e-6, mul=10)
+model_kdn.fit(X_train, y_train, epsilon=1e-6, mul=20)
 #%%
 proba_kdn = model_kdn.predict_proba(X_test)
 proba_dn = model_kdn.network.predict(X_test)
