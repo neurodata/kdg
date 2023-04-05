@@ -116,7 +116,7 @@ with open('controlled_dimensionality.pickle', 'rb') as f:
     df = pickle.load(f)
 # %%
 sns.set_context('talk')
-fig, ax = plt.subplots(1,1, figsize=(12,10))
+fig, ax = plt.subplots(1,1, figsize=(13,10))
 
 err_kdf_med = []
 err_kdn_med = []
@@ -129,10 +129,10 @@ err_kde_25 = []
 err_kde_75 = []
 
 for dim in signal_dimension:
-    kdf_err = np.array(df['err_kdf'][df['dimension']==dim])
-    kde_err = np.array(df['err_kde'][df['dimension']==dim])
+    kdf_err = 1-np.array(df['err_kdf'][df['dimension']==dim])
+    kde_err = 1-np.array(df['err_kde'][df['dimension']==dim])
 
-    kdn_err = np.array(df['err_kdn'][df['dimension']==dim])
+    kdn_err = 1-np.array(df['err_kdn'][df['dimension']==dim])
 
     err_kdf_med.append(
         np.median(kdf_err)
@@ -178,8 +178,8 @@ ax.plot(dimension, err_kde_med, c='k', linewidth=3, label='KDE')
 ax.fill_between(dimension, err_kde_25, err_kde_75, facecolor='k', alpha=.3)
 ax.set_xscale('log')
 ax.set_xlabel('Dimension', fontsize=35)
-ax.set_ylabel('Error', fontsize=35)
-ax.set_yticks([0.1,0.2,0.3])
+ax.set_ylabel('Accuracy', fontsize=35)
+ax.set_yticks([0.7,0.8,0.9,1])
 #ax.set_yticks([0, 1])
 ax.tick_params(axis='both', which='major', labelsize=40)
 ax.legend(fontsize=30, frameon=False)
