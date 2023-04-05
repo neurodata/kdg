@@ -39,34 +39,23 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     X = (X-min_val)/(max_val-min_val)
     _, y = np.unique(y, return_inverse=True)
     
-    '''for ii in range(X.shape[1]):
-        unique_val = np.unique(X[:,ii])
-        if len(unique_val) < 10:
-            return'''
         
     total_sample = X.shape[0]
     test_sample = total_sample//3
-    train_samples = np.logspace(
-            np.log10(10),
-            np.log10(total_sample-test_sample),
-            num=5,
-            endpoint=True,
-            dtype=int
-        )
-    err = []
-    err_rf = []
-    ece = []
-    ece_rf = []
+    train_sample = total_sample-test_sample
+        
+    conf_rf = []
+    conf_kdf = []
     mc_rep = []
-    samples = []
+    distances = np.arange(0, 11, 1)
 
-    for train_sample in train_samples:
-        for rep in range(reps):
-            X_train, X_test, y_train, y_test = train_test_split(
+    for rep in range(reps):
+        for distance in distances:
+            X_train, _, y_train, _ = train_test_split(
                      X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep)
             
-            model_kdf = kdf(k=1, kwargs={'n_estimators':n_estimators})
-            model_kdf.fit(X_train, y_train, epsilon=1e-2)
+            model_kdf = kdf(kwargs={'n_estimators':n_estimators})
+            model_kdf.fit(X_train, y_train)
             proba_kdf = model_kdf.predict_proba(X_test)
             proba_rf = model_kdf.rf_model.predict_proba(X_test)
             predicted_label_kdf = np.argmax(proba_kdf, axis = 1)

@@ -298,7 +298,7 @@ def trunk_sim(n_samples, p_star=3, p=3, center_box=(-1.0, 1.0), random_state=Non
     samples_per_class = np.random.multinomial(n_samples, 1 / 2 * np.ones(2))
 
     mean = 1.0 / np.sqrt(np.arange(1, p_star + 1, 1))
-
+ 
     X = np.concatenate(
         (
             np.random.multivariate_normal(

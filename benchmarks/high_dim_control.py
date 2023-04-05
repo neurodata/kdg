@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 # %%
 ##### main hyperparameters #####
 mc_reps = 10
-signal_dimension = [10, 100, 1000]
+signal_dimension = [1,10,50,100,500,1000]
 train_sample = 5000
 test_sample = 1000
 #%%
@@ -176,7 +176,7 @@ ax.plot(dimension, err_kdn_med, c='b', linewidth=3, label='KGN')
 ax.fill_between(dimension, err_kdn_25, err_kdn_75, facecolor='b', alpha=.3)
 ax.plot(dimension, err_kde_med, c='k', linewidth=3, label='KDE')
 ax.fill_between(dimension, err_kde_25, err_kde_75, facecolor='k', alpha=.3)
-ax.set_xscale('log')
+#ax.set_xscale('log')
 ax.set_xlabel('Dimension', fontsize=35)
 ax.set_ylabel('Accuracy', fontsize=35)
 ax.set_yticks([0.7,0.8,0.9,1])
