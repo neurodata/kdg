@@ -138,8 +138,11 @@ def experiment(dataset_id, reps=10, random_state=42):
 # %%
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 
-Parallel(n_jobs=-1,verbose=1)(
+'''Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment)(
                 dataset_id,
                 ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
-            )
+            )'''
+
+for dataset_id in openml.study.get_suite("OpenML-CC18").data:
+    experiment(dataset_id) 
