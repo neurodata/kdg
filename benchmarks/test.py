@@ -369,7 +369,8 @@ for dataset_id in datasets:
 
     if np.isnan(np.sum(X)):
         continue
-
+    
+    print(np.isnan(np.sum(X)), np.isnan(np.sum(y)))
     print(X.shape)
     data_id.append(dataset_id)
 # %%
