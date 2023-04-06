@@ -116,4 +116,5 @@ benchmark_suite = openml.study.get_suite('OpenML-CC18')
 data_id_not_done = [28, 554, 1485, 40996, 41027, 23517, 40923, 40927]
 
 for dataset_id in data_id_not_done:
+    print("Doing ", dataset_id)
     experiment(dataset_id)
