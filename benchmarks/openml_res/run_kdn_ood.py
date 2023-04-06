@@ -145,4 +145,5 @@ benchmark_suite = openml.study.get_suite('OpenML-CC18')
             )'''
 
 for dataset_id in openml.study.get_suite("OpenML-CC18").data:
+    print("Doing ", dataset_id)
     experiment(dataset_id) 
