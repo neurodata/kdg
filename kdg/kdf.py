@@ -36,7 +36,7 @@ class kdf(KernelDensityGraph):
             )
             return
 
-        #X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y)
         X = X.astype('double')
         self.total_samples = X.shape[0]
         self.labels = np.unique(y)
