@@ -36,8 +36,8 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     
     min_val = np.min(X,axis=0)
     max_val = np.max(X, axis=0)
-    print(max_val, min_val)
-    X = (X-min_val)/(max_val-min_val)
+    
+    X = (X-min_val)/(max_val-min_val+1e-12)
     _, y = np.unique(y, return_inverse=True)
     
     '''for ii in range(X.shape[1]):
@@ -66,7 +66,7 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
             X_train, X_test, y_train, y_test = train_test_split(
                      X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep)
             
-            print((X_train), np.isnan(np.sum(y_train)))
+            
             model_kdf = kdf(k=1, kwargs={'n_estimators':n_estimators})
             model_kdf.fit(X_train, y_train, epsilon=1e-2)
             proba_kdf = model_kdf.predict_proba(X_test)
