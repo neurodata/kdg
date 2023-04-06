@@ -795,17 +795,18 @@ def generate_ood_samples(n, inbound=[1, -1], outbound=[5, -5]):
     Xood = np.array(Xood)
     return Xood
 
-def sample_unifrom_circle(n = 1000, r=1):
-    theta = np.random.uniform(
-        low=-np.pi,
-        high=np.pi,
-        size=n
+def sample_unifrom_circle(n = 1000, r=1, p=2):
+    X = np.random.uniform(
+        low=-1,
+        high=1,
+        size=(n,p)
     )
 
-    x1 = r*np.cos(theta).reshape(-1,1)
-    x2 = r*np.sin(theta).reshape(-1,1)
-
-    return np.concatenate(
-        (x1,x2),
+    normalizing_vector = np.linalg.norm(
+        X,
+        2,
         axis=1
     )
+    X /= normalizing_vector[:,None]
+
+    return X

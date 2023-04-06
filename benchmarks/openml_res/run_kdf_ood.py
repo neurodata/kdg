@@ -12,7 +12,7 @@ from kdg.utils import get_ece, sample_unifrom_circle
 from sklearn.model_selection import train_test_split
 from joblib import Parallel, delayed
 # %%
-root_dir = "openml_kdf_res"
+root_dir = "openml_kdf_res_ood"
 
 try:
     os.mkdir(root_dir)
@@ -34,61 +34,54 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     if np.isnan(np.sum(X)):
         return
     
-    min_val = np.min(X,axis=0)
-    max_val = np.max(X, axis=0)
-    X = (X-min_val)/(max_val-min_val)
+    X /= np.max(
+        np.linalg.norm(X, 2, axis=1)
+    )
     _, y = np.unique(y, return_inverse=True)
     
         
     total_sample = X.shape[0]
     test_sample = total_sample//3
     train_sample = total_sample-test_sample
-        
+
+    r = []    
     conf_rf = []
     conf_kdf = []
-    mc_rep = []
     distances = np.arange(0, 11, 1)
 
     for rep in range(reps):
-        for distance in distances:
-            X_train, _, y_train, _ = train_test_split(
+        X_train, _, y_train, _ = train_test_split(
                      X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep)
+        model_kdf = kdf(kwargs={'n_estimators':n_estimators})
+        model_kdf.fit(X_train, y_train)
+        
+        for distance in distances:
+            X_ood = sample_unifrom_circle(1000, distance)
+            proba_kdf = model_kdf.predict_proba(X_ood)
+            proba_rf = model_kdf.rf_model.predict_proba(X_ood)
             
-            model_kdf = kdf(kwargs={'n_estimators':n_estimators})
-            model_kdf.fit(X_train, y_train)
-            proba_kdf = model_kdf.predict_proba(X_test)
-            proba_rf = model_kdf.rf_model.predict_proba(X_test)
-            predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
-            predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
-            err.append(
-                1 - np.mean(
-                        predicted_label_kdf==y_test
-                    )
-            )
-            err_rf.append(
-                1 - np.mean(
-                    predicted_label_rf==y_test
+            conf_rf.append(
+                np.mean(
+                    np.max(proba_rf, axis=1)
                 )
             )
-            ece.append(
-                get_ece(proba_kdf, predicted_label_kdf, y_test)
+            conf_kdf.append(
+                np.mean(
+                    np.mean(
+                        np.max(proba_kdf, axis=1)
+                    )
+                )
             )
-            ece_rf.append(
-                get_ece(proba_rf, predicted_label_rf, y_test)
+            r.append(
+                distance
             )
-            samples.append(
-                train_sample
-            )
-            mc_rep.append(rep)
+            
 
     df = pd.DataFrame() 
-    df['err_kdf'] = err
-    df['err_rf'] = err_rf
-    df['ece_kdf'] = ece
-    df['ece_rf'] = ece_rf
-    df['rep'] = mc_rep
-    df['samples'] = samples
+    df['conf_kdf'] = conf_kdf
+    df['conf_rf'] = conf_rf
+    df['distance'] = r
 
     filename = 'Dataset_' + str(dataset_id) + '.csv'
     df.to_csv(os.path.join(root_dir, filename))
