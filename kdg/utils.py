@@ -807,6 +807,6 @@ def sample_unifrom_circle(n = 1000, r=1, p=2):
         2,
         axis=1
     )
-    X /= normalizing_vector[:,None]
-
+    X = r*X/normalizing_vector[:,None]
+    
     return X

@@ -47,7 +47,7 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     r = []    
     conf_rf = []
     conf_kdf = []
-    distances = np.arange(0, 11, 1)
+    distances = np.arange(0, 5, .5)
 
     for rep in range(reps):
         X_train, _, y_train, _ = train_test_split(
@@ -56,7 +56,7 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
         model_kdf.fit(X_train, y_train)
         
         for distance in distances:
-            X_ood = sample_unifrom_circle(1000, distance)
+            X_ood = sample_unifrom_circle(1000, r=distance, p=X_train.shape[1])
             proba_kdf = model_kdf.predict_proba(X_ood)
             proba_rf = model_kdf.rf_model.predict_proba(X_ood)
             
