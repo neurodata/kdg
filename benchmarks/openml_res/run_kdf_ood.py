@@ -47,14 +47,31 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     r = []    
     conf_rf = []
     conf_kdf = []
-    distances = np.arange(0, 5, .5)
+    distances = np.arange(1, 5.5, .5)
 
     for rep in range(reps):
-        X_train, _, y_train, _ = train_test_split(
+        X_train, X_test, y_train, y_test = train_test_split(
                      X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep)
         model_kdf = kdf(kwargs={'n_estimators':n_estimators})
         model_kdf.fit(X_train, y_train)
-        
+        model_kdf.global_bias = -100
+
+        proba_kdf = model_kdf.predict_proba(X_test)
+        proba_rf = model_kdf.rf_model.predict_proba(X_test)
+
+        conf_rf.append(
+                np.nanmean(
+                    np.max(proba_rf, axis=1)
+                )
+            )
+        conf_kdf.append(
+            np.nanmean(
+                    np.max(proba_kdf, axis=1)
+                )
+        )
+        r.append(
+            0
+        )
         for distance in distances:
             X_ood = sample_unifrom_circle(1000, r=distance, p=X_train.shape[1])
             proba_kdf = model_kdf.predict_proba(X_ood)
@@ -62,16 +79,14 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
             
 
             conf_rf.append(
-                np.mean(
+                np.nanmean(
                     np.max(proba_rf, axis=1)
                 )
             )
             conf_kdf.append(
-                np.mean(
-                    np.mean(
+                np.nanmean(
                         np.max(proba_kdf, axis=1)
                     )
-                )
             )
             r.append(
                 distance

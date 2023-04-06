@@ -107,8 +107,13 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
 # %%
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
 
-Parallel(n_jobs=-1,verbose=1)(
+'''Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment)(
                 dataset_id,
                 ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
-            )
+            )'''
+
+data_id_not_done = [28, 554, 1485, 40996, 41027, 23517, 40923, 40927]
+
+for dataset_id in data_id_not_done:
+    experiment(dataset_id)

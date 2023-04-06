@@ -244,16 +244,14 @@ for label in labels:
         break
     break
 # %%
-dataset = openml.datasets.get_dataset(182)
+dataset = openml.datasets.get_dataset(458)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
             )
 
 #feature = [475, 433]
 #X = X[:,feature]
-min_val = np.min(X,axis=0)
-max_val = np.max(X, axis=0)
-X = (X-min_val)/(max_val-min_val)
+X /= np.max(np.linalg.norm(X,2,axis=1))
 total_sample = X.shape[0]
 train_samples = np.logspace(
             np.log10(100),
@@ -266,7 +264,7 @@ X_train, X_test, y_train, y_test = train_test_split(
                      X, y, test_size=.33, random_state=44)
 
 #%%
-model_kdf = kdf(k=1, kwargs={'n_estimators':500})
+model_kdf = kdf(k=1e100, kwargs={'n_estimators':500})
 model_kdf.fit(X_train, y_train, epsilon=1e-4)
 
 # %%
@@ -348,4 +346,43 @@ get_ece(proba_kdcnn, predicted_label_kdcnn, y_test)
 
 # %%
 plot_reliability(proba_kdcnn, predicted_label_kdcnn, y_test)
+# %%
+data_id = []
+benchmark_suite = openml.study.get_suite('OpenML-CC18')
+datasets = list(openml.study.get_suite("OpenML-CC18").data)
+for dataset_id in datasets:
+    print(dataset_id)
+    try:
+        dataset = openml.datasets.get_dataset(dataset_id)
+        X, y, is_categorical, _ = dataset.get_data(
+                        dataset_format="array", target=dataset.default_target_attribute
+                    )
+    except:
+        print('could not fetch!', dataset_id)
+    
+    print(np.mean(is_categorical))
+    if np.mean(is_categorical) >0:
+        continue
+
+    if np.isnan(np.sum(y)):
+        continue
+
+    if np.isnan(np.sum(X)):
+        continue
+
+    print(X.shape)
+    data_id.append(dataset_id)
+# %%
+res_folder_kdf = 'openml_res/openml_kdf_res_ood'
+files = os.listdir(res_folder_kdf)
+#files.remove('.DS_Store')
+id_done = []
+for file in files:
+    id = file[:-4]
+    id_done.append(int(id[8:]))
+# %%
+for id in data_id:
+    if id not in id_done:
+        print(id)
+
 # %%
