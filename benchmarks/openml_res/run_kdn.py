@@ -69,7 +69,7 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
     
     min_val = np.min(X,axis=0)
     max_val = np.max(X, axis=0)
-    X = (X-min_val)/(max_val-min_val)
+    X = (X-min_val)/(max_val-min_val+1e-12)
     _, y = np.unique(y, return_inverse=True)
 
     '''for ii in range(X.shape[1]):
@@ -141,6 +141,7 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
 
 # %%
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
+data_id_not_done = [28, 554, 1485, 40996, 41027, 23517, 40923, 40927]
 
 '''for dataset_id in openml.study.get_suite("OpenML-CC18").data:
     print("Doing data ", dataset_id)
@@ -148,5 +149,5 @@ benchmark_suite = openml.study.get_suite('OpenML-CC18')
 Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment)(
                 dataset_id,
-                ) for dataset_id in openml.study.get_suite("OpenML-CC18").data
+                ) for dataset_id in data_id_not_done#openml.study.get_suite("OpenML-CC18").data
             )
