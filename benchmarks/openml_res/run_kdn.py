@@ -69,7 +69,7 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
     
     min_val = np.min(X,axis=0)
     max_val = np.max(X, axis=0)
-    X = (X-min_val)/(max_val-min_val)
+    X = (X-min_val)/(max_val-min_val+1e-12)
     _, y = np.unique(y, return_inverse=True)
 
     '''for ii in range(X.shape[1]):
