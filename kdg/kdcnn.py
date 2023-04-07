@@ -89,7 +89,7 @@ class kdcnn(KernelDensityGraph):
        return polytope_ids
    
    
-   def fit(self, X, y, epsilon=1e-4, batch=1):
+   def fit(self, X, y, epsilon=1e-12, batch=100):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -130,8 +130,10 @@ class kdcnn(KernelDensityGraph):
        batchsize = self.total_samples//batch
        polytope_ids = self._get_polytope_ids(X[:batchsize])
        indx_X2 = np.inf
+
+       print("Extracting polytopes...")
        for ii in range(1,batch):
-           #print("doing batch ", ii)
+           print("doing batch ", ii)
            indx_X1 = ii*batchsize
            indx_X2 = (ii+1)*batchsize
            polytope_ids = np.concatenate(
@@ -182,7 +184,7 @@ class kdcnn(KernelDensityGraph):
            if ii in used:
                continue
            scales = self.w[ii,:].copy()
-           scales = scales**np.log(self.total_samples)
+           scales = scales**(np.log10(self.total_samples)/2)
            
            idx_with_scale_1 = np.where(
                    scales>.9999999
