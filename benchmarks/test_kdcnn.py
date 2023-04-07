@@ -105,9 +105,7 @@ a = output_from_model(network, 'conv2d_24', X_test[:1])
 print(a.shape)
 # %%
 model_kdn = kdcnn(
-    network=network,
-    k=1e300,
-    verbose=False,
+    network=network
 )
 model_kdn.fit(X_train, y_train)
 # %%
