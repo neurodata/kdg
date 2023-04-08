@@ -178,7 +178,7 @@ class kdcnn(KernelDensityGraph):
            
        self.w = np.exp(self.w - normalizing_factor)
 
-       
+       X = X.reshape(self.total_layers, -1)
        used = []
        for ii in range(self.total_samples):
            if ii in used:
@@ -237,6 +237,7 @@ class kdcnn(KernelDensityGraph):
         X : ndarray
             Input data matrix.
         """
+        X = X.reshape(-1, self.feature_dim)
         X = check_array(X)
 
         total_polytope = len(self.polytope_means)
