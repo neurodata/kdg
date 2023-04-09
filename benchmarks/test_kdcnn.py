@@ -104,10 +104,16 @@ def output_from_model(model, layer_name, x):
 a = output_from_model(network, 'conv2d_24', X_test[:1])
 print(a.shape)
 # %%
+idx_to_train = []
+
+for ii in [0,1]:
+    idx_to_train.extend(np.where(y_train==ii)[0][:100])
+
+
 model_kdn = kdcnn(
     network=network
 )
-model_kdn.fit(X_train[:100], y_train[:100], batch=2)
+model_kdn.fit(X_train[idx_to_train], y_train[idx_to_train], batch=1)
 # %%
 proba = model_kdn.predict_proba(X_test)
 

@@ -13,8 +13,7 @@ from tqdm import tqdm
 class kdn(KernelDensityGraph):
    def __init__(
        self,
-       network,
-       k=1
+       network
    ):
        r"""
        Parameters
@@ -29,7 +28,6 @@ class kdn(KernelDensityGraph):
        self.total_samples_this_label = {}
        self.prior = {}
        self.network = network
-       self.k = k
 
  
        # total number of layers in the NN
@@ -85,7 +83,7 @@ class kdn(KernelDensityGraph):
       
        return polytope_ids
      
-   def fit(self, X, y, epsilon=1e-6, batch=1, mul=1):
+   def fit(self, X, y, k=1, epsilon=1e-6, batch=1, mul=1):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -100,7 +98,7 @@ class kdn(KernelDensityGraph):
        self.labels = np.unique(y)
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
-       self.global_bias = np.log(self.k) - 10**(self.feature_dim**(1/2)) 
+       self.global_bias = np.log(k) - 10**(self.feature_dim**(1/2)) 
        self.w = np.zeros(
                 (
                     self.total_samples,

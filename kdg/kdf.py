@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore")
 
 class kdf(KernelDensityGraph):
 
-    def __init__(self, k=1, kwargs={}):
+    def __init__(self, kwargs={}):
         super().__init__()
 
         self.polytope_means = []
@@ -20,7 +20,7 @@ class kdf(KernelDensityGraph):
         self.k = k
         self.is_fitted = False
 
-    def fit(self, X, y, epsilon=1e-4):
+    def fit(self, X, y, k=1, epsilon=1e-4):
         r"""
         Fits the kernel density forest.
         Parameters
@@ -42,7 +42,7 @@ class kdf(KernelDensityGraph):
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
         self.feature_dim = X.shape[1] 
-        self.global_bias = np.log(self.k) - 10**(self.feature_dim**(1/2)) 
+        self.global_bias = np.log(k) - 10**(self.feature_dim**(1/2)) 
 
         ### change code to calculate one kernel per polytope
         idx_with_label = {}

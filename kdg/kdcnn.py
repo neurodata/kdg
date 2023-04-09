@@ -15,8 +15,7 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 class kdcnn(KernelDensityGraph):
    def __init__(
        self,
-       network,
-       k=1
+       network
    ):
        r"""
        Parameters
@@ -31,7 +30,6 @@ class kdcnn(KernelDensityGraph):
        self.total_samples_this_label = {}
        self.prior = {}
        self.network = network
-       self.k = k
 
  
        # total number of layers in the NN
@@ -89,7 +87,7 @@ class kdcnn(KernelDensityGraph):
        return polytope_ids
    
    
-   def fit(self, X, y, epsilon=1e-12, batch=100):
+   def fit(self, X, y, k=1, epsilon=1e-12, batch=100):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -103,7 +101,7 @@ class kdcnn(KernelDensityGraph):
        self.labels = np.unique(y)
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
-       self.global_bias = np.log(self.k) - 10**(self.feature_dim**(1/2)) 
+       self.global_bias = np.log(k) - 1e10 
        self.w = np.zeros(
                 (
                     self.total_samples,
@@ -178,7 +176,7 @@ class kdcnn(KernelDensityGraph):
            
        self.w = np.exp(self.w - normalizing_factor)
 
-       X = X.reshape(self.total_layers, -1)
+       X = X.reshape(self.total_samples, -1)
        used = []
        for ii in range(self.total_samples):
            if ii in used:
