@@ -5,7 +5,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
 import pickle
 from keras.models import Model
-from kdg import kdcnn, kdf
+from kdg import kdcnn, kdf, kdn
 import pickle
 # %%
 (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
@@ -105,11 +105,9 @@ a = output_from_model(network, 'conv2d_24', X_test[:1])
 print(a.shape)
 # %%
 model_kdn = kdcnn(
-    network=network,
-    k=1e300,
-    verbose=False,
+    network=network
 )
-model_kdn.fit(X_train, y_train)
+model_kdn.fit(X_train[:100], y_train[:100], batch=2)
 # %%
 proba = model_kdn.predict_proba(X_test)
 
