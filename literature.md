@@ -16,3 +16,4 @@
 - Does not need OOD samples to train on like ours.
 - Uses AUROC of threshold-based detector using the confidence score.
 - Uses DenseNet, ResNet rained on CIFAR-10 and tests on TinyImageNet, LSUN, SVHN and adversarial (DeepFool) samples.
+Used statistics: AUROC, AUPR, TNR at 95% TPR, dtection accuracy.
