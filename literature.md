@@ -21,4 +21,4 @@ Used statistics: AUROC, AUPR, TNR at 95% TPR, dtection accuracy.
 ### [Rethinking Feature Distribution for Loss Functions in Image Classification Weitao](https://openaccess.thecvf.com/content_cvpr_2018/papers/Wan_Rethinking_Feature_Distribution_CVPR_2018_paper.pdf)
 #### Notes
 - Assumes the learned features of the training set to follow a Gaussian Mixture (GM) distribution, with each component representing a class.
-- 
+- Transforms the projected feature space using a loss function with regularization from deep-net as Gausian.
