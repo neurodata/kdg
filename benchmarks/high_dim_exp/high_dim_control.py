@@ -105,7 +105,7 @@ for dim in signal_dimension:
             res[ii][2]
         )
         err_extra_kdf.append(
-            res[ii][2]
+            res[ii][3]
         )
         dimension.append(
             dim
@@ -126,7 +126,7 @@ with open('controlled_dimensionality.pickle', 'rb') as f:
     df = pickle.load(f)
 # %%
 sns.set_context('talk')
-fig, ax = plt.subplots(1,1, figsize=(8,8))
+fig, ax = plt.subplots(1,1, figsize=(14,10))
 
 err_kdf_med = []
 err_kdn_med = []
@@ -142,10 +142,10 @@ err_extra_kdf_25 = []
 err_extra_kdf_75 = []
 
 for dim in signal_dimension:
-    kdf_err = np.array(df['err_kdf'][df['dimension']==dim])
-    kde_err = np.array(df['err_kde'][df['dimension']==dim])
-    kdn_err = np.array(df['err_kdn'][df['dimension']==dim])
-    extra_kdf_err = np.array(df['err_extra_kdf'][df['dimension']==dim])
+    kdf_err = 1-np.array(df['err_kdf'][df['dimension']==dim])
+    kde_err = 1-np.array(df['err_kde'][df['dimension']==dim])
+    kdn_err = 1-np.array(df['err_kdn'][df['dimension']==dim])
+    extra_kdf_err = 1-np.array(df['err_extra_kdf'][df['dimension']==dim])
 
     err_kdf_med.append(
         np.median(kdf_err)
@@ -200,9 +200,20 @@ ax.plot(dimension, err_kde_med, c='k', linewidth=3, label='KDE')
 ax.fill_between(dimension, err_kde_25, err_kde_75, facecolor='k', alpha=.3)
 ax.plot(dimension, err_extra_kdf_med, c='purple', linewidth=3, label='Extra KGF')
 ax.fill_between(dimension, err_extra_kdf_25, err_extra_kdf_75, facecolor='purple', alpha=.3)
-ax.set_xscale('log')
-#ax.set_xticks([])
-#ax.set_yticks([0, 1])
+#ax.set_xscale('log')
+
+ax.set_xlabel('Dimension', fontsize=45)
+ax.set_ylabel('Accuracy', fontsize=45)
+ax.set_xticks([1, 200,600,1000])
+ax.set_yticks([0.7, .8, .9, 1])
+ax.legend(
+    fontsize=30,
+    frameon=False,
+    #bbox_to_anchor=(0.53,- 0.06),
+    bbox_transform=plt.gcf().transFigure,
+    loc="upper right",
+)
 ax.tick_params(axis='both', which='major', labelsize=40)
 
+plt.savefig('trunk.pdf')
 # %%
