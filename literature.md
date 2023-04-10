@@ -22,3 +22,4 @@ Used statistics: AUROC, AUPR, TNR at 95% TPR, dtection accuracy.
 #### Notes
 - Assumes the learned features of the training set to follow a Gaussian Mixture (GM) distribution, with each component representing a class.
 - Transforms the projected feature space using a loss function with regularization from deep-net as Gausian.
+- But [Hein et al](https://openaccess.thecvf.com/content_CVPR_2019/papers/Hein_Why_ReLU_Networks_Yield_High-Confidence_Predictions_Far_Away_From_the_CVPR_2019_paper.pdf) showed far away from training data ReLU net produce arbitarily high confidence.
