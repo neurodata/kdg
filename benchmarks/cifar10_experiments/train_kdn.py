@@ -28,6 +28,9 @@ tasks = [[0,1], [2,3], [4,5],
 
 #%%
 for task, labels in enumerate(tasks):
+    if task==0:
+        continue
+    
     print("Doing task ", task)
 
     nn_file = 'resnet_models/cifar_model_'+str(task)
