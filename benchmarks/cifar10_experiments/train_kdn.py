@@ -28,7 +28,7 @@ tasks = [[0,1], [2,3], [4,5],
 
 #%%
 for task, labels in enumerate(tasks):
-    if task==0:
+    if task==0 or task==1 or task==2:
         continue
     
     print("Doing task ", task)
