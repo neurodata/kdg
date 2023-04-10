@@ -15,5 +15,10 @@
 - Considers the closest Gaussian in terms of Mahalanobis distance (We consider Euclidean distance as for small regions over the manifold in a polytope the manifold can be approaximated as Euclidean).
 - Does not need OOD samples to train on like ours.
 - Uses AUROC of threshold-based detector using the confidence score.
-- Uses DenseNet, ResNet rained on CIFAR-10 and tests on TinyImageNet, LSUN, SVHN and adversarial (DeepFool) samples.
+- Uses DenseNet-100, ResNet-34 rained on CIFAR-10 and tests on TinyImageNet, LSUN, SVHN and adversarial (DeepFool) samples.
 Used statistics: AUROC, AUPR, TNR at 95% TPR, dtection accuracy.
+
+### [Rethinking Feature Distribution for Loss Functions in Image Classification Weitao](https://openaccess.thecvf.com/content_cvpr_2018/papers/Wan_Rethinking_Feature_Distribution_CVPR_2018_paper.pdf)
+#### Notes
+- Assumes the learned features of the training set to follow a Gaussian Mixture (GM) distribution, with each component representing a class.
+- 

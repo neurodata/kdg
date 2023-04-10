@@ -126,12 +126,14 @@ class kdcnn(KernelDensityGraph):
  
        # get polytope ids and unique polytope ids
        batchsize = self.total_samples//batch
+       print("Extracting polytopes...")
+       print("doing batch ", 1)
        polytope_ids = self._get_polytope_ids(X[:batchsize])
        indx_X2 = np.inf
 
-       print("Extracting polytopes...")
+       
        for ii in range(1,batch):
-           print("doing batch ", ii)
+           print("doing batch ", ii+1)
            indx_X1 = ii*batchsize
            indx_X2 = (ii+1)*batchsize
            polytope_ids = np.concatenate(
