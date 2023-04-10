@@ -11,7 +11,7 @@
 ### [A Simple Unified Framework for Detecting Out-of-Distribution Samples and Adversarial Attacks](https://proceedings.neurips.cc/paper/2018/file/abdeb6f575ac5c6676b747bca8d09cc2-Paper.pdf)
 
 #### Notes 
-- Fits GMM with respect to features extracted at different lvels of deep-nets.
+- Fits GMM with respect to features extracted at different levels of deep-nets.
 - Considers the closest Gaussian in terms of Mahalanobis distance (We consider Euclidean distance as for small regions over the manifold in a polytope the manifold can be approaximated as Euclidean).
 - Does not need OOD samples to train on like ours.
 - Uses AUROC of threshold-based detector using the confidence score.
