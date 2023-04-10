@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pickle
 from kdg.utils import trunk_sim
-from kdg import kdn, kdf, kde
+from kdg import kdn, kdf, kde, extra_kdf
 from tensorflow import keras
 from tensorflow.keras import activations
 from joblib import Parallel, delayed
@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 # %%
 ##### main hyperparameters #####
 mc_reps = 10
-signal_dimension = [10, 100, 1000]
+signal_dimension = [1, 10, 100, 200, 400, 600, 800, 1000]
 train_sample = 5000
 test_sample = 1000
 #%%
@@ -62,19 +62,25 @@ def experiment(train_sample, test_sample, dim):
     model_kdn = kdn(network=nn)
     model_kdn.fit(X, y)
     
+    model_extra_kdf = extra_kdf(kwargs={'n_estimators':500})
+    model_extra_kdf.fit(X, y)
+
     kde_err = 1 - \
         np.mean(model_kde.predict(X_test)==y_test)
     kdf_err = 1 - \
         np.mean(model_kdf.predict(X_test)==y_test)
     kdn_err = 1 - \
         np.mean(model_kdn.predict(X_test)==y_test)
+    extra_kdf_err = 1 - \
+        np.mean(model_extra_kdf.predict(X_test)==y_test)
     
-    return kdn_err, kdf_err, kde_err
+    return kdn_err, kdf_err, kde_err, extra_kdf_err
 
 # %%
 err_kdn = []
 err_kdf = []
 err_kde = []
+err_extra_kdf = []
 dimension = []
 df = pd.DataFrame()
 
@@ -98,6 +104,9 @@ for dim in signal_dimension:
         err_kde.append(
             res[ii][2]
         )
+        err_extra_kdf.append(
+            res[ii][2]
+        )
         dimension.append(
             dim
         )
@@ -105,6 +114,7 @@ for dim in signal_dimension:
 df['err_kdn'] = err_kdn
 df['err_kdf'] = err_kdf
 df['err_kde'] = err_kde
+df['err_extra_kdf'] = err_extra_kdf
 df['dimension'] = dimension
 
 with open('controlled_dimensionality.pickle', 'wb') as f:
@@ -121,18 +131,21 @@ fig, ax = plt.subplots(1,1, figsize=(8,8))
 err_kdf_med = []
 err_kdn_med = []
 err_kde_med = []
+err_extra_kdf_med = []
 err_kdf_25 = []
 err_kdf_75 = []
 err_kdn_25 = []
 err_kdn_75 = []
 err_kde_25 = []
 err_kde_75 = []
+err_extra_kdf_25 = []
+err_extra_kdf_75 = []
 
 for dim in signal_dimension:
     kdf_err = np.array(df['err_kdf'][df['dimension']==dim])
     kde_err = np.array(df['err_kde'][df['dimension']==dim])
-
     kdn_err = np.array(df['err_kdn'][df['dimension']==dim])
+    extra_kdf_err = np.array(df['err_extra_kdf'][df['dimension']==dim])
 
     err_kdf_med.append(
         np.median(kdf_err)
@@ -143,7 +156,9 @@ for dim in signal_dimension:
     err_kde_med.append(
         np.median(kde_err)
     )
-
+    err_extra_kdf_med.append(
+        np.median(extra_kdf_err)
+    )
     qunatiles = np.quantile(kdf_err,[.25,.75],axis=0)
     err_kdf_25.append(
         qunatiles[0]
@@ -168,6 +183,13 @@ for dim in signal_dimension:
         qunatiles[1]
     )
 
+    qunatiles = np.quantile(extra_kdf_err,[.25,.75],axis=0)
+    err_extra_kdf_25.append(
+        qunatiles[0]
+    )
+    err_extra_kdf_75.append(
+        qunatiles[1]
+    )
     
 dimension = np.unique(df['dimension'])
 ax.plot(dimension, err_kdf_med, c='r', linewidth=3, label='KGF')
@@ -176,6 +198,8 @@ ax.plot(dimension, err_kdn_med, c='b', linewidth=3, label='KGN')
 ax.fill_between(dimension, err_kdn_25, err_kdn_75, facecolor='b', alpha=.3)
 ax.plot(dimension, err_kde_med, c='k', linewidth=3, label='KDE')
 ax.fill_between(dimension, err_kde_25, err_kde_75, facecolor='k', alpha=.3)
+ax.plot(dimension, err_extra_kdf_med, c='purple', linewidth=3, label='Extra KGF')
+ax.fill_between(dimension, err_extra_kdf_25, err_extra_kdf_75, facecolor='purple', alpha=.3)
 ax.set_xscale('log')
 #ax.set_xticks([])
 #ax.set_yticks([0, 1])

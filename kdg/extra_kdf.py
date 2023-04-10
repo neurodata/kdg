@@ -1,12 +1,12 @@
 from numpy import min_scalar_type
 from .base import KernelDensityGraph
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
-from sklearn.ensemble import RandomForestClassifier as rf 
+from sklearn.ensemble import ExtraTreesClassifier as rf 
 import numpy as np
 import warnings
 warnings.filterwarnings("ignore")
 
-class kdf(KernelDensityGraph):
+class extra_kdf(KernelDensityGraph):
 
     def __init__(self, kwargs={}):
         super().__init__()
