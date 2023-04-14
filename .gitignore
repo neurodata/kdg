@@ -141,4 +141,4 @@ dmypy.json
 benchmarks/mnist_test
 benchmarks/cifar_model
 benchmarks/cifar10_experiments/resnet_models
-benchmarks/cifar10_experiments/kdn_models
+benchmarks/cifar10_experiments/kdn_models 
