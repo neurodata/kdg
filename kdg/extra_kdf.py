@@ -76,11 +76,7 @@ class extra_kdf(KernelDensityGraph):
             
             location = np.mean(X[idx_with_scale_1], axis=0)
             X_tmp = X.copy() - location
-            covariance = np.average(X_tmp**2, axis=0, weights=scales)
-
-            if len(idx_with_scale_1) == 1:
-                covariance += epsilon
-                
+            covariance = np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales)     
             self.polytope_cov.append(covariance)
             self.polytope_means.append(location)
 
@@ -96,7 +92,7 @@ class extra_kdf(KernelDensityGraph):
         
     def _compute_mahalanobis(self, X, polytope):
         return np.sum(
-            (X - self.polytope_means[polytope])**2,
+            (X - self.polytope_means[polytope])**2/self.polytope_cov[polytope],
             axis=1
         )
 

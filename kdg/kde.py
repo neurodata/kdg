@@ -107,4 +107,3 @@ class kde(KernelDensityGraph):
         """
         
         return np.argmax(self.predict_proba(X), axis = 1)
-

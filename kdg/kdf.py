@@ -94,11 +94,11 @@ class kdf(KernelDensityGraph):
         self.global_bias = self.global_bias - np.log10(self.total_samples)
         self.is_fitted = True
         
-    def _compute_mahalanobis(self, X, polytope):
+    def _compute_distance(self, X, polytope):
         return np.sum(
-            (X - self.polytope_means[polytope])**2,
-            axis=1
-        )
+               (X - self.polytope_means[polytope])**2,
+               axis=1
+           )
 
     def _compute_log_likelihood_1d(self, X, location, variance):        
         return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
@@ -140,7 +140,7 @@ class kdf(KernelDensityGraph):
             )
         
         for polytope in range(total_polytope):
-            distance[:,polytope] = self._compute_mahalanobis(X, polytope)
+            distance[:,polytope] = self._compute_distance(X, polytope)
 
         polytope_idx = np.argmin(distance, axis=1)
 

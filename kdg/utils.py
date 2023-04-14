@@ -314,6 +314,7 @@ def trunk_sim(n_samples, p_star=3, p=3, center_box=(-1.0, 1.0), random_state=Non
         (np.zeros(samples_per_class[0]), np.ones(samples_per_class[1])), axis=0
     )
 
+
     if p > p_star:
         X_noise = np.random.uniform(
             low=center_box[0], high=center_box[1], size=(n_samples, p - p_star)

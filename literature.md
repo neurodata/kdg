@@ -23,3 +23,11 @@ Used statistics: AUROC, AUPR, TNR at 95% TPR, dtection accuracy.
 - Assumes the learned features of the training set to follow a Gaussian Mixture (GM) distribution, with each component representing a class.
 - Transforms the projected feature space using a loss function with regularization from deep-net as Gausian.
 - [Hein et al](https://openaccess.thecvf.com/content_CVPR_2019/papers/Hein_Why_ReLU_Networks_Yield_High-Confidence_Predictions_Far_Away_From_the_CVPR_2019_paper.pdf) showed far away from training data ReLU net produce arbitarily high confidence. This paper fits a Gaussian at the end.
+
+
+### [Uncertainty estimation using a single deep deterministic neural network](http://proceedings.mlr.press/v119/van-amersfoort20a/van-amersfoort20a.pdf)
+
+#### Notes
+- Stabilises training of RBF networks and show, for the first time, that these type of models can achieve competitive accuracy versus softmax models.
+- two-sided Jacobian regularisation makes it possible to obtain reliable uncertainty estimates for RBF networks.
+- Obtain excellent uncertainty in a single forward pass, while maintaining competitive accuracy.

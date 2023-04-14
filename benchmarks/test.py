@@ -26,7 +26,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import train_test_split
 
 #%%
-dataset_id = 1067#44#1497#1067#1468#44#40979#1468#11#44#1050#
+dataset_id = 1050#6#12#44#1497#1067#1468#44#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -55,10 +55,8 @@ np.random.shuffle(indx)
 indx_to_take_train = indx[:train_sample]
 indx_to_take_test = indx[-test_sample:]       
 #%%
-model_kdf = kdf(k=1e-300,kwargs={'n_estimators':500, 'min_samples_leaf':10})
+model_kdf = kdf(kwargs={'n_estimators':500})
 model_kdf.fit(X[indx_to_take_train], y[indx_to_take_train])
-
-# %%
 
 #%%
 print(np.mean(model_kdf.predict(X[indx_to_take_test])==y[indx_to_take_test]))
@@ -244,7 +242,7 @@ for label in labels:
         break
     break
 # %%
-dataset = openml.datasets.get_dataset(182)
+dataset = openml.datasets.get_dataset(1050)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
             )
@@ -385,5 +383,122 @@ for file in files:
 for id in data_id:
     if id not in id_done:
         print(id)
+
+# %%
+def _compute_distance(model, X, polytope):
+    return np.sum(
+            (X - model.polytope_means[polytope])**2,
+            axis=1
+        )
+
+def _compute_log_likelihood_1d(model, X, location, variance):        
+    return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
+
+def _compute_log_likelihood(model, X, label, polytope_idx):
+    polytope_mean = model.polytope_means[polytope_idx]
+    polytope_cov = model.polytope_cov[polytope_idx]
+    likelihood = 0
+
+    for ii in range(model.feature_dim):
+        likelihood += model._compute_log_likelihood_1d(X[ii], polytope_mean[ii], polytope_cov[ii])
+    
+    likelihood += np.log(model.polytope_cardinality[label][polytope_idx]) -\
+        np.log(model.total_samples_this_label[label])
+
+    return likelihood
+
+def predict_proba(model, X, return_likelihood=False):
+        r"""
+        Calculate posteriors using the kernel density forest.
+        Parameters
+        ----------
+        X : ndarray
+            Input data matrix.
+        """
+        X = X.reshape(-1, model.feature_dim)
+        #X = check_array(X)
+
+        total_samples = X.shape[0]
+        total_polytope = len(model.polytope_means)
+        top_few_polytopes = 5 #int(np.ceil(total_polytope*.001))
+        distance = np.zeros(
+                (
+                    np.size(X,0),
+                    total_polytope
+                ),
+                dtype=float
+            )
+        
+        for polytope in range(total_polytope):
+            distance[:,polytope] = model._compute_distance(X, polytope)
+
+        polytope_idx_to_consider = np.argsort(distance, axis=1)[:,:top_few_polytopes]
+
+        #print(polytope_idx_to_consider.shape)
+        log_likelihoods = np.zeros(
+            (np.size(X,0), len(model.labels)),
+            dtype=float
+        )
+        #print(top_few_polytopes)
+        for ii,label in enumerate(model.labels):
+            total_polytope_this_label = len(model.polytope_means[label])
+            tmp_ = np.zeros((X.shape[0],top_few_polytopes), dtype=float)
+
+            for jj in range(total_samples):
+                iterate = polytope_idx_to_consider[jj,:]
+                #print(iterate.shape)
+                for kk, polytope_idx in enumerate(iterate):
+                    #print(polytope_idx)
+                    tmp_[jj,kk] = model._compute_log_likelihood(X[jj], label, polytope_idx) 
+                    #print(tmp_[jj,kk], label)
+            max_pow = np.max(
+                    np.concatenate(
+                        (
+                            tmp_,
+                            model.global_bias*np.ones((X.shape[0],1), dtype=float)
+                        ),
+                        axis=1
+                    ),
+                    axis=1
+                )
+            pow_exp = np.nan_to_num(
+                max_pow.reshape(-1,1)@np.ones((1,top_few_polytopes), dtype=float)
+            )
+            #print(tmp_, 'before')
+            tmp_ -= pow_exp
+            #print(tmp_, 'after')
+            likelihoods = np.sum(np.exp(tmp_), axis=1) +\
+                 np.exp(model.global_bias - pow_exp[:,0]) 
+                
+            likelihoods *= model.prior[label] 
+            log_likelihoods[:,ii] = np.log(likelihoods) + pow_exp[:,0]
+
+        max_pow = np.nan_to_num(
+            np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(model.labels)))
+        )
+        log_likelihoods -= max_pow
+        #print(log_likelihoods)
+        likelihoods = np.exp(log_likelihoods)
+
+        total_likelihoods = np.sum(likelihoods, axis=1)
+
+        proba = (likelihoods.T/total_likelihoods).T
+        
+        if return_likelihood:
+            return proba, likelihoods
+        else:
+            return proba, distance
+
+def predict(model, X):
+    r"""
+    Perform inference using the kernel density forest.
+    Parameters
+    ----------
+    X : ndarray
+        Input data matrix.
+    """
+    
+    return np.argmax(predict_proba(model, X), axis = 1)
+
 
 # %%

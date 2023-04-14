@@ -28,7 +28,7 @@ fit_kwargs = {
         "callbacks": [callback],
     }
 # %%
-def getNN(input_size, num_classes, layer_size=1000):
+def getNN(input_size, num_classes, layer_size):
     network_base = keras.Sequential()
     initializer = keras.initializers.random_normal(seed=0)
     network_base.add(keras.layers.Dense(layer_size, kernel_initializer=initializer, input_shape=(input_size,)))
@@ -47,10 +47,16 @@ def experiment(train_sample, test_sample, dim):
     X, y = trunk_sim(train_sample, p_star=dim)
     X_test, y_test = trunk_sim(test_sample, p_star=dim)
 
+    min_val = np.min(X,axis=0)
+    max_val = np.max(X, axis=0)
+    
+    X = (X-min_val)/(max_val-min_val+1e-12)
+    X_test = (X_test-min_val)/(max_val-min_val+1e-12)
+
     model_kde = kde()
     model_kde.fit(X, y)
 
-    model_kdf = kdf(kwargs={'n_estimators':500})
+    model_kdf = kdf(kwargs={'n_estimators':100})
     model_kdf.fit(X, y)
 
     nn = getNN(
@@ -62,7 +68,7 @@ def experiment(train_sample, test_sample, dim):
     model_kdn = kdn(network=nn)
     model_kdn.fit(X, y)
     
-    model_extra_kdf = extra_kdf(kwargs={'n_estimators':500})
+    model_extra_kdf = extra_kdf(kwargs={'n_estimators':100, 'max_features':1})
     model_extra_kdf.fit(X, y)
 
     kde_err = 1 - \
@@ -71,14 +77,65 @@ def experiment(train_sample, test_sample, dim):
         np.mean(model_kdf.predict(X_test)==y_test)
     kdn_err = 1 - \
         np.mean(model_kdn.predict(X_test)==y_test)
+    rf_err = 1 - \
+        np.mean(model_kdf.rf_model.predict(X_test)==y_test)
+    dn_err = 1 - \
+        np.mean(np.argmax(model_kdn.network.predict(X_test),axis=1)==y_test)
     extra_kdf_err = 1 - \
         np.mean(model_extra_kdf.predict(X_test)==y_test)
     
-    return kdn_err, kdf_err, kde_err, extra_kdf_err
+    return kdn_err, kdf_err, kde_err, extra_kdf_err, rf_err, dn_err
+
+
+
+def experiment_noise(train_sample, test_sample, dim):
+    X, y = trunk_sim(train_sample, p_star=1, p=dim)
+    X_test, y_test = trunk_sim(test_sample, p_star=1, p=dim)
+
+    min_val = np.min(X,axis=0)
+    max_val = np.max(X, axis=0)
+    
+    X = (X-min_val)/(max_val-min_val+1e-12)
+    X_test = (X_test-min_val)/(max_val-min_val+1e-12)
+    
+    model_kde = kde()
+    model_kde.fit(X, y)
+
+    model_kdf = kdf(kwargs={'n_estimators':100})
+    model_kdf.fit(X, y)
+
+    nn = getNN(
+            input_size=X.shape[1],
+            num_classes=2, 
+            layer_size=100
+        )
+    history = nn.fit(X, keras.utils.to_categorical(y), **fit_kwargs)
+    model_kdn = kdn(network=nn)
+    model_kdn.fit(X, y)
+    
+    model_extra_kdf = extra_kdf(kwargs={'n_estimators':100, 'max_features':1})
+    model_extra_kdf.fit(X, y)
+
+    kde_err = 1 - \
+        np.mean(model_kde.predict(X_test)==y_test)
+    kdf_err = 1 - \
+        np.mean(model_kdf.predict(X_test)==y_test)
+    kdn_err = 1 - \
+        np.mean(model_kdn.predict(X_test)==y_test)
+    rf_err = 1 - \
+        np.mean(model_kdf.rf_model.predict(X_test)==y_test)
+    dn_err = 1 - \
+        np.mean(np.argmax(model_kdn.network.predict(X_test),axis=1)==y_test)
+    extra_kdf_err = 1 - \
+        np.mean(model_extra_kdf.predict(X_test)==y_test)
+    
+    return kdn_err, kdf_err, kde_err, extra_kdf_err, rf_err, dn_err
 
 # %%
 err_kdn = []
 err_kdf = []
+err_dn = []
+err_rf = []
 err_kde = []
 err_extra_kdf = []
 dimension = []
@@ -107,12 +164,20 @@ for dim in signal_dimension:
         err_extra_kdf.append(
             res[ii][3]
         )
+        err_rf.append(
+            res[ii][4]
+        )
+        err_dn.append(
+            res[ii][5]
+        )
         dimension.append(
             dim
         )
 
 df['err_kdn'] = err_kdn
 df['err_kdf'] = err_kdf
+df['err_dn'] = err_dn
+df['err_rf'] = err_rf
 df['err_kde'] = err_kde
 df['err_extra_kdf'] = err_extra_kdf
 df['dimension'] = dimension
@@ -126,7 +191,7 @@ with open('controlled_dimensionality.pickle', 'rb') as f:
     df = pickle.load(f)
 # %%
 sns.set_context('talk')
-fig, ax = plt.subplots(1,1, figsize=(14,10))
+fig, ax = plt.subplots(1,1, figsize=(14,12))
 
 err_kdf_med = []
 err_kdn_med = []
