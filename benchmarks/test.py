@@ -385,9 +385,9 @@ for id in data_id:
         print(id)
 
 # %%
-def _compute_distance(model, X, polytope):
+def _compute_distance(model, X, polytope, scales):
     return np.sum(
-            (X - model.polytope_means[polytope])**2,
+            (X - model.polytope_means[polytope])**2/scales,
             axis=1
         )
 
@@ -420,7 +420,7 @@ def predict_proba(model, X, return_likelihood=False):
 
         total_samples = X.shape[0]
         total_polytope = len(model.polytope_means)
-        top_few_polytopes = 5 #int(np.ceil(total_polytope*.001))
+        top_few_polytopes = 1 #int(np.ceil(total_polytope*.001))
         distance = np.zeros(
                 (
                     np.size(X,0),
@@ -429,8 +429,13 @@ def predict_proba(model, X, return_likelihood=False):
                 dtype=float
             )
         
+        scales = np.zeros(model.feature_dim, dtype=float)
         for polytope in range(total_polytope):
-            distance[:,polytope] = model._compute_distance(X, polytope)
+            scales += model.polytope_cov[polytope]
+
+        scales /= total_polytope
+        for polytope in range(total_polytope):
+            distance[:,polytope] = _compute_distance(model, X, polytope, scales)
 
         polytope_idx_to_consider = np.argsort(distance, axis=1)[:,:top_few_polytopes]
 
