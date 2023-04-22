@@ -83,14 +83,9 @@ class kdf(KernelDensityGraph):
             location = np.mean(X[idx_with_scale_1], axis=0)    
 
             X_tmp = X.copy() - location
-            initial_guess = np.sqrt(np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales))
-            try:
-                covariance, _ = curve_fit(f, X_tmp, scales, p0=initial_guess, maxfev=1000, gtol=1e-3)
-                covariance += epsilon
-            except:
-                covariance = initial_guess
+            covariance = np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales)
             
-            self.polytope_cov.append(covariance**2)
+            self.polytope_cov.append(covariance)
             self.polytope_means.append(location)
 
             for label in self.labels:
@@ -193,9 +188,3 @@ class kdf(KernelDensityGraph):
         
         return np.argmax(self.predict_proba(X), axis = 1)
 
-
-def f(x, *args):
-    y = 1
-    for ii,sigma in enumerate(args):
-        y *= np.exp(-x[:,ii]**2/(2*sigma**2))
-    return y
