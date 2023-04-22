@@ -3,6 +3,8 @@ from .base import KernelDensityGraph
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 from sklearn.ensemble import RandomForestClassifier as rf 
 import numpy as np
+from scipy.optimize import curve_fit
+from tqdm import tqdm
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -19,7 +21,7 @@ class kdf(KernelDensityGraph):
         self.kwargs = kwargs
         self.is_fitted = False
 
-    def fit(self, X, y, k=1, epsilon=1e-4):
+    def fit(self, X, y, k=1, epsilon=1e-6):
         r"""
         Fits the kernel density forest.
         Parameters
@@ -42,7 +44,7 @@ class kdf(KernelDensityGraph):
         self.rf_model = rf(**self.kwargs).fit(X, y)
         self.feature_dim = X.shape[1] 
         self.global_bias = np.log(k) - 10**(self.feature_dim**(1/2)) 
-
+        
         ### change code to calculate one kernel per polytope
         idx_with_label = {}
         for label in self.labels:
@@ -58,30 +60,37 @@ class kdf(KernelDensityGraph):
                 [tree.apply(X) for tree in self.rf_model.estimators_]
                 ).T
 
-        polytopes = np.unique(
-                predicted_leaf_ids_across_trees, axis=0
-            )
-        total_polytopes = len(polytopes)
-            
-        for polytope in range(total_polytopes):
+        
+        self.w = np.zeros((self.total_samples,self.total_samples), dtype=float)
+        for ii in range(self.total_samples):
             matched_samples = np.sum(
-                    predicted_leaf_ids_across_trees == polytopes[polytope],
+                    predicted_leaf_ids_across_trees == predicted_leaf_ids_across_trees[ii],
                     axis=1
                 )
-            
-            scales = (matched_samples/np.max(matched_samples))**(1+np.floor(np.log10(X.shape[0]/3)))
-            idx_with_scale_1 = np.where(
-                    scales==1
-                )[0]
-            
-            location = np.mean(X[idx_with_scale_1], axis=0)
-            X_tmp = X.copy() - location
-            covariance = np.average(X_tmp**2, axis=0, weights=scales)
+            self.w[ii,:] = (matched_samples/np.max(matched_samples)) + 1e-30
+        
+        used = []
+        for ii in range(self.total_samples):
+            if ii in used:
+               continue
 
-            if len(idx_with_scale_1) == 1:
+            scales= self.w[ii,:]
+            idx_with_scale_1 = list(np.where(
+                    scales>0.999999
+                )[0])
+            used.extend(idx_with_scale_1)
+            
+            location = np.mean(X[idx_with_scale_1], axis=0)    
+
+            X_tmp = X.copy() - location
+            initial_guess = np.sqrt(np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales))
+            try:
+                covariance, _ = curve_fit(f, X_tmp, scales, p0=initial_guess, maxfev=1000, gtol=1e-3)
                 covariance += epsilon
-                
-            self.polytope_cov.append(covariance)
+            except:
+                covariance = initial_guess
+            
+            self.polytope_cov.append(covariance**2)
             self.polytope_means.append(location)
 
             for label in self.labels:
@@ -96,7 +105,7 @@ class kdf(KernelDensityGraph):
         
     def _compute_distance(self, X, polytope):
         return np.sum(
-               (X - self.polytope_means[polytope])**2,
+               (X - self.polytope_means[polytope])**2/self.polytope_cov[polytope],
                axis=1
            )
 
@@ -183,3 +192,10 @@ class kdf(KernelDensityGraph):
         """
         
         return np.argmax(self.predict_proba(X), axis = 1)
+
+
+def f(x, *args):
+    y = 1
+    for ii,sigma in enumerate(args):
+        y *= np.exp(-x[:,ii]**2/(2*sigma**2))
+    return y

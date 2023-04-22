@@ -242,14 +242,14 @@ for label in labels:
         break
     break
 # %%
-dataset = openml.datasets.get_dataset(1050)
+dataset = openml.datasets.get_dataset(458)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
             )
 
 #feature = [475, 433]
 #X = X[:,feature]
-X /= np.max(np.linalg.norm(X,2,axis=1))
+#X /= np.max(np.linalg.norm(X,2,axis=1))
 total_sample = X.shape[0]
 train_samples = np.logspace(
             np.log10(100),
@@ -261,9 +261,15 @@ train_samples = np.logspace(
 X_train, X_test, y_train, y_test = train_test_split(
                      X, y, test_size=.33, random_state=44)
 
+min_val = np.min(X_train,axis=0)
+max_val = np.max(X_train, axis=0)
+    
+X_train = (X_train-min_val)/(max_val-min_val+1e-12)
+X_test = (X_test-min_val)/(max_val-min_val+1e-12)
+
 #%%
-model_kdf = kdf(k=1e100, kwargs={'n_estimators':500})
-model_kdf.fit(X_train, y_train, epsilon=1e-4)
+model_kdf = kdf(kwargs={'n_estimators':500})
+model_kdf.fit(X_train, y_train)
 
 # %%
 1 - np.mean(model_kdf.predict(X_test)==y_test)
@@ -506,4 +512,35 @@ def predict(model, X):
     return np.argmax(predict_proba(model, X), axis = 1)
 
 
+# %%
+from kdg.utils import generate_gaussian_parity
+from kdg import kdf
+import numpy as np
+
+X, y = generate_gaussian_parity(1000)
+X_test, y_test = generate_gaussian_parity(1000)
+model_kdf = kdf(kwargs={'n_estimators':50})
+model_kdf.fit(X,y)
+#%%
+np.mean(model_kdf.predict(X_test)==y_test)
+#%%
+np.mean(model_kdf.rf_model.predict(X_test)==y_test)
+# %%
+from scipy.optimize import curve_fit
+
+#%%
+location = X[100,:]
+def f(x, *args):
+    y = 1
+    for ii,sigma in enumerate(args):
+        y *= np.exp(-(x[:,ii]-location[ii])**2/(2*sigma**2))
+    return y
+# %%
+sigma, pcov = curve_fit(f, X, model_kdf.w[100,:], p0=np.ones(model_kdf.feature_dim), gtol=1e-2)
+# %%
+dist = (X[:,0] - location)
+idx = np.argsort(dist)
+
+plt.plot(dist[idx], model_kdf.w[100,idx])
+plt.plot(dist[idx], f(X[idx,0], sigma))
 # %%
