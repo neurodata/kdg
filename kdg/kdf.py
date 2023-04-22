@@ -74,7 +74,7 @@ class kdf(KernelDensityGraph):
             if ii in used:
                continue
 
-            scales= self.w[ii,:]
+            scales= (self.w[ii,:])**(1+np.floor(np.log10(self.total_samples)/3))
             idx_with_scale_1 = list(np.where(
                     scales>0.999999
                 )[0])
