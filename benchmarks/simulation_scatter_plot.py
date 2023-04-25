@@ -6,7 +6,7 @@ from kdg import kdf
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd 
-from scipy.io import savemat, loadmat
+import pickle
 # %%
 n_samples = 1e4
 X, y = {}, {}
@@ -180,7 +180,9 @@ ax[1][4].set_yticks([])
 ax[1][4].set_xticks([])
 
 #########################################################
-df = loadmat('kdf_experiments/results/gxor_plot_data.mat')
+with open('kdf_simulations/results/gxor.pickle', 'rb') as f:
+    df = pickle.load(f)
+
 ax1 = ax[2][0].imshow(
     df['posterior_rf'],
     extent=[xx.min(), xx.max(), yy.min(), yy.max()],
@@ -213,7 +215,9 @@ ax[3][0].set_yticks([-2,-1,0,1,2])
 ax[3][0].set_xticks([])
 
 ############################################
-df = loadmat('kdf_experiments/results/spiral_plot_data.mat')
+with open('kdf_simulations/results/spiral.pickle', 'rb') as f:
+    df = pickle.load(f)
+
 ax1 = ax[2][1].imshow(
     1-np.flip(df['posterior_rf'],axis=0),
     extent=[xx.min(), xx.max(), yy.min(), yy.max()],
@@ -244,7 +248,9 @@ ax[3][1].set_yticks([])
 ax[3][1].set_xticks([])
 
 #############################################
-df = loadmat('kdf_experiments/results/circle_plot_data.mat')
+with open('kdf_simulations/results/circle.pickle', 'rb') as f:
+    df = pickle.load(f)
+
 ax1 = ax[2][2].imshow(
     df['posterior_rf'],
     extent=[xx.min(), xx.max(), yy.min(), yy.max()],
@@ -276,7 +282,9 @@ ax[3][2].set_xticks([])
 
 
 ##################################################
-df = loadmat('kdf_experiments/results/sinewave_plot_data.mat')
+with open('kdf_simulations/results/sinewave.pickle', 'rb') as f:
+    df = pickle.load(f)
+
 ax1 = ax[2][3].imshow(
     np.flip(df['posterior_rf'],axis=0),
     extent=[xx.min(), xx.max(), yy.min(), yy.max()],
@@ -307,7 +315,9 @@ ax[3][3].set_yticks([])
 ax[3][3].set_xticks([])
 
 ###################################################
-df = loadmat('kdf_experiments/results/polynomial_plot_data.mat')
+with open('kdf_simulations/results/polynomial.pickle', 'rb') as f:
+    df = pickle.load(f)
+
 ax1 = ax[2][4].imshow(
     np.flip(df['posterior_rf'],axis=0),
     extent=[xx.min(), xx.max(), yy.min(), yy.max()],
@@ -340,9 +350,11 @@ ax[3][4].set_xticks([])
 
 ##############################################
 ##############################################
-df = loadmat('kdn_experiments/results/gxor_plot_data.mat')
-proba_nn = 1-np.flip(df["nn_proba"][:, 0].reshape(400, 400), axis=1)
-proba_kdn = 1-np.flip(df["kdn_proba"][:, 0].reshape(400, 400), axis=1)
+with open('kdn_simulations/results/gxor.pickle', 'rb') as f:
+    df = pickle.load(f)
+
+proba_nn = 1-np.flip(df["posterior_dn"], axis=1)
+proba_kdn = 1-np.flip(df["posterior_kdn"], axis=1)
 
 ax1 = ax[4][0].imshow(
     proba_nn,
@@ -355,7 +367,7 @@ ax1 = ax[4][0].imshow(
 )
 ax[4][0].set_aspect("equal")
 ax[4][0].tick_params(labelsize=ticksize)
-ax[4][0].set_ylabel('NN Posteriors',fontsize=title_size-5)
+ax[4][0].set_ylabel('DN Posteriors',fontsize=title_size-5)
 ax[4][0].set_yticks([-2,-1,0,1,2])
 ax[4][0].set_xticks([])
 
@@ -377,9 +389,11 @@ ax[5][0].set_xticks([-2,-1,0,1,2])
 
 
 ########################################
-df = loadmat('kdn_experiments/results/spiral_plot_data.mat')
-proba_nn = np.flip(df["nn_proba"][:, 0].reshape(400, 400), axis=1)
-proba_kdn = np.flip(df["kdn_proba"][:, 0].reshape(400, 400), axis=1)
+with open('kdn_simulations/results/spiral.pickle', 'rb') as f:
+    df = pickle.load(f)
+
+proba_nn = np.flip(df["posterior_dn"], axis=1)
+proba_kdn = np.flip(df["posterior_kdn"], axis=1)
 
 ax1 = ax[4][1].imshow(
     proba_nn,
@@ -411,9 +425,11 @@ ax[5][1].set_yticks([])
 ax[5][1].set_xticks([-2,-1,0,1,2])
 
 ########################################################
-df = loadmat('kdn_experiments/results/circle_plot_data.mat')
-proba_nn = np.flip(df["nn_proba"][:, 0].reshape(400, 400), axis=1)
-proba_kdn = np.flip(df["kdn_proba"][:, 0].reshape(400, 400), axis=1)
+with open('kdn_simulations/results/circle.pickle', 'rb') as f:
+    df = pickle.load(f)
+
+proba_nn = np.flip(df["posterior_dn"], axis=1)
+proba_kdn = np.flip(df["posterior_kdn"], axis=1)
 
 ax1 = ax[4][2].imshow(
     proba_nn,
@@ -445,9 +461,11 @@ ax[5][2].set_yticks([])
 ax[5][2].set_xticks([-2,-1,0,1,2])
 
 ####################################################
-df = loadmat('kdn_experiments/results/sinewave_plot_data.mat')
-proba_nn = np.flip(df["nn_proba"][:, 0].reshape(400, 400), axis=0)
-proba_kdn = np.flip(df["kdn_proba"][:, 0].reshape(400, 400), axis=0)
+with open('kdn_simulations/results/sinewave.pickle', 'rb') as f:
+    df = pickle.load(f)
+
+proba_nn = np.flip(df["posterior_dn"], axis=0)
+proba_kdn = np.flip(df["posterior_kdn"], axis=0)
 
 ax1 = ax[4][3].imshow(
     proba_nn,
@@ -479,9 +497,11 @@ ax[5][3].set_yticks([])
 ax[5][3].set_xticks([-2,-1,0,1,2])
 
 #######################################################
-df = loadmat('kdn_experiments/results/polynomial_plot_data.mat')
-proba_nn = np.flip(df["nn_proba"][:, 0].reshape(400, 400), axis=1)
-proba_kdn = np.flip(df["kdn_proba"][:, 0].reshape(400, 400), axis=1)
+with open('kdn_simulations/results/polynomial.pickle', 'rb') as f:
+    df = pickle.load(f)
+
+proba_nn = np.flip(df["posterior_dn"], axis=1)
+proba_kdn = np.flip(df["posterior_kdn"], axis=1)
 
 ax1 = ax[4][4].imshow(
     proba_nn,

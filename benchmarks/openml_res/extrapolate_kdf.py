@@ -11,64 +11,132 @@ from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece, plot_reliability
 from sklearn.model_selection import train_test_split
 from joblib import Parallel, delayed
-# %% load the data
-dataset_id = 12
-
-dataset = openml.datasets.get_dataset(dataset_id)
-X, y, is_categorical, _ = dataset.get_data(
+# %%
+def experiment(dataset_id):
+    dataset = openml.datasets.get_dataset(dataset_id)
+    X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
             )
-# %% normalize and sort the data
-max_norm = np.max(
-    np.linalg.norm(X, 2, axis=1)
-)
-X /= max_norm
-norms = np.linalg.norm(X, 2, axis=1)
 
-idx_to_train = np.where(norms<=0.9)[0]
-idx_to_test_subsample = np.where(norms>0.9)[0]
+    if np.mean(is_categorical) >0:
+        return
+
+    if np.isnan(np.sum(y)):
+        return
+
+    if np.isnan(np.sum(X)):
+        return
+    
+    total_sample = len(y)
+    max_norm = np.max(
+        np.linalg.norm(X, 2, axis=1)
+    )
+    X /= max_norm
+    norms = np.linalg.norm(X, 2, axis=1)
+    sorted_id = np.argsort(norms)
+
+    test_percentile = np.arange(.5,1.01,.1)
+    train_sample = int(total_sample*0.5)
+    test_sample = [int(total_sample*percentile) for percentile in test_percentile]
+
+    model_kdf = kdf(kwargs={'n_estimators':500})
+    model_kdf.fit(X[sorted_id[:train_sample]], y[sorted_id[:train_sample]])
+
+    ECE_rf = []
+    ECE_kdf = []
+    error_rf = []
+    error_kdf = []
+    mean_max_conf_rf = []
+    mean_max_conf_kdf = []
+
+    prev_id = 0
+    for sample in test_sample:
+        predicted_proba_kdf = model_kdf.predict_proba(
+            X[sorted_id[prev_id:sample]]
+        )
+        predicted_proba_rf = model_kdf.rf_model.predict_proba(
+            X[sorted_id[prev_id:sample]]
+        )
+        predicted_label_kdf = np.argmax(predicted_proba_kdf, axis=1)
+        predicted_label_rf = np.argmax(predicted_proba_rf, axis=1)
+
+        ECE_rf.append(
+            get_ece(predicted_proba_rf,
+                    predicted_label_rf,
+                    y[prev_id:sample])
+        )
+        ECE_kdf.append(
+            get_ece(predicted_proba_kdf,
+                    predicted_proba_kdf,
+                    y[prev_id:sample])
+        )
+        error_rf.append(
+            1-np.mean(predicted_label_rf==y[prev_id:sample])
+        )
+        error_kdf.append(
+            1-np.mean(predicted_label_kdf==y[prev_id:sample])
+        )
+
+        mean_max_conf_rf.append(
+            np.mean(np.max(predicted_proba_rf, axis=1))
+        )
+        mean_max_conf_kdf.append(
+            np.mean(np.max(predicted_proba_kdf, axis=1))
+        )
+
+        prev_id = sample
+
+    return ECE_rf, ECE_kdf, error_rf, error_kdf, mean_max_conf_rf, mean_max_conf_kdf
+
+#%%
+benchmark_suite = openml.study.get_suite('OpenML-CC18')
+res = Parallel(n_jobs=-1,verbose=1)(
+            delayed(experiment)(
+                    dataset_id,
+                    ) for dataset_id in benchmark_suite.data
+                )
 # %%
-labels = np.unique(y)
-model_kdf = kdf(kwargs={'n_estimators':500})
-model_kdf.fit(X[idx_to_train], y[idx_to_train], epsilon=1e-6)
+total_datasets = len(res)
+ECE_rf = np.zeros(6, dtype=float)
+ECE_kdf = np.zeros(6, dtype=float)
+error_rf = np.zeros(6, dtype=float)
+error_kdf = np.zeros(6, dtype=float)
+mean_max_conf_rf = np.zeros(6, dtype=float)
+mean_max_conf_kdf = np.zeros(6, dtype=float)
 
-# %%
-#model_kdf.global_bias = 10
-proba = model_kdf.predict_proba(X[idx_to_test_subsample])
-max_proba = np.max(proba, axis=1)
-predicted_label = np.argmax(proba, axis=1)
+for ii in range(total_datasets):
+    ECE_rf += res[ii][0]
+    ECE_kdf += res[ii][1]
+    error_rf += res[ii][2]
+    error_kdf += res[ii][3]
+    mean_max_conf_rf += res[ii][4]
+    mean_max_conf_kdf += res[ii][5]
 
-proba_rf = model_kdf.rf_model.predict_proba(X[idx_to_test_subsample])
-max_proba_rf = np.max(proba_rf, axis=1)
-predicted_label_rf = np.argmax(proba_rf, axis=1)
+ECE_rf /= total_datasets
+ECE_kdf /= total_datasets
+error_rf /= total_datasets
+error_kdf /= total_datasets
+mean_max_conf_rf /= total_datasets
+mean_max_conf_kdf /= total_datasets
 
-print("ECE KDF:", get_ece(proba, predicted_label, y[idx_to_test_subsample]))
-print("ECE RF:", get_ece(proba_rf, predicted_label_rf, y[idx_to_test_subsample]))
-
-norms_test = np.linalg.norm(X[idx_to_test_subsample], 2, axis=1)
-sorted_idx = np.argsort(norms_test)
-
+#%%
+test_percentile = np.arange(.5,1.01,.1)
 sns.set_context('talk')
-plt.plot(norms_test[sorted_idx], max_proba[sorted_idx])
-plt.xlabel('Norm')
-plt.ylabel('Max Conf')
-# %%
-labels_to_train = [0,1]
-idx_to_train = []
-labels_to_test = [4,5]
-idx_to_test = []
+fig1, ax = plt.subplots(1, 3, figsize=(24, 8))
 
-for label in labels_to_train:
-    idx_to_train.extend(
-        np.where(y==label)[0]
-    )
+ax[0].plot(test_percentile, mean_max_conf_rf, c='k', label='RF')
+ax[0].plot(test_percentile, mean_max_conf_kdf, c='r', label='KDF')
+ax[0].set_ylabel('Mean Max Confidence')
+ax[0].set_xlabel('Data Percentile')
 
-for label in labels_to_test:
-    idx_to_test.extend(
-        np.where(y==label)[0]
-    )
-# %%
-model_kdf = kdf(kwargs={'n_estimators':500})
-model_kdf.fit(X[idx_to_train], y[idx_to_train], epsilon=1e-6)
+ax[1].plot(test_percentile, ECE_rf, c='k', label='RF')
+ax[1].plot(test_percentile, ECE_kdf, c='r', label='KDF')
+ax[1].set_ylabel('ECE')
+ax[1].set_xlabel('Data Percentile')
 
+
+ax[2].plot(test_percentile, error_rf, c='k', label='RF')
+ax[2].plot(test_percentile, error_kdf, c='r', label='KDF')
+ax[2].set_ylabel('Generalization Error')
+ax[2].set_xlabel('Data Percentile')
 # %%

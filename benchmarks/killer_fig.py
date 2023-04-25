@@ -2,15 +2,50 @@
 import numpy as np
 from kdg.utils import generate_gaussian_parity, generate_ellipse, generate_spirals, generate_sinewave, generate_polynomial
 from kdg.utils import plot_2dsim
-from kdg import kdf
+from kdg import kdf, kdn
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd 
+from tensorflow import keras
+from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
+from tensorflow.keras import activations
+from tensorflow.keras import backend as bknd
 # %%
 n_samples = 1e4
 n_estimators = 500
 X, y = {}, {}
 models  = {}
+models_kdn = {}
+nn = {}
+#%%
+compile_kwargs = {
+        "loss": "binary_crossentropy",
+        "optimizer": keras.optimizers.Adam(3e-4),
+    }
+callback = keras.callbacks.EarlyStopping(monitor="loss", patience=10, verbose=True)
+fit_kwargs = {
+        "epochs": 200,
+        "batch_size": 64,
+        "verbose": False,
+        "callbacks": [callback],
+    }
+
+#%%
+# network architecture [1000, 1000, 1000, 1000, 2]
+def getNN(input_size, num_classes):
+    network_base = keras.Sequential()
+    initializer = keras.initializers.random_normal(seed=0)
+    network_base.add(keras.layers.Dense(1000, kernel_initializer=initializer, input_shape=(input_size,)))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(1000, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(1000, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(1000, kernel_initializer=initializer))
+    network_base.add(keras.layers.Activation(activations.relu))
+    network_base.add(keras.layers.Dense(units=num_classes, activation="softmax", kernel_initializer=initializer))
+    network_base.compile(**compile_kwargs)
+    return network_base
 #%%
 X['gxor'], y['gxor'] = generate_gaussian_parity(n_samples)
 X['spiral'], y['spiral'] = generate_spirals(n_samples)
@@ -18,7 +53,26 @@ X['circle'], y['circle'] = generate_ellipse(n_samples)
 X['sine'], y['sine'] = generate_sinewave(n_samples)
 X['poly'], y['poly'] = generate_polynomial(n_samples, a=[1,3])
 
-# %%
+#%%
+# train Vanilla NN
+print("Fitting DNs!!!")
+
+nn['gxor'] = getNN(input_size=2, num_classes=2)
+history = nn['gxor'].fit(X['gxor'], keras.utils.to_categorical(y['gxor']), **fit_kwargs)
+
+nn['spiral'] = getNN(input_size=2, num_classes=2)
+history = nn['spiral'].fit(X['spiral'], keras.utils.to_categorical(y['spiral']), **fit_kwargs)
+
+nn['circle'] = getNN(input_size=2, num_classes=2)
+history = nn['circle'].fit(X['circle'], keras.utils.to_categorical(y['circle']), **fit_kwargs)
+
+nn['sine'] = getNN(input_size=2, num_classes=2)
+history = nn['sine'].fit(X['sine'], keras.utils.to_categorical(y['sine']), **fit_kwargs)
+
+nn['poly'] = getNN(input_size=2, num_classes=2)
+history = nn['poly'].fit(X['poly'], keras.utils.to_categorical(y['poly']), **fit_kwargs)
+
+#%%
 models['gxor'] = kdf(kwargs={"n_estimators": n_estimators})
 models['spiral'] = kdf(kwargs={"n_estimators": n_estimators})
 models['circle'] = kdf(kwargs={"n_estimators": n_estimators})
@@ -26,24 +80,67 @@ models['sine'] = kdf(kwargs={"n_estimators": n_estimators})
 models['poly'] = kdf(kwargs={"n_estimators": n_estimators})
 
 # %%
+print("Fitting KDFs!")
+
 models['gxor'].fit(
-    X['gxor'], y['gxor']
+    X['gxor'], y['gxor'],
+    k=2e8
 )
 
 models['spiral'].fit(
-    X['spiral'], y['spiral']
+    X['spiral'], y['spiral'],
+    k=1e9
 )
 
 models['circle'].fit(
-    X['circle'], y['circle']
+    X['circle'], y['circle'],
+    k=1e9
 )
 
 models['sine'].fit(
-    X['sine'], y['sine']
+    X['sine'], y['sine'],
+    k=1e9
 )
 
 models['poly'].fit(
-    X['poly'], y['poly']
+    X['poly'], y['poly'],
+    k=2e9
+)
+
+# %%
+models_kdn['gxor'] = kdn(network=nn['gxor'])
+models_kdn['spiral'] = kdn(network=nn['spiral'])
+models_kdn['circle'] = kdn(network=nn['circle'])
+models_kdn['sine'] = kdn(network=nn['sine'])
+models_kdn['poly'] = kdn(network=nn['poly'])
+
+#%%
+# %%
+print("Fitting KDNs!")
+
+models_kdn['gxor'].fit(
+    X['gxor'], y['gxor'],
+    k=2e8
+)
+
+models_kdn['spiral'].fit(
+    X['spiral'], y['spiral'],
+    k=1e9
+)
+
+models_kdn['circle'].fit(
+    X['circle'], y['circle'],
+    k=1e9
+)
+
+models_kdn['sine'].fit(
+    X['sine'], y['sine'],
+    k=1e9
+)
+
+models_kdn['poly'].fit(
+    X['poly'], y['poly'],
+    k=1e9
 )
 # %%
 fig = plt.figure(constrained_layout=True,figsize=(24,30))
