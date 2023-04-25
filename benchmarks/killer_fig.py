@@ -2,326 +2,538 @@
 import numpy as np
 from kdg.utils import generate_gaussian_parity, generate_ellipse, generate_spirals, generate_sinewave, generate_polynomial
 from kdg.utils import plot_2dsim
-from kdg import kdf, kdn
+from kdg import kdf
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd 
-from tensorflow import keras
-from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
-from tensorflow.keras import activations
-from tensorflow.keras import backend as bknd
+import pickle
 # %%
 n_samples = 1e4
-n_estimators = 500
 X, y = {}, {}
-models  = {}
-models_kdn = {}
-nn = {}
-#%%
-compile_kwargs = {
-        "loss": "binary_crossentropy",
-        "optimizer": keras.optimizers.Adam(3e-4),
-    }
-callback = keras.callbacks.EarlyStopping(monitor="loss", patience=10, verbose=True)
-fit_kwargs = {
-        "epochs": 200,
-        "batch_size": 64,
-        "verbose": False,
-        "callbacks": [callback],
-    }
-
-#%%
-# network architecture [1000, 1000, 1000, 1000, 2]
-def getNN(input_size, num_classes):
-    network_base = keras.Sequential()
-    initializer = keras.initializers.random_normal(seed=0)
-    network_base.add(keras.layers.Dense(1000, kernel_initializer=initializer, input_shape=(input_size,)))
-    network_base.add(keras.layers.Activation(activations.relu))
-    network_base.add(keras.layers.Dense(1000, kernel_initializer=initializer))
-    network_base.add(keras.layers.Activation(activations.relu))
-    network_base.add(keras.layers.Dense(1000, kernel_initializer=initializer))
-    network_base.add(keras.layers.Activation(activations.relu))
-    network_base.add(keras.layers.Dense(1000, kernel_initializer=initializer))
-    network_base.add(keras.layers.Activation(activations.relu))
-    network_base.add(keras.layers.Dense(units=num_classes, activation="softmax", kernel_initializer=initializer))
-    network_base.compile(**compile_kwargs)
-    return network_base
 #%%
 X['gxor'], y['gxor'] = generate_gaussian_parity(n_samples)
 X['spiral'], y['spiral'] = generate_spirals(n_samples)
 X['circle'], y['circle'] = generate_ellipse(n_samples)
 X['sine'], y['sine'] = generate_sinewave(n_samples)
 X['poly'], y['poly'] = generate_polynomial(n_samples, a=[1,3])
-
 #%%
-# train Vanilla NN
-print("Fitting DNs!!!")
+sns.set_context('talk')
+fig, ax = plt.subplots(6,5, figsize=(40,48), sharex=True)
+title_size = 45
+ticksize = 30
 
-nn['gxor'] = getNN(input_size=2, num_classes=2)
-history = nn['gxor'].fit(X['gxor'], keras.utils.to_categorical(y['gxor']), **fit_kwargs)
+plot_2dsim(X['gxor'], y['gxor'], ax=ax[0][0])
+ax[0][0].set_ylabel('Simulation Data', fontsize=title_size-5)
+ax[0][0].set_xlim([-2,2])
+ax[0][0].set_ylim([-2,2])
+ax[0][0].set_xticks([])
+ax[0][0].set_yticks([-2,-1,0,1,2])
+ax[0][0].tick_params(labelsize=ticksize)
+ax[0][0].set_title('Gaussian XOR', fontsize=title_size)
 
-nn['spiral'] = getNN(input_size=2, num_classes=2)
-history = nn['spiral'].fit(X['spiral'], keras.utils.to_categorical(y['spiral']), **fit_kwargs)
+plot_2dsim(X['spiral'], y['spiral'], ax=ax[0][1])
+ax[0][1].set_xlim([-2,2])
+ax[0][1].set_ylim([-2,2])
+ax[0][1].set_xticks([])
+ax[0][1].set_yticks([])
+ax[0][1].tick_params(labelsize=ticksize)
+ax[0][1].set_title('Spiral', fontsize=title_size)
 
-nn['circle'] = getNN(input_size=2, num_classes=2)
-history = nn['circle'].fit(X['circle'], keras.utils.to_categorical(y['circle']), **fit_kwargs)
+plot_2dsim(X['circle'], y['circle'], ax=ax[0][2])
+ax[0][2].set_xlim([-2,2])
+ax[0][2].set_ylim([-2,2])
+ax[0][2].set_xticks([])
+ax[0][2].set_yticks([])
+ax[0][2].tick_params(labelsize=ticksize)
+ax[0][2].set_title('Circle', fontsize=title_size)
 
-nn['sine'] = getNN(input_size=2, num_classes=2)
-history = nn['sine'].fit(X['sine'], keras.utils.to_categorical(y['sine']), **fit_kwargs)
+plot_2dsim(X['sine'], y['sine'], ax=ax[0][3])
+ax[0][3].set_xlim([-2,2])
+ax[0][3].set_ylim([-2,2])
+ax[0][3].set_xticks([])
+ax[0][3].set_yticks([])
+ax[0][3].tick_params(labelsize=ticksize)
+ax[0][3].set_title('Sinewave', fontsize=title_size)
 
-nn['poly'] = getNN(input_size=2, num_classes=2)
-history = nn['poly'].fit(X['poly'], keras.utils.to_categorical(y['poly']), **fit_kwargs)
+plot_2dsim(X['poly'], y['poly'], ax=ax[0][4])
+ax[0][4].set_xlim([-2,2])
+ax[0][4].set_ylim([-2,2])
+ax[0][4].set_xticks([])
+ax[0][4].set_yticks([])
+ax[0][4].tick_params(labelsize=ticksize)
+ax[0][4].set_title('Polynomial', fontsize=title_size)
 
-#%%
-models['gxor'] = kdf(kwargs={"n_estimators": n_estimators})
-models['spiral'] = kdf(kwargs={"n_estimators": n_estimators})
-models['circle'] = kdf(kwargs={"n_estimators": n_estimators})
-models['sine'] = kdf(kwargs={"n_estimators": n_estimators})
-models['poly'] = kdf(kwargs={"n_estimators": n_estimators})
+################################################
+#define grids
+p = np.arange(-2, 2, step=0.01)
+q = np.arange(-2, 2, step=0.01)
+xx, yy = np.meshgrid(p, q)
 
-# %%
-print("Fitting KDFs!")
+# get true posterior
+tp_df = pd.read_csv("true_posterior/Gaussian_xor_pdf.csv")
+proba_true = 0.5*np.ones((400, 400))
+tmp = np.array([tp_df["posterior"][x] for x in range(40000)])
+tmp = tmp.reshape(200, 200)
+proba_true[100:300, 100:300] = tmp
 
-models['gxor'].fit(
-    X['gxor'], y['gxor'],
-    k=2e8
+ax0 = ax[1][0].imshow(
+    proba_true,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
 )
+#ax[1][0].set_title("True Class Posteriors", fontsize=24)
+ax[1][0].set_aspect("equal")
+ax[1][0].tick_params(labelsize=ticksize)
+ax[1][0].set_yticks([-2,-1,0,1,2])
+ax[1][0].set_xticks([])
+ax[1][0].set_ylabel('True Posteriors',fontsize=title_size-5)
 
-models['spiral'].fit(
-    X['spiral'], y['spiral'],
-    k=1e9
+tp_df = pd.read_csv("true_posterior/spiral_pdf.csv")
+proba_true = 0.5*np.ones((400, 400))
+tmp = np.array([tp_df["posterior"][x] for x in range(40000)])
+tmp = tmp.reshape(200, 200)
+proba_true[100:300, 100:300] = 1 - tmp
+
+ax0 = ax[1][1].imshow(
+    np.flip(proba_true, axis=0),
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
 )
+#ax[1][1].set_title("True Class Posteriors", fontsize=24)
+ax[1][1].set_aspect("equal")
+ax[1][1].tick_params(labelsize=ticksize)
+ax[1][1].set_yticks([])
+ax[1][1].set_xticks([])
 
-models['circle'].fit(
-    X['circle'], y['circle'],
-    k=1e9
+
+tp_df = pd.read_csv("true_posterior/ellipse_pdf.csv")
+proba_true = 0.5*np.ones((400, 400))
+tmp = np.array([tp_df["posterior"][x] for x in range(40000)])
+tmp = tmp.reshape(200, 200)
+proba_true[100:300, 100:300] = tmp
+
+ax0 = ax[1][2].imshow(
+    proba_true,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
 )
+#ax[1][2].set_title("True Class Posteriors", fontsize=24)
+ax[1][2].set_aspect("equal")
+ax[1][2].tick_params(labelsize=ticksize)
+ax[1][2].set_yticks([])
+ax[1][2].set_xticks([])
 
-models['sine'].fit(
-    X['sine'], y['sine'],
-    k=1e9
+
+tp_df = pd.read_csv("true_posterior/sinewave_pdf.csv")
+proba_true = 0.5*np.ones((400, 400))
+tmp = np.array([tp_df["posterior"][x] for x in range(40000)])
+tmp = np.flip(tmp.reshape(200, 200),axis=0)
+proba_true[100:300, 100:300] = tmp
+
+ax0 = ax[1][3].imshow(
+    proba_true,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
 )
+#ax[1][3].set_title("True Class Posteriors", fontsize=24)
+ax[1][3].set_aspect("equal")
+ax[1][3].tick_params(labelsize=ticksize)
+ax[1][3].set_yticks([])
+ax[1][3].set_xticks([])
 
-models['poly'].fit(
-    X['poly'], y['poly'],
-    k=2e9
+
+tp_df = pd.read_csv("true_posterior/polynomial_pdf.csv")
+proba_true = 0.5*np.ones((400, 400))
+tmp = np.array([tp_df["posterior"][x] for x in range(40000)])
+tmp = np.flip(tmp.reshape(200, 200),axis=0)
+proba_true[100:300, 100:300] = tmp
+
+ax0 = ax[1][4].imshow(
+    proba_true,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
 )
+#ax[1][4].set_title("True Class Posteriors", fontsize=24)
+ax[1][4].set_aspect("equal")
+ax[1][4].tick_params(labelsize=ticksize)
+ax[1][4].set_yticks([])
+ax[1][4].set_xticks([])
 
-# %%
-models_kdn['gxor'] = kdn(network=nn['gxor'])
-models_kdn['spiral'] = kdn(network=nn['spiral'])
-models_kdn['circle'] = kdn(network=nn['circle'])
-models_kdn['sine'] = kdn(network=nn['sine'])
-models_kdn['poly'] = kdn(network=nn['poly'])
+#########################################################
+with open('kdf_simulations/results/gxor.pickle', 'rb') as f:
+    df = pickle.load(f)
 
-#%%
-# %%
-print("Fitting KDNs!")
-
-models_kdn['gxor'].fit(
-    X['gxor'], y['gxor'],
-    k=2e8
+ax1 = ax[2][0].imshow(
+    df['posterior_rf'],
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
 )
+ax[2][0].set_ylabel("RF Posteriors", fontsize=title_size-5)
+ax[2][0].set_aspect("equal")
+ax[2][0].tick_params(labelsize=ticksize)
+ax[2][0].set_yticks([-2,-1,0,1,2])
+ax[2][0].set_xticks([])
 
-models_kdn['spiral'].fit(
-    X['spiral'], y['spiral'],
-    k=1e9
+
+ax1 = ax[3][0].imshow(
+    df['posterior_kdf'],
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
 )
+ax[3][0].set_ylabel('KDF Posteriors', fontsize=title_size-5)
+ax[3][0].set_aspect("equal")
+ax[3][0].tick_params(labelsize=ticksize)
+ax[3][0].set_yticks([-2,-1,0,1,2])
+ax[3][0].set_xticks([])
 
-models_kdn['circle'].fit(
-    X['circle'], y['circle'],
-    k=1e9
+############################################
+with open('kdf_simulations/results/spiral.pickle', 'rb') as f:
+    df = pickle.load(f)
+
+ax1 = ax[2][1].imshow(
+    1-np.flip(df['posterior_rf'],axis=0),
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
 )
+ax[2][1].set_aspect("equal")
+ax[2][1].tick_params(labelsize=ticksize)
+ax[2][1].set_yticks([])
+ax[2][1].set_xticks([])
 
-models_kdn['sine'].fit(
-    X['sine'], y['sine'],
-    k=1e9
+
+ax1 = ax[3][1].imshow(
+    1-np.flip(df['posterior_kdf'],axis=0),
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
 )
+ax[3][1].set_aspect("equal")
+ax[3][1].tick_params(labelsize=ticksize)
+ax[3][1].set_yticks([])
+ax[3][1].set_xticks([])
 
-models_kdn['poly'].fit(
-    X['poly'], y['poly'],
-    k=1e9
+#############################################
+with open('kdf_simulations/results/circle.pickle', 'rb') as f:
+    df = pickle.load(f)
+
+ax1 = ax[2][2].imshow(
+    df['posterior_rf'],
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
 )
-# %%
-fig = plt.figure(constrained_layout=True,figsize=(24,30))
-gs = fig.add_gridspec(30, 24)
-
-sns.set_context("talk")
-p = np.arange(-2,2,step=0.1)
-q = np.arange(-2,2,step=0.1)
-xx, yy = np.meshgrid(p,q)
-
-grid_samples = np.concatenate(
-            (
-                xx.reshape(-1,1),
-                yy.reshape(-1,1)
-            ),
-            axis=1
-    )
+ax[2][2].set_aspect("equal")
+ax[2][2].tick_params(labelsize=ticksize)
+ax[2][2].set_yticks([])
+ax[2][2].set_xticks([])
 
 
-
-### GXOR plot ###
-ax = fig.add_subplot(gs[:6,:6])
-plot_2dsim(X['gxor'], y['gxor'], ax=ax)
-
-ax = fig.add_subplot(gs[:6,6:12])
-df = pd.read_csv('true_posterior/Gaussian_xor_pdf.csv')
-grid_samples0 = df['X1']
-grid_samples1 = df['X2']
-posterior = df['posterior']
-data = pd.DataFrame(data={'x':grid_samples0, 'y':grid_samples1, 'z':posterior})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-ax.set_title('True Posterior',fontsize=24)
-
-ax = fig.add_subplot(gs[:6,12:18])
-pdf_gxor = models['gxor'].rf_model.predict_proba(grid_samples)
-data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':pdf_gxor[:,0]})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-ax.set_title('RF Posterior',fontsize=24)
-
-ax = fig.add_subplot(gs[:6,18:24])
-pdf_gxor = models['gxor'].predict_proba(grid_samples)
-data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':pdf_gxor[:,0]})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-ax.set_title('KDF Posterior',fontsize=24)
+ax1 = ax[3][2].imshow(
+    df['posterior_kdf'],
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[3][2].set_aspect("equal")
+ax[3][2].tick_params(labelsize=ticksize)
+ax[3][2].set_yticks([])
+ax[3][2].set_xticks([])
 
 
+##################################################
+with open('kdf_simulations/results/sinewave.pickle', 'rb') as f:
+    df = pickle.load(f)
 
-### circle plot ###
-ax = fig.add_subplot(gs[6:12,:6])
-plot_2dsim(X['circle'], y['circle'], ax=ax)
-
-ax = fig.add_subplot(gs[6:12,6:12])
-df = pd.read_csv('true_posterior/ellipse_pdf.csv')
-grid_samples0 = df['X1']
-grid_samples1 = df['X2']
-posterior = df['posterior']
-data = pd.DataFrame(data={'x':grid_samples0, 'y':grid_samples1, 'z':posterior})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('True Posterior',fontsize=24)
-
-ax = fig.add_subplot(gs[6:12,12:18])
-pdf_circle = models['circle'].rf_model.predict_proba(grid_samples)
-data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':pdf_circle[:,0]})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('RF Posterior',fontsize=24)
-
-ax = fig.add_subplot(gs[6:12,18:24])
-pdf_circle = models['circle'].predict_proba(grid_samples)
-data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':pdf_circle[:,0]})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('KDF Posterior',fontsize=24)
+ax1 = ax[2][3].imshow(
+    np.flip(df['posterior_rf'],axis=0),
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[2][3].set_aspect("equal")
+ax[2][3].tick_params(labelsize=ticksize)
+ax[2][3].set_yticks([])
+ax[2][3].set_xticks([])
 
 
+ax1 = ax[3][3].imshow(
+    np.flip(df['posterior_kdf'], axis=0),
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[3][3].set_aspect("equal")
+ax[3][3].tick_params(labelsize=ticksize)
+ax[3][3].set_yticks([])
+ax[3][3].set_xticks([])
+
+###################################################
+with open('kdf_simulations/results/polynomial.pickle', 'rb') as f:
+    df = pickle.load(f)
+
+ax1 = ax[2][4].imshow(
+    np.flip(df['posterior_rf'],axis=0),
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[2][4].set_aspect("equal")
+ax[2][4].tick_params(labelsize=ticksize)
+ax[2][4].set_yticks([])
+ax[2][4].set_xticks([])
 
 
-### spiral plot ###
-ax = fig.add_subplot(gs[12:18,:6])
-plot_2dsim(X['spiral'], y['spiral'], ax=ax)
-
-ax = fig.add_subplot(gs[12:18,6:12])
-df = pd.read_csv('true_posterior/spiral_pdf.csv')
-grid_samples0 = df['X1']
-grid_samples1 = df['X2']
-posterior = df['posterior']
-data = pd.DataFrame(data={'x':grid_samples0, 'y':grid_samples1, 'z':posterior})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('True Posterior',fontsize=24)
-
-ax = fig.add_subplot(gs[12:18,12:18])
-pdf_spiral = models['spiral'].rf_model.predict_proba(grid_samples)
-data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':pdf_spiral[:,0]})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('RF Posterior',fontsize=24)
-
-ax = fig.add_subplot(gs[12:18,18:24])
-pdf_spiral = models['spiral'].predict_proba(grid_samples)
-data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':pdf_spiral[:,0]})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('KDF Posterior',fontsize=24)
+ax1 = ax[3][4].imshow(
+    np.flip(df['posterior_kdf'],axis=0),
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[3][4].set_aspect("equal")
+ax[3][4].tick_params(labelsize=ticksize)
+ax[3][4].set_yticks([])
+ax[3][4].set_xticks([])
 
 
+##############################################
+##############################################
+with open('kdn_simulations/results/gxor.pickle', 'rb') as f:
+    df = pickle.load(f)
 
-### sinewave plot ###
-ax = fig.add_subplot(gs[18:24,:6])
-plot_2dsim(X['sine'], y['sine'], ax=ax)
+proba_nn = 1-np.flip(df["posterior_dn"], axis=1)
+proba_kdn = 1-np.flip(df["posterior_kdn"], axis=1)
 
-ax = fig.add_subplot(gs[18:24,6:12])
-df = pd.read_csv('true_posterior/sinewave_pdf.csv')
-grid_samples0 = df['X1']
-grid_samples1 = df['X2']
-posterior = df['posterior']
-data = pd.DataFrame(data={'x':grid_samples0, 'y':grid_samples1, 'z':posterior})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('True Posterior',fontsize=24)
-
-ax = fig.add_subplot(gs[18:24,12:18])
-pdf_sine = models['sine'].rf_model.predict_proba(grid_samples)
-data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':pdf_sine[:,0]})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('RF Posterior',fontsize=24)
-
-ax = fig.add_subplot(gs[18:24,18:24])
-pdf_sine = models['sine'].predict_proba(grid_samples)
-data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':pdf_sine[:,0]})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('KDF Posterior',fontsize=24)
+ax1 = ax[4][0].imshow(
+    proba_nn,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[4][0].set_aspect("equal")
+ax[4][0].tick_params(labelsize=ticksize)
+ax[4][0].set_ylabel('DN Posteriors',fontsize=title_size-5)
+ax[4][0].set_yticks([-2,-1,0,1,2])
+ax[4][0].set_xticks([])
 
 
+ax1 = ax[5][0].imshow(
+    proba_kdn,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[5][0].set_aspect("equal")
+ax[5][0].set_ylabel('KDN Posteriors',fontsize=title_size-5)
+ax[5][0].tick_params(labelsize=ticksize)
+ax[5][0].set_yticks([-2,-1,0,1,2])
+ax[5][0].set_xticks([-2,-1,0,1,2])
 
-### polynomial plot ###
-ax = fig.add_subplot(gs[24:30,:6])
-plot_2dsim(X['poly'], y['poly'], ax=ax)
 
-ax = fig.add_subplot(gs[24:30,6:12])
-df = pd.read_csv('true_posterior/polynomial_pdf.csv')
-grid_samples0 = df['X1']
-grid_samples1 = df['X2']
-posterior = df['posterior']
-data = pd.DataFrame(data={'x':grid_samples0, 'y':grid_samples1, 'z':posterior})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('True Posterior',fontsize=24)
+########################################
+with open('kdn_simulations/results/spiral.pickle', 'rb') as f:
+    df = pickle.load(f)
 
-ax = fig.add_subplot(gs[24:30,12:18])
-pdf_poly = models['poly'].rf_model.predict_proba(grid_samples)
-data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':pdf_poly[:,0]})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('RF Posterior',fontsize=24)
+proba_nn = np.flip(df["posterior_dn"], axis=1)
+proba_kdn = np.flip(df["posterior_kdn"], axis=1)
 
-ax = fig.add_subplot(gs[24:30,18:24])
-pdf_poly = models['poly'].predict_proba(grid_samples)
-data = pd.DataFrame(data={'x':grid_samples[:,0], 'y':grid_samples[:,1], 'z':pdf_poly[:,0]})
-data = data.pivot(index='x', columns='y', values='z')
-cmap= sns.diverging_palette(240, 10, n=9)
-ax1 = sns.heatmap(data, ax=ax, vmin=0, vmax=1,cmap=cmap)
-#ax.set_title('KDF Posterior',fontsize=24)
+ax1 = ax[4][1].imshow(
+    proba_nn,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[4][1].set_aspect("equal")
+ax[4][1].tick_params(labelsize=ticksize)
+ax[4][1].set_yticks([])
+ax[4][1].set_xticks([])
+
+
+ax1 = ax[5][1].imshow(
+    proba_kdn,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[5][1].set_aspect("equal")
+ax[5][1].tick_params(labelsize=ticksize)
+ax[5][1].set_yticks([])
+ax[5][1].set_xticks([-2,-1,0,1,2])
+
+########################################################
+with open('kdn_simulations/results/circle.pickle', 'rb') as f:
+    df = pickle.load(f)
+
+proba_nn = np.flip(df["posterior_dn"], axis=1)
+proba_kdn = np.flip(df["posterior_kdn"], axis=1)
+
+ax1 = ax[4][2].imshow(
+    proba_nn,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[4][2].set_aspect("equal")
+ax[4][2].tick_params(labelsize=ticksize)
+ax[4][2].set_yticks([])
+ax[4][2].set_xticks([])
+
+
+ax1 = ax[5][2].imshow(
+    proba_kdn,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[5][2].set_aspect("equal")
+ax[5][2].tick_params(labelsize=ticksize)
+ax[5][2].set_yticks([])
+ax[5][2].set_xticks([-2,-1,0,1,2])
+
+####################################################
+with open('kdn_simulations/results/sinewave.pickle', 'rb') as f:
+    df = pickle.load(f)
+
+proba_nn = np.flip(df["posterior_dn"], axis=0)
+proba_kdn = np.flip(df["posterior_kdn"], axis=0)
+
+ax1 = ax[4][3].imshow(
+    proba_nn,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[4][3].set_aspect("equal")
+ax[4][3].tick_params(labelsize=ticksize)
+ax[4][3].set_yticks([])
+ax[4][3].set_xticks([])
+
+
+ax1 = ax[5][3].imshow(
+    proba_kdn,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+ax[5][3].set_aspect("equal")
+ax[5][3].tick_params(labelsize=ticksize)
+ax[5][3].set_yticks([])
+ax[5][3].set_xticks([-2,-1,0,1,2])
+
+#######################################################
+with open('kdn_simulations/results/polynomial.pickle', 'rb') as f:
+    df = pickle.load(f)
+
+proba_nn = np.flip(df["posterior_dn"], axis=1)
+proba_kdn = np.flip(df["posterior_kdn"], axis=1)
+
+ax1 = ax[4][4].imshow(
+    proba_nn,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+#fig.colorbar(ax1, ax=ax[4][4], anchor=(0, 0.3), shrink=0.85)
+ax[4][4].set_aspect("equal")
+ax[4][4].tick_params(labelsize=ticksize)
+ax[4][4].set_yticks([])
+ax[4][4].set_xticks([])
+
+
+ax1 = ax[5][4].imshow(
+    proba_kdn,
+    extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    cmap="bwr",
+    vmin=0,
+    vmax=1,
+    interpolation="nearest",
+    aspect="auto",
+)
+#fig.colorbar(ax1, anchor=(0, 0.3), shrink=0.85)
+
+ax[5][4].set_aspect("equal")
+ax[5][4].tick_params(labelsize=ticksize)
+ax[5][4].set_yticks([])
+ax[5][4].set_xticks([-2,-1,0,1,2])
+
+plt.savefig('plots/simulations.pdf')
 # %%

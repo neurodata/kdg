@@ -40,8 +40,8 @@ def experiment(dataset_id):
     test_sample = [int(total_sample*percentile) for percentile in test_percentile]
 
     model_kdf = kdf(kwargs={'n_estimators':500})
-    model_kdf.fit(X[sorted_id[:train_sample]], y[sorted_id[:train_sample]])
-
+    model_kdf.fit(X[sorted_id[:train_sample]], y[sorted_id[:train_sample]], k=1e100)
+    model_kdf.global_bias = 1e3
     ECE_rf = []
     ECE_kdf = []
     error_rf = []
@@ -93,7 +93,7 @@ benchmark_suite = openml.study.get_suite('OpenML-CC18')
 res = Parallel(n_jobs=-1,verbose=1)(
             delayed(experiment)(
                     dataset_id,
-                    ) for dataset_id in benchmark_suite.data
+                    ) for dataset_id in [6,11,14,16,18,22]#benchmark_suite.data
                 )
 # %%
 total_datasets = len(res)
@@ -104,7 +104,7 @@ error_kdf = np.zeros(6, dtype=float)
 mean_max_conf_rf = np.zeros(6, dtype=float)
 mean_max_conf_kdf = np.zeros(6, dtype=float)
 
-for ii in range(total_datasets):
+for ii in range(1):
     ECE_rf += res[ii][0]
     ECE_kdf += res[ii][1]
     error_rf += res[ii][2]
@@ -139,4 +139,6 @@ ax[2].plot(test_percentile, error_rf, c='k', label='RF')
 ax[2].plot(test_percentile, error_kdf, c='r', label='KDF')
 ax[2].set_ylabel('Generalization Error')
 ax[2].set_xlabel('Data Percentile')
+
+ax[2].legend()
 # %%
