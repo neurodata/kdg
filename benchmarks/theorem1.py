@@ -32,6 +32,9 @@ for estimator in tqdm(estimators):
             X_ood = np.concatenate((X_ood,sample_unifrom_circle(n=1000, r=r)),axis=0)
 
         X, y = generate_spirals(n_samples)
+        norms = np.linalg.norm(X,axis=0)
+        X /= np.max(norms)
+
         rf_model = rf(n_estimators=estimator)
         rf_model.fit(X, y)
         proba = rf_model.predict_proba(grid_samples)
@@ -69,5 +72,5 @@ right_side.set_visible(False)
 top_side = ax.spines["top"]
 top_side.set_visible(False)
 
-plt.savefig('plots/theorem1_spiral2.pdf')
+plt.savefig('plots/theorem1_spiral_corrected.pdf')
 # %%
