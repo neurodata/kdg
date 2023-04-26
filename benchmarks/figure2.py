@@ -53,12 +53,12 @@ for ii, model in enumerate(models):
         min_val = np.round(np.min(tot_val),1)
         max_val = np.round(np.max(tot_val),1)
         
-        ax[jj][ii*3+0].set_yticks([0,max_val])
+        ax[jj][ii*3+0].set_yticks([min_val,max_val])
 
         if len(model)>6:
             offset=0
         else:
-            offset=(max_val-min_val)/3
+            offset= min_val+(max_val-min_val)/3
 
         if ii == 0:
             ax[jj][0].text(1,offset, simulation, fontsize=labelsize+25, rotation=90)
@@ -88,7 +88,7 @@ for ii, model in enumerate(models):
         tot_val = np.concatenate((df[model_key+'med'], df[parent_key+'med']))
         min_val = np.round(np.min(tot_val),1)
         max_val = np.round(np.max(tot_val),1)
-        ax[jj][ii*3+1].set_yticks([0, max_val])
+        ax[jj][ii*3+1].set_yticks([min_val, max_val])
         ax[jj][ii*3+1].tick_params(labelsize=ticksize)
 
         if jj==0:
@@ -137,7 +137,7 @@ for ii, model in enumerate(models):
         top_side = ax[jj][ii*3+2].spines["top"]
         top_side.set_visible(False)
 
-plt.subplots_adjust(hspace=.2,wspace=.50)
-
+plt.subplots_adjust(hspace=.2,wspace=.2)
+plt.tight_layout()
 plt.savefig('plots/simulation_res.pdf')
 # %%
