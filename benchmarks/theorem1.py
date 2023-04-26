@@ -64,7 +64,7 @@ sns.regplot(x=calibration, y=OOD_cal, ci=False, line_kws={'color':'red'}, ax=ax)
 
 ax.set_xlabel('Helinger Distance', fontsize=65)
 ax.set_ylabel('OOD Calibration', fontsize=65)
-#ax.set_xticks([.4,.45,.5,.55])
+ax.set_xticks([.35,.4,.45,.5,.55])
 #ax.set_yticks([.45,.48,.5])
 ax.tick_params(labelsize=50)
 right_side = ax.spines["right"]
