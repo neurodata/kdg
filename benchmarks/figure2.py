@@ -124,6 +124,7 @@ for ii, model in enumerate(models):
 
         if jj==4:
             ax[jj][ii*3+2].set_xlabel('Distance', fontsize=labelsize)
+            ax[jj][ii*3+2].set_xticks([0,2,4,6,8,10])
         else:
             ax[jj][ii*3+2].set_xticks([])
 
