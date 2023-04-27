@@ -61,7 +61,7 @@ for ii, model in enumerate(models):
             offset= min_val+(max_val-min_val)/3
 
         if ii == 0:
-            ax[jj][0].text(1,offset, simulation, fontsize=labelsize+25, rotation=90)
+            ax[jj][0].text(1,offset, simulation[0].upper()+simulation[1:], fontsize=labelsize+25, rotation=90)
             
         ax[jj][ii*3+0].tick_params(labelsize=ticksize)
         right_side = ax[jj][ii*3+0].spines["right"]
@@ -88,11 +88,15 @@ for ii, model in enumerate(models):
         tot_val = np.concatenate((df[model_key+'med'], df[parent_key+'med']))
         min_val = np.round(np.min(tot_val),1)
         max_val = np.round(np.max(tot_val),1)
+
+        if min_val == max_val:
+            max_val += .1
+            
         ax[jj][ii*3+1].set_yticks([min_val, max_val])
         ax[jj][ii*3+1].tick_params(labelsize=ticksize)
 
         if jj==0:
-            ax[jj][ii*3+1].set_title(model.upper(), fontsize=labelsize+40)
+            ax[jj][ii*3+1].set_title(model.upper() + ' and '+parent.upper(), fontsize=labelsize+40)
 
         if jj==4 and ii==0:
             leg = ax[jj][ii*3+1].legend(bbox_to_anchor=(0.3, 0.07), bbox_transform=plt.gcf().transFigure,
