@@ -56,9 +56,10 @@ def plot_summary_error(files, folder, model='kdf', parent='rf', ax=None):
             tmp_diff
         )
         
-        ax.plot(samples, err_diff, linewidth=4, c='r', alpha=.1)
-    
-    ax.plot(sample_combined, np.nanmean(np.array(err_diff_), axis=0), linewidth=4, c='r')
+       # ax.plot(samples, err_diff, linewidth=4, c='r', alpha=.1)
+    qunatiles = np.nanquantile(np.array(err_diff_),[.25,.75],axis=0)
+    ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, c='r')    
+    ax.fill_between(sample_combined, qunatiles[0], qunatiles[1], facecolor='r', alpha=.3)
 
 
 def plot_summary_ece(files, folder, model='kdf', parent='rf', ax=None):
@@ -104,9 +105,10 @@ def plot_summary_ece(files, folder, model='kdf', parent='rf', ax=None):
             tmp_diff
         )
         
-        ax.plot(samples, err_diff, linewidth=4, c='r', alpha=.1)
-    
-    ax.plot(sample_combined, np.nanmean(np.array(err_diff_), axis=0), linewidth=4, c='r')
+        #ax.plot(samples, err_diff, linewidth=4, c='r', alpha=.1)
+    qunatiles = np.nanquantile(np.array(err_diff_),[.25,.75],axis=0)
+    ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, c='r')
+    ax.fill_between(sample_combined, qunatiles[0], qunatiles[1], facecolor='r', alpha=.3)
 
 
 #%%
@@ -114,40 +116,44 @@ sns.set(
     color_codes=True, palette="bright", style="white", context="talk", font_scale=1.5
 )
 
-fig, ax = plt.subplots(2, 2, figsize=(14,14), constrained_layout=True, sharex=True)
+fig, ax = plt.subplots(2, 2, figsize=(14,14), sharex=True)
 
 plot_summary_error(files, res_folder_kdf, ax=ax[0][0])
 plot_summary_ece(files, res_folder_kdf, ax=ax[0][1])
 plot_summary_error(files, res_folder_kdn, model='kdn', parent='dn', ax=ax[1][0])
 plot_summary_ece(files, res_folder_kdn, model='kdn', parent='dn', ax=ax[1][1])
 
+ax[0][0].set_title('Classification Error', fontsize=40)
+
 ax[0][0].set_xscale("log")
-ax[0][0].set_ylim([-0.35, .2])
-ax[0][0].set_yticks([-.3,0,.2])
-ax[0][0].set_ylabel('RF error - KDF error', fontsize=35)
-ax[0][0].text(100, .1, 'KDF wins')
-ax[0][0].text(100, -.2, 'KDF loses')
+ax[0][0].set_ylim([-0.1, .1])
+ax[0][0].set_yticks([-.1,0,.1])
+ax[0][0].set_ylabel('Difference', fontsize=35)
+ax[0][0].text(100, .05, 'KDF wins')
+ax[0][0].text(100, -.08, 'RF wins')
+
+ax[0][1].set_title('Calibration Error', fontsize=40)
 
 ax[0][1].set_xscale("log")
-ax[0][1].set_ylim([-0.3, .45])
-ax[0][1].set_yticks([-.2,0,.4])
-ax[0][1].set_ylabel('RF ECE - KDF ECE', fontsize=35)
-ax[0][1].text(100, .2, 'KDF wins')
-ax[0][1].text(100, -.1, 'KDF loses')
+ax[0][1].set_ylim([-0.1, .45])
+ax[0][1].set_yticks([-.1,0,.4])
+ax[0][1].set_ylabel('Difference', fontsize=35)
+ax[0][1].text(100, .3, 'KDF wins')
+ax[0][1].text(100, -.05, 'RF wins')
 
 ax[1][0].set_xscale("log")
-ax[1][0].set_ylim([-0.44, .2])
-ax[1][0].set_yticks([-.3,0,.2])
-ax[1][0].set_ylabel('DN error - KDN error', fontsize=35)
-ax[1][0].text(100, .1, 'KDN wins')
-ax[1][0].text(100, -.2, 'KDN loses')
+ax[1][0].set_ylim([-0.15, .1])
+ax[1][0].set_yticks([-.1,0,.1])
+ax[1][0].set_ylabel('Difference', fontsize=35)
+ax[1][0].text(100, .05, 'KDN wins')
+ax[1][0].text(100, -.08, 'DN wins')
 
 ax[1][1].set_xscale("log")
 ax[1][1].set_ylim([-0.15, .1])
 ax[1][1].set_yticks([-.1,0,.1])
-ax[1][1].set_ylabel('DN ECE - KDN ECE', fontsize=35)
-ax[1][1].text(100, .06, 'KDN wins')
-ax[1][1].text(100, -.06, 'KDN loses')
+ax[1][1].set_ylabel('Difference', fontsize=35)
+ax[1][1].text(100, .05, 'KDN wins')
+ax[1][1].text(100, -.08, 'DN wins')
 
 for j in range(2):
     for i in range(2):
@@ -158,7 +164,7 @@ for j in range(2):
         right_side.set_visible(False)
         top_side = ax[j][i].spines["top"]
         top_side.set_visible(False)
-fig.text(0.53, -0.04, "Number of Training Samples", ha="center", fontsize=35)
-
+fig.text(0.53, 0.01, "Number of Training Samples", ha="center", fontsize=35)
+plt.tight_layout()
 plt.savefig('plots/openml_summary.pdf')
 # %%

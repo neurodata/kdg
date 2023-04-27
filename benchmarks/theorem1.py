@@ -1,6 +1,6 @@
 #%%
 from sklearn.ensemble import RandomForestClassifier as rf 
-from kdg.utils import generate_sinewave, generate_spirals, sample_unifrom_circle, get_ece, hellinger
+from kdg.utils import generate_sinewave, generate_spirals, sample_unifrom_circle, get_ece, hellinger, sparse_parity, plot_2dsim
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -13,14 +13,18 @@ calibration = []
 OOD_cal = []
 reps = 10
 
-tp_df = pd.read_csv("true_posterior/spiral_pdf.csv")
-true_posterior = tp_df['posterior']
-true_posterior = np.vstack((true_posterior.ravel(), 1-true_posterior.ravel())).T
+#tp_df = pd.read_csv("true_posterior/spiral_pdf.csv")
+#true_posterior = np.vstack((true_posterior.ravel(), 1-true_posterior.ravel())).T
 
 p = np.arange(-1, 1, step=0.01)
 q = np.arange(-1, 1, step=0.01)
 xx, yy = np.meshgrid(p, q)
 grid_samples = np.concatenate((xx.reshape(-1, 1), yy.reshape(-1, 1)), axis=1)
+
+y = np.sum(grid_samples > 0, axis=1) % 2
+true_posterior = np.concatenate((y.reshape(-1,1),1-y.reshape(-1,1)), axis=1)
+#true_posterior = tp_df['posterior']
+
 
 for estimator in tqdm(estimators):
     hellinger_dis = []
@@ -31,7 +35,7 @@ for estimator in tqdm(estimators):
         for r in np.arange(1.5,20,1):
             X_ood = np.concatenate((X_ood,sample_unifrom_circle(n=1000, r=r)),axis=0)
 
-        X, y = generate_spirals(n_samples)
+        X, y = sparse_parity(n_samples, p_star=2, p=2)
         norms = np.linalg.norm(X,axis=0)
         X /= np.max(norms)
 
@@ -64,7 +68,7 @@ sns.regplot(x=calibration, y=OOD_cal, ci=False, line_kws={'color':'red'}, ax=ax)
 
 ax.set_xlabel('Helinger Distance', fontsize=65)
 ax.set_ylabel('OOD Calibration', fontsize=65)
-ax.set_xticks([.35,.4,.45,.5,.55])
+#ax.set_xticks([.35,.4,.45,.5,.55])
 #ax.set_yticks([.45,.48,.5])
 ax.tick_params(labelsize=50)
 right_side = ax.spines["right"]
@@ -72,5 +76,5 @@ right_side.set_visible(False)
 top_side = ax.spines["top"]
 top_side.set_visible(False)
 
-plt.savefig('plots/theorem1_spiral_corrected.pdf')
+plt.savefig('plots/theorem1.pdf')
 # %%

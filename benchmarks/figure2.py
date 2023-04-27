@@ -47,7 +47,7 @@ for ii, model in enumerate(models):
         else:
             ax[jj][ii*3+0].set_xticks([])
 
-        ax[jj][ii*3+0].set_ylabel('Error', fontsize=labelsize)
+        ax[jj][ii*3+0].set_ylabel('Classification error', fontsize=labelsize)
 
         tot_val = np.concatenate((df[model_key+'med'], df[parent_key+'med']))
         min_val = np.round(np.min(tot_val),1)
