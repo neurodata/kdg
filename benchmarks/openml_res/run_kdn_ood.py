@@ -137,7 +137,7 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
 
 # %%
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
-
+id_done = [6,11,12,14,16,18,22,28,32,37,44,54,182,300,458, 554,1049,1050,1063,1067,1068,1510,4134]
 '''Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment)(
                 dataset_id,
@@ -145,5 +145,8 @@ benchmark_suite = openml.study.get_suite('OpenML-CC18')
             )'''
 
 for dataset_id in openml.study.get_suite("OpenML-CC18").data:
+    if dataset_id in id_done:
+        continue
+    
     print("Doing ", dataset_id)
     experiment(dataset_id) 

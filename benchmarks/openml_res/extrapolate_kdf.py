@@ -41,7 +41,7 @@ def experiment(dataset_id):
 
     model_kdf = kdf(kwargs={'n_estimators':500})
     model_kdf.fit(X[sorted_id[:train_sample]], y[sorted_id[:train_sample]], k=1e100)
-    model_kdf.global_bias = 1e3
+    model_kdf.global_bias = -100
     ECE_rf = []
     ECE_kdf = []
     error_rf = []
@@ -104,7 +104,7 @@ error_kdf = np.zeros(6, dtype=float)
 mean_max_conf_rf = np.zeros(6, dtype=float)
 mean_max_conf_kdf = np.zeros(6, dtype=float)
 
-for ii in range(1):
+for ii in range(total_datasets):
     ECE_rf += res[ii][0]
     ECE_kdf += res[ii][1]
     error_rf += res[ii][2]
@@ -141,4 +141,37 @@ ax[2].set_ylabel('Generalization Error')
 ax[2].set_xlabel('Data Percentile')
 
 ax[2].legend()
+# %%
+sns.set_context('talk')
+fig, ax = plt.subplots(6, 2, figsize=(14,14))
+test_percentile = np.arange(.5,1.01,.1)
+distances = np.arange(.5, 5.5, .5)
+distances[0] = 0
+
+for ii, data_id in enumerate([6,11,14,16,18,22]):
+    mean_max_conf_rf = res[ii][4]
+    mean_max_conf_kdf = res[ii][5]
+    ax[ii][0].plot(test_percentile, mean_max_conf_rf, c='k', label='RF')
+    ax[ii][0].plot(test_percentile, mean_max_conf_kdf, c='r', label='KDF')
+
+    openml_file = 'openml_kdf_res_ood/Dataset_'+str(data_id)+'.csv'
+    df = pd.read_csv(openml_file)
+    mean_max_conf_rf_ = []
+    mean_max_conf_kdf_ = []
+    for r in distances:
+        kdf = df['conf_kdf'][df['distance']==r]
+        rf = df['conf_rf'][df['distance']==r]
+        
+        mean_max_conf_rf_.append(np.mean(rf))
+        mean_max_conf_kdf_.append(np.mean(kdf))
+    
+    ax[ii][1].plot(distances, mean_max_conf_rf_, c='k', label='RF')
+    ax[ii][1].plot(distances, mean_max_conf_kdf_, c='r', label='KDF')
+ax[5][1].legend()
+ax[0][0].set_title('Jovo method', fontsize=30)
+ax[0][1].set_title('Uniform sampling method', fontsize=30)
+ax[5][0].set_xlabel('Data Percentile')
+ax[5][1].set_xlabel('distance')
+fig.text(-0.01, 0.5, "Mean Max Conf.", va="center", rotation="vertical", fontsize=35)
+
 # %%
