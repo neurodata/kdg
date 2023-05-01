@@ -164,7 +164,7 @@ for j in range(2):
         right_side.set_visible(False)
         top_side = ax[j][i].spines["top"]
         top_side.set_visible(False)
-fig.text(0.53, 0.01, "Number of Training Samples", ha="center", fontsize=35)
+fig.text(0.53, 0.01, "Number of Training Samples (log)", ha="center", fontsize=35)
 plt.tight_layout()
 plt.savefig('plots/openml_summary.pdf')
 # %%

@@ -43,11 +43,11 @@ for ii, model in enumerate(models):
         ax[jj][ii*3+0].set_xscale('log')
 
         if jj==4:
-            ax[jj][ii*3+0].set_xlabel('Sample size', fontsize=labelsize)
+            ax[jj][ii*3+0].set_xlabel('sample size (log)', fontsize=labelsize)
         else:
             ax[jj][ii*3+0].set_xticks([])
 
-        ax[jj][ii*3+0].set_ylabel('Classification error', fontsize=labelsize)
+        ax[jj][ii*3+0].set_ylabel('classification error', fontsize=labelsize)
 
         tot_val = np.concatenate((df[model_key+'med'], df[parent_key+'med']))
         min_val = np.round(np.min(tot_val),1)
@@ -79,7 +79,7 @@ for ii, model in enumerate(models):
         ax[jj][ii*3+1].set_xscale('log')
 
         if jj==4:
-            ax[jj][ii*3+1].set_xlabel('Sample size', fontsize=labelsize)
+            ax[jj][ii*3+1].set_xlabel('sample size (log)', fontsize=labelsize)
         else:
             ax[jj][ii*3+1].set_xticks([])
 
