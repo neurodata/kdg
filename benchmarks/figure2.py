@@ -15,7 +15,7 @@ def unpickle(filename):
 
 # %%
 simulations = ['gxor', 'spiral', 'circle', 'sinewave', 'polynomial']
-models = ['kdn', 'kdf']
+models = ['kdf', 'kdn']
 sample_size = [50, 100, 500, 1000, 5000, 10000]
 r = r = np.arange(0,10.5,.5)
 linewidth = [6,3]
@@ -56,9 +56,9 @@ for ii, model in enumerate(models):
         ax[jj][ii*3+0].set_yticks([min_val,max_val])
 
         if len(model)>6:
-            offset=0
+            offset=min_val+.01
         else:
-            offset= min_val+(max_val-min_val)/3
+            offset= min_val-.01
 
         if ii == 0:
             ax[jj][0].text(1,offset, simulation[0].upper()+simulation[1:], fontsize=labelsize+25, rotation=90)
