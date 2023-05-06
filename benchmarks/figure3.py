@@ -186,7 +186,7 @@ ax[0][0].set_ylabel('Difference', fontsize=35)
 ax[0][0].text(100, .05, 'KDF wins')
 ax[0][0].text(100, -.08, 'RF wins')
 
-ax[0][1].set_title('Calibration Error', fontsize=40)
+ax[0][1].set_title('ID Calibration Error', fontsize=40)
 
 ax[0][1].set_xscale("log")
 ax[0][1].set_ylim([-0.1, .45])
@@ -247,8 +247,8 @@ for i in range(2):
     top_side = ax[i][2].spines["top"]
     top_side.set_visible(False)
 
-fig.text(0.43, 0.0, "Number of Training Samples (log)", ha="center", fontsize=35)
-fig.text(0.83, 0.0, "Distance", ha="center", fontsize=35)
+fig.text(0.43, 0.01, "Number of Training Samples (log)", ha="center", fontsize=35)
+fig.text(0.83, 0.01, "Distance", ha="center", fontsize=35)
 plt.tight_layout()
 plt.savefig('plots/openml_summary.pdf')
 # %%

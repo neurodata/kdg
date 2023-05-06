@@ -20,14 +20,14 @@ X['poly'], y['poly'] = generate_polynomial(n_samples, a=[1,3])
 sns.set_context('talk')
 fig, ax = plt.subplots(6,5, figsize=(40,48), sharex=True)
 title_size = 55
-ticksize = 30
+ticksize = 45
 
 plot_2dsim(X['gxor'], y['gxor'], ax=ax[0][0])
 ax[0][0].set_ylabel('Simulation Data', fontsize=title_size-5)
 ax[0][0].set_xlim([-2,2])
 ax[0][0].set_ylim([-2,2])
 ax[0][0].set_xticks([])
-ax[0][0].set_yticks([])
+ax[0][0].set_yticks([-2,-1,0,1,2])
 ax[0][0].tick_params(labelsize=ticksize)
 ax[0][0].set_title('Gaussian XOR', fontsize=title_size)
 
@@ -88,7 +88,7 @@ ax0 = ax[1][0].imshow(
 #ax[1][0].set_title("True Class Posteriors", fontsize=24)
 ax[1][0].set_aspect("equal")
 ax[1][0].tick_params(labelsize=ticksize)
-ax[1][0].set_yticks([])
+ax[1][0].set_yticks([-2,-1,0,1,2])
 ax[1][0].set_xticks([])
 ax[1][0].set_ylabel('True Posteriors',fontsize=title_size-5)
 
@@ -195,7 +195,7 @@ ax1 = ax[2][0].imshow(
 ax[2][0].set_ylabel("RF Posteriors", fontsize=title_size-5)
 ax[2][0].set_aspect("equal")
 ax[2][0].tick_params(labelsize=ticksize)
-ax[2][0].set_yticks([])
+ax[2][0].set_yticks([-2,-1,0,1,2])
 ax[2][0].set_xticks([])
 
 
@@ -211,7 +211,7 @@ ax1 = ax[3][0].imshow(
 ax[3][0].set_ylabel('KDF Posteriors', fontsize=title_size-5)
 ax[3][0].set_aspect("equal")
 ax[3][0].tick_params(labelsize=ticksize)
-ax[3][0].set_yticks([])
+ax[3][0].set_yticks([-2,-1,0,1,2])
 ax[3][0].set_xticks([])
 
 ############################################
@@ -368,7 +368,7 @@ ax1 = ax[4][0].imshow(
 ax[4][0].set_aspect("equal")
 ax[4][0].tick_params(labelsize=ticksize)
 ax[4][0].set_ylabel('DN Posteriors',fontsize=title_size-5)
-ax[4][0].set_yticks([])
+ax[4][0].set_yticks([-2,-1,0,1,2])
 ax[4][0].set_xticks([])
 
 
@@ -384,8 +384,8 @@ ax1 = ax[5][0].imshow(
 ax[5][0].set_aspect("equal")
 ax[5][0].set_ylabel('KDN Posteriors',fontsize=title_size-5)
 ax[5][0].tick_params(labelsize=ticksize)
-ax[5][0].set_yticks([])
-ax[5][0].set_xticks([])
+ax[5][0].set_yticks([-2,-1,0,1,2])
+ax[5][0].set_xticks([-2,-1,0,1,2])
 
 
 ########################################
@@ -422,7 +422,7 @@ ax1 = ax[5][1].imshow(
 ax[5][1].set_aspect("equal")
 ax[5][1].tick_params(labelsize=ticksize)
 ax[5][1].set_yticks([])
-ax[5][1].set_xticks([])
+ax[5][1].set_xticks([-2,-1,0,1,2])
 
 ########################################################
 with open('kdn_simulations/results/circle.pickle', 'rb') as f:
@@ -458,7 +458,7 @@ ax1 = ax[5][2].imshow(
 ax[5][2].set_aspect("equal")
 ax[5][2].tick_params(labelsize=ticksize)
 ax[5][2].set_yticks([])
-ax[5][2].set_xticks([])
+ax[5][2].set_xticks([-2,-1,0,1,2])
 
 ####################################################
 with open('kdn_simulations/results/sinewave.pickle', 'rb') as f:
@@ -494,7 +494,7 @@ ax1 = ax[5][3].imshow(
 ax[5][3].set_aspect("equal")
 ax[5][3].tick_params(labelsize=ticksize)
 ax[5][3].set_yticks([])
-ax[5][3].set_xticks([])
+ax[5][3].set_xticks([-2,-1,0,1,2])
 
 #######################################################
 with open('kdn_simulations/results/polynomial.pickle', 'rb') as f:
@@ -533,7 +533,7 @@ ax1 = ax[5][4].imshow(
 ax[5][4].set_aspect("equal")
 ax[5][4].tick_params(labelsize=ticksize)
 ax[5][4].set_yticks([])
-ax[5][4].set_xticks([])
+ax[5][4].set_xticks([-2,-1,0,1,2])
 
 plt.savefig('plots/simulations.pdf')
 # %%
