@@ -208,7 +208,7 @@ ax1 = ax[3][0].imshow(
     interpolation="nearest",
     aspect="auto",
 )
-ax[3][0].set_ylabel('KDF Posteriors', fontsize=title_size-5)
+ax[3][0].set_ylabel('KGF Posteriors', fontsize=title_size-5)
 ax[3][0].set_aspect("equal")
 ax[3][0].tick_params(labelsize=ticksize)
 ax[3][0].set_yticks([-2,-1,0,1,2])
@@ -382,7 +382,7 @@ ax1 = ax[5][0].imshow(
     aspect="auto",
 )
 ax[5][0].set_aspect("equal")
-ax[5][0].set_ylabel('KDN Posteriors',fontsize=title_size-5)
+ax[5][0].set_ylabel('KGN Posteriors',fontsize=title_size-5)
 ax[5][0].tick_params(labelsize=ticksize)
 ax[5][0].set_yticks([-2,-1,0,1,2])
 ax[5][0].set_xticks([-2,-1,0,1,2])

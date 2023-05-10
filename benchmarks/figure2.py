@@ -33,7 +33,7 @@ for ii, model in enumerate(models):
         parent = 'rf' if model == 'kdf' else 'dn'
         model_key = 'error_' + model + '_'
         parent_key = 'error_' + parent + '_' 
-
+        model_gen = model[0] + 'G' + model[2]
         
         ax[jj][ii*3+0].plot(sample_size, df[model_key+'med'], c="r", linewidth=linewidth[0], label=model.upper())
         ax[jj][ii*3+0].plot(sample_size, df[parent_key+'med'], c="k", label=parent.upper())
@@ -71,7 +71,7 @@ for ii, model in enumerate(models):
 
         model_key = 'hellinger_' + model + '_'
         parent_key = 'hellinger_' + parent + '_' 
-        ax[jj][ii*3+1].plot(sample_size, df[model_key+'med'], c="r", linewidth=linewidth[0], label=model.upper())
+        ax[jj][ii*3+1].plot(sample_size, df[model_key+'med'], c="r", linewidth=linewidth[0], label=model_gen.upper())
         ax[jj][ii*3+1].plot(sample_size, df[parent_key+'med'], c="k", label=parent.upper())
         ax[jj][ii*3+1].fill_between(sample_size, df[model_key+'25'], df[model_key+'75'], facecolor='r', alpha=.3)
         ax[jj][ii*3+1].fill_between(sample_size, df[parent_key+'25'], df[parent_key+'75'], facecolor='k', alpha=.3)
@@ -96,7 +96,7 @@ for ii, model in enumerate(models):
         ax[jj][ii*3+1].tick_params(labelsize=ticksize)
 
         if jj==0:
-            ax[jj][ii*3+1].set_title(model.upper() + ' and '+parent.upper(), fontsize=labelsize+40)
+            ax[jj][ii*3+1].set_title(model_gen.upper() + ' and '+parent.upper(), fontsize=labelsize+40)
 
         if jj==4 and ii==0:
             leg = ax[jj][ii*3+1].legend(bbox_to_anchor=(0.3, 0.07), bbox_transform=plt.gcf().transFigure,
