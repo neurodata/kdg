@@ -23,7 +23,7 @@ linewidth = [6,3]
 #sns.set_context('talk')
 ticksize = 45
 labelsize = 50
-fig1, ax = plt.subplots(5, 8, figsize=(80, 40))
+fig1, ax = plt.subplots(5, 8, figsize=(100, 50))
 
 for ii, model in enumerate(models):
     for jj, simulation in enumerate(simulations):
@@ -56,9 +56,9 @@ for ii, model in enumerate(models):
         ax[jj][ii*4+0].set_yticks([min_val,max_val])
 
         if len(model)>6:
-            offset=min_val+.01
+            offset=min_val+.02
         else:
-            offset= min_val-.01
+            offset= min_val
 
         if ii == 0:
             ax[jj][0].text(1,offset, simulation[0].upper()+simulation[1:], fontsize=labelsize+25, rotation=90)
@@ -166,6 +166,6 @@ for ii, model in enumerate(models):
         top_side.set_visible(False)
 
 plt.subplots_adjust(hspace=.2,wspace=.2)
-plt.tight_layout()
+#plt.tight_layout()
 plt.savefig('plots/simulation_res.pdf')
 # %%
