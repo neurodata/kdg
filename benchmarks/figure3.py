@@ -59,8 +59,8 @@ def plot_summary_ood(files, folder, model='kdf', parent='rf', ax=None):
             )
 
     qunatiles = np.nanquantile(np.array(err_diff_),[.25,.75],axis=0)
-    ax.plot(r, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, c='r')
-    ax.fill_between(r, qunatiles[0], qunatiles[1], facecolor='r', alpha=.3)
+    ax.plot(r[1:], np.nanmedian(np.array(err_diff_), axis=0)[1:], linewidth=4, c='r')
+    ax.fill_between(r[1:], qunatiles[0][1:], qunatiles[1][1:], facecolor='r', alpha=.3)
 
 
 def plot_summary_error(files, folder, model='kdf', parent='rf', ax=None):
@@ -183,7 +183,7 @@ ax[0][0].set_yticks([-.1,0,.1])
 ax[0][0].set_xticks([])
 
 ax[0][0].set_ylabel('Difference', fontsize=35)
-ax[0][0].text(100, .05, 'KDF wins')
+ax[0][0].text(100, .05, 'KGF wins')
 ax[0][0].text(100, -.08, 'RF wins')
 
 ax[0][1].set_title('ID Calibration Error', fontsize=40)
@@ -193,39 +193,48 @@ ax[0][1].set_ylim([-0.1, .45])
 ax[0][1].set_yticks([-.1,0,.4])
 ax[0][1].set_xticks([])
 ax[0][1].set_ylabel('', fontsize=35)
-ax[0][1].text(100, .3, 'KDF wins')
+ax[0][1].text(100, .3, 'KGF wins')
 ax[0][1].text(100, -.05, 'RF wins')
 
 ax[1][0].set_xscale("log")
 ax[1][0].set_ylim([-0.15, .1])
 ax[1][0].set_yticks([-.1,0,.1])
 ax[1][0].set_ylabel('Difference', fontsize=35)
-ax[1][0].text(100, .05, 'KDN wins')
+ax[1][0].text(100, .05, 'KGN wins')
 ax[1][0].text(100, -.08, 'DN wins')
 
 ax[1][1].set_xscale("log")
 ax[1][1].set_ylim([-0.15, .1])
 ax[1][1].set_yticks([-.1,0,.1])
 ax[1][1].set_ylabel('', fontsize=35)
-ax[1][1].text(100, .05, 'KDN wins')
+ax[1][1].text(100, .05, 'KGN wins')
 ax[1][1].text(100, -.08, 'DN wins')
 
 ax[0][2].set_ylim([-0.25, .25])
 ax[0][2].set_yticks([-.2,0,.2])
 ax[0][2].set_xticks([])
 #ax[2][0].set_ylabel('Difference', fontsize=35)
-ax[0][2].text(2, .05, 'KDF wins')
+ax[0][2].text(2, .05, 'KGF wins')
 ax[0][2].text(2, -.08, 'RF wins')
+ax[0][2].set_xlim([1, 5])
+#ax[0][2].text(.25, .1, 'ID', rotation=90, fontsize=40, color='b')
+#ax[0][2].text(1.5, .05, 'OOD', rotation=90, fontsize=40, color='b')
+#ax[0][2].axvline(x=1, ymin=-0.2, ymax=1, color='b', linestyle='dashed',linewidth=4)
 
 ax[0][2].set_title('OOD Calibration Error', fontsize=40)
 
 
-ax[1][2].set_ylim([-0.1, .85])
-ax[1][2].set_yticks([-.1,0,.8])
-ax[1][2].set_xticks([0,1,3,5])
+ax[1][2].set_ylim([-0.2, .85])
+ax[1][2].set_xlim([1, 5])
+ax[1][2].set_yticks([-.2,0,.8])
+ax[1][2].set_xticks([1,3,5])
 #ax[2][0].set_ylabel('Difference', fontsize=35)
-ax[1][2].text(2, .3, 'KDN wins')
+ax[1][2].text(2, .3, 'KGN wins')
 ax[1][2].text(2, -.08, 'DN wins')
+#ax[2][0].set_ylabel('Difference', fontsize=35)
+#ax[1][2].text(.25, .5, 'ID', rotation=90, fontsize=40, color='b')
+#ax[1][2].text(1.5, .4, 'OOD', rotation=90, fontsize=40, color='b')
+#ax[1][2].axvline(x=1, ymin=-0.2, ymax=1, color='b', linestyle='dashed',linewidth=4)
 #ax[1][2].set_xlabel('Distance')
 
 for j in range(2):
