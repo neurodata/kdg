@@ -242,7 +242,7 @@ for label in labels:
         break
     break
 # %%
-dataset = openml.datasets.get_dataset(458)
+dataset = openml.datasets.get_dataset(1050)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
             )
@@ -321,7 +321,7 @@ history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
 model_kdn = kdn(network=nn)
 model_kdn.fit(X_train, y_train, epsilon=1e-6, mul=20)
 #%%
-proba_kdn = model_kdn.predict_proba(X_test)
+proba_kdn = model_kdn.predict_proba(X_test, distance='Geodesic')
 proba_dn = model_kdn.network.predict(X_test)
 predicted_label_kdn = np.argmax(proba_kdn, axis = 1)
 predicted_label_dn = np.argmax(proba_dn, axis = 1)
