@@ -242,7 +242,7 @@ for label in labels:
         break
     break
 # %%
-dataset = openml.datasets.get_dataset(1050)
+dataset = openml.datasets.get_dataset(554)
 X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
             )
