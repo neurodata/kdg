@@ -31,13 +31,14 @@ class kdf(KernelDensityGraph):
     def _compute_geodesic(self, polytope_id_test, polytope_ids):
        total_samples = polytope_id_test.shape[0]
        total_polytopes = polytope_ids.shape[0]
+       total_trees = polytope_id_test.shape[1]
        w = np.zeros((total_samples, total_polytopes), dtype=float)
        for ii in range(total_samples):
            matched_samples = np.sum(
                     polytope_ids == polytope_id_test[ii],
                     axis=1
                 )
-           w[ii,:] = (matched_samples/np.max(matched_samples)) + 1e-30
+           w[ii,:] = (matched_samples/total_trees) + 1e-30
        return 1 - w
 
     def _compute_euclidean(self, test_X):
