@@ -110,7 +110,7 @@ class kdn(KernelDensityGraph):
        w = np.zeros((total_samples, total_polytopes), dtype=float)
        for ii in range(total_samples):
            w[ii,:] = np.sum(
-               (test_X[ii] - self.polytope_means)**2,
+               ((test_X[ii] - self.polytope_means)**2).reshape(total_polytopes,-1),
                axis=1
            )
        return w
@@ -225,8 +225,9 @@ class kdn(KernelDensityGraph):
         return -(X-location)**2/(2*variance) - .5*np.log(2*np.pi*variance)
 
    def _compute_log_likelihood(self, X, label, polytope_idx):
-        polytope_mean = self.polytope_means[polytope_idx]
-        polytope_cov = self.polytope_cov[polytope_idx]
+        polytope_mean = self.polytope_means[polytope_idx].reshape(-1)
+        polytope_cov = self.polytope_cov[polytope_idx].reshape(-1)
+        X = X.reshape(-1)
         likelihood = 0
 
         for ii in range(self.feature_dim):
@@ -299,7 +300,7 @@ class kdn(KernelDensityGraph):
 
    def predict(self, X, distance='Euclidean'):
         r"""
-        Perform inference using the kernel density forest.
+        Perform inference using the kernel density network.
         Parameters
         ----------
         X : ndarray

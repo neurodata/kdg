@@ -21,6 +21,36 @@ class kdf(KernelDensityGraph):
         self.kwargs = kwargs
         self.is_fitted = False
 
+    def _get_polytope_ids(self, X):
+       predicted_leaf_ids_across_trees = np.array(
+                [tree.apply(X) for tree in self.rf_model.estimators_]
+                ).T
+
+       return predicted_leaf_ids_across_trees
+     
+    def _compute_geodesic(self, polytope_id_test, polytope_ids):
+       total_samples = polytope_id_test.shape[0]
+       total_polytopes = polytope_ids.shape[0]
+       w = np.zeros((total_samples, total_polytopes), dtype=float)
+       for ii in range(total_samples):
+           matched_samples = np.sum(
+                    polytope_ids == polytope_id_test[ii],
+                    axis=1
+                )
+           w[ii,:] = (matched_samples/np.max(matched_samples)) + 1e-30
+       return 1 - w
+
+    def _compute_euclidean(self, test_X):
+        total_samples = test_X.shape[0]
+        total_polytopes = len(self.polytope_means)
+        w = np.zeros((total_samples, total_polytopes), dtype=float)
+        for ii in range(total_samples):
+           w[ii,:] = np.sum(
+               ((test_X[ii] - self.polytope_means)**2).reshape(total_polytopes,-1),
+               axis=1
+           )
+        return w
+    
     def fit(self, X, y, k=1, epsilon=1e-6):
         r"""
         Fits the kernel density forest.
@@ -56,9 +86,7 @@ class kdf(KernelDensityGraph):
                 )/X.shape[0]
 
 
-        predicted_leaf_ids_across_trees = np.array(
-                [tree.apply(X) for tree in self.rf_model.estimators_]
-                ).T
+        predicted_leaf_ids_across_trees = self._get_polytope_ids(X)
 
         
         self.w = np.zeros((self.total_samples,self.total_samples), dtype=float)
@@ -120,7 +148,7 @@ class kdf(KernelDensityGraph):
 
         return likelihood
 
-    def predict_proba(self, X, return_likelihood=False):
+    def predict_proba(self, X, distance = 'Euclidean', return_likelihood=False):
         r"""
         Calculate posteriors using the kernel density forest.
         Parameters
@@ -128,26 +156,29 @@ class kdf(KernelDensityGraph):
         X : ndarray
             Input data matrix.
         """
-        X = check_array(X)
-
+        #X = check_array(X)
+        
         total_polytope = len(self.polytope_means)
         log_likelihoods = np.zeros(
             (np.size(X,0), len(self.labels)),
             dtype=float
         )
-        distance = np.zeros(
-                (
-                    np.size(X,0),
-                    total_polytope
-                ),
-                dtype=float
-            )
         
-        for polytope in range(total_polytope):
-            distance[:,polytope] = self._compute_distance(X, polytope)
-
+        if distance == 'Euclidean':
+            distance = self._compute_euclidean(X)
+        elif distance == 'Geodesic':
+            distance = self._compute_geodesic(
+                self._get_polytope_ids(X),
+                self._get_polytope_ids(
+                    np.array(
+                    self.polytope_means
+                    )
+                )
+            )
+        else:
+            raise ValueError("Unknown distance measure!")
+        
         polytope_idx = np.argmin(distance, axis=1)
-
         for ii,label in enumerate(self.labels):
             for jj in range(X.shape[0]):
                 log_likelihoods[jj, ii] = self._compute_log_likelihood(X[jj], label, polytope_idx[jj])
@@ -177,7 +208,7 @@ class kdf(KernelDensityGraph):
         else:
             return proba 
 
-    def predict(self, X):
+    def predict(self, X, distance='Euclidean'):
         r"""
         Perform inference using the kernel density forest.
         Parameters
@@ -186,5 +217,5 @@ class kdf(KernelDensityGraph):
             Input data matrix.
         """
         
-        return np.argmax(self.predict_proba(X), axis = 1)
+        return np.argmax(self.predict_proba(X, distance=distance), axis = 1)
 
