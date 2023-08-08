@@ -131,12 +131,12 @@ df['err_kdf_geodesic'] = err_kdf_geodesic
 df['err_kdn_geodesic'] = err_kdn_geodesic
 df['dimension'] = dimension
 
-with open('controlled_dimensionality.pickle', 'wb') as f:
+with open('controlled_dimensionality_geodesic.pickle', 'wb') as f:
     pickle.dump(df, f)
 
     
 # %%
-with open('controlled_dimensionality.pickle', 'rb') as f:
+with open('controlled_dimensionality_geodesic.pickle', 'rb') as f:
     df = pickle.load(f)
 # %%
 sns.set_context('talk')
@@ -242,13 +242,13 @@ ax.plot(dimension, err_rf_med, c='g', linewidth=3, label='RF')
 ax.fill_between(dimension, err_rf_25, err_rf_75, facecolor='g', alpha=.3)
 ax.plot(dimension, err_dn_med, c='#3f97b7', linewidth=3, label='DN')
 ax.fill_between(dimension, err_dn_25, err_dn_75, facecolor='#3f97b7', alpha=.3)
-ax.plot(dimension, err_kdf_med, c='k', linewidth=3, label='KGF (Euclidean)')
+ax.plot(dimension, err_kdf_med, c='k', linewidth=3, label='KGF-Euclidean')
 ax.fill_between(dimension, err_kdf_25, err_kdf_75, facecolor='k', alpha=.3)
-ax.plot(dimension, err_kdn_med, c='purple', linewidth=3, label='KGN (Euclidean)')
+ax.plot(dimension, err_kdn_med, c='purple', linewidth=3, label='KGN-Euclidean')
 ax.fill_between(dimension, err_kdn_25, err_kdn_75, facecolor='purple', alpha=.3)
-ax.plot(dimension, err_kdf_geodesic_med, c='r', linewidth=3, label='KGF (Geodesic)')
+ax.plot(dimension, err_kdf_geodesic_med, c='r', linewidth=3, label='KGF-Geodesic')
 ax.fill_between(dimension, err_kdf_geodesic_25, err_kdf_geodesic_75, facecolor='r', alpha=.3)
-ax.plot(dimension, err_kdn_geodesic_med, c='b', linewidth=3, label='KGN (Geodesic)')
+ax.plot(dimension, err_kdn_geodesic_med, c='b', linewidth=3, label='KGN-Geodesic')
 ax.fill_between(dimension, err_kdn_geodesic_25, err_kdn_geodesic_75, facecolor='b', alpha=.3)
 #ax.set_xscale('log')
 
