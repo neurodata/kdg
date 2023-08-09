@@ -197,8 +197,12 @@ classes_to_consider = [[0,1], [2,3],
                        [4,5], [6,7],
                        [8,9]]
 seeds = [0,100,200,300,400]
+done = [0,1,2]
 
 for task, classes in enumerate(classes_to_consider):
+    if task in done:
+        continue
+    
     subtract_pixel_mean = True
     normalize = True
     (x_train, y_train), (x_test, y_test), trn_mean = get_data(classes)
