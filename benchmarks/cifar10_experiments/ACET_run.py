@@ -197,19 +197,19 @@ classes_to_consider = [[0,1], [2,3],
                        [4,5], [6,7],
                        [8,9]]
 seeds = [0,100,200,300,400]
-done = [0,1,2]
+done = [0,1,3]
 
 for task, classes in enumerate(classes_to_consider):
     if task in done:
         continue
-    
+
     subtract_pixel_mean = True
     normalize = True
     (x_train, y_train), (x_test, y_test), trn_mean = get_data(classes)
     input_shape = x_train.shape
     batchsize=40
     iteration = input_shape[0]//batchsize
-    epochs = 20
+    epochs = 10
     dim=2
     #y_train = tf.one_hot(y_train, depth=2)
     for seed in seeds:
