@@ -197,7 +197,7 @@ classes_to_consider = [[0,1], [2,3],
                        [4,5], [6,7],
                        [8,9]]
 seeds = [0,100,200,300,400]
-done = [0,1,3]
+done = [0,1,2,3]
 
 for task, classes in enumerate(classes_to_consider):
     if task in done:
@@ -270,7 +270,7 @@ for task, classes in enumerate(classes_to_consider):
         predicted_logits = cnn(x_test)
         mmc_dn['cifar100'] = np.mean(np.max(predicted_logits,axis=1))
         
-        x_test = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
+        x_test = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
         test_ids =  random.sample(range(0, x_test.shape[3]), 2000)
         x_test = x_test[:,:,:,test_ids].astype('float32').reshape(2000,32,32,3)/255
         x_test -= trn_mean
