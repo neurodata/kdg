@@ -198,7 +198,6 @@ classes_to_consider = [[0,1], [2,3],
                        [8,9]]
 seeds = [0,100,200,300,400]
 done = [0,1,2,3]
-
 for task, classes in enumerate(classes_to_consider):
     if task in done:
         continue
@@ -213,6 +212,7 @@ for task, classes in enumerate(classes_to_consider):
     dim=2
     #y_train = tf.one_hot(y_train, depth=2)
     for seed in seeds:
+
         mmc_dn = {}
         acc_dn = 0
         
@@ -278,7 +278,7 @@ for task, classes in enumerate(classes_to_consider):
         predicted_logits = cnn(x_test)
         mmc_dn['svhn'] = np.mean(np.max(predicted_logits,axis=1))
         
-        x_test = np.random.random_integers(0,high=255,size=(2000,32,32,3)).astype('float')
+        x_test = np.random.random_integers(0,high=255,size=(2000,32,32,3)).astype('float')/255
         x_test -= trn_mean
         predicted_logits = cnn(x_test)
         mmc_dn['noise'] = np.mean(np.max(predicted_logits,axis=1))
