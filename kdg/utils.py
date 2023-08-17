@@ -4,7 +4,27 @@ from numpy.random import uniform, normal, shuffle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def get_ece(predicted_posterior, true_label, R=15):
+def get_ece(predicted_posterior, y):
+    hists = []
+    hists_hat = []
+    amts = []
+    num_bins = 40
+    eces_across_y_vals = []
+    for y_val in np.unique(y):
+        for i in range(num_bins):
+            prop = i*1./num_bins
+            inds = np.where((predicted_posterior[:, y_val] >= prop) & (predicted_posterior[:, y_val] <= prop+1./num_bins))[0]
+            amts.append(len(inds))
+            if len(inds) > 0:
+                hists.append(len(np.where(y[inds] == y_val)[0])*1./len(inds))
+                hists_hat.append(np.mean(predicted_posterior[inds, y_val]))
+            else:
+                hists.append(prop)
+                hists_hat.append(prop + 0.5/num_bins)
+        eces_across_y_vals.append(np.dot(np.abs(np.array(hists) - np.array(hists_hat)), amts) / np.sum(amts))
+    return np.mean(eces_across_y_vals)
+
+def get_ace(predicted_posterior, true_label, R=15):
     total_sample = len(true_label)
     K = predicted_posterior.shape[1]
     predicted_label = np.argmax(predicted_posterior, axis=1)
