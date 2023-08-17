@@ -4,9 +4,10 @@ from numpy.random import uniform, normal, shuffle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def get_ece(predicted_posterior, predicted_label, true_label, R=15):
+def get_ece(predicted_posterior, true_label, R=15):
     total_sample = len(true_label)
     K = predicted_posterior.shape[1]
+    predicted_label = np.argmax(predicted_posterior, axis=1)
     score = 0
     bin_size = total_sample//R
 
