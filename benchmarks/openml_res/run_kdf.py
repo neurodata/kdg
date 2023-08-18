@@ -69,7 +69,7 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
                      X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep)
             
             
-            model_kdf = kdf(k=1, kwargs={'n_estimators':n_estimators})
+            model_kdf = kdf(kwargs={'n_estimators':n_estimators})
             model_kdf.fit(X_train, y_train, epsilon=1e-6)
             proba_kdf = model_kdf.predict_proba(X_test)
             proba_kdf_geod = model_kdf.predict_proba(X_test, distance='Geodesic')
