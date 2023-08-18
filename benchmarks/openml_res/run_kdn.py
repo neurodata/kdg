@@ -80,9 +80,9 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
     total_sample = X.shape[0]
     test_sample = total_sample//3
     train_samples = np.logspace(
-            np.log10(100),
+            np.log10(10),
             np.log10(total_sample-test_sample),
-            num=4,
+            num=5,
             endpoint=True,
             dtype=int
         )
@@ -98,7 +98,7 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
     for train_sample in train_samples:
         for rep in range(reps):
             X_train, X_test, y_train, y_test = train_test_split(
-                     X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep)
+                     X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep, stratify=y)
             
             nn = getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1, layer_size=layer_size)
             history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)

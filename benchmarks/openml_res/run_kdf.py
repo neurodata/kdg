@@ -39,7 +39,6 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     
     X = (X-min_val)/(max_val-min_val+1e-12)
     _, y = np.unique(y, return_inverse=True)
-    
     '''for ii in range(X.shape[1]):
         unique_val = np.unique(X[:,ii])
         if len(unique_val) < 10:
@@ -48,9 +47,9 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     total_sample = X.shape[0]
     test_sample = total_sample//3
     train_samples = np.logspace(
-            np.log10(100),
+            np.log10(10),
             np.log10(total_sample-test_sample),
-            num=4,
+            num=5,
             endpoint=True,
             dtype=int
         )
@@ -66,8 +65,7 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     for train_sample in train_samples:
         for rep in range(reps):
             X_train, X_test, y_train, y_test = train_test_split(
-                     X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep)
-            
+                     X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep, stratify=y)
             
             model_kdf = kdf(kwargs={'n_estimators':n_estimators})
             model_kdf.fit(X_train, y_train, epsilon=1e-6)
