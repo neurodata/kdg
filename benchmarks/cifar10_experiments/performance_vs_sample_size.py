@@ -40,7 +40,7 @@ def getLeNet(input_shape, num_classes):
     
 # %%
 ### Hyperparameters ###
-subtract_pixel_mean = True
+subtract_pixel_mean = False
 normalize = True
 classes_to_consider = [[0,1], [2,3],
                        [4,5], [6,7],
@@ -165,18 +165,17 @@ def experiment(task, sample_size, seed=0):
 def experiment_out(task, seed, n_test=1000):
     random.seed(seed)
     classes = classes_to_consider[task]
-    (x_train, y_train), (x_test, y_test), _ = get_data(classes)
+    (x_train, y_train), (_, _), _ = get_data(classes)
+
     x_train = x_train.reshape(-1,32*32*3)
-    x_test = x_test.reshape(-1,32*32*3)
-    normalizing_vector = np.linalg.norm(
-                                x_train,
-                                2,
-                                axis=1
-                            )
-    x_train = x_train/normalizing_vector[:,None]
-    x_test = x_test/normalizing_vector[:,None]
+    normalize = np.max(np.linalg.norm(
+                                    x_train,
+                                    2,
+                                    axis=1
+                                )
+                        )
+    x_train = x_train/normalize
     x_train = x_train.reshape(-1,32,32,3)
-    x_test = x_test.reshape(-1,32,32,3)
     input_shape = x_train[0].shape
 
     nn = getLeNet(
@@ -192,22 +191,17 @@ def experiment_out(task, seed, n_test=1000):
         **fit_kwargs
         )
     
-    predicted_label_dn = np.argmax(
-            nn.predict(x_test), 
-            axis=1
-        )
     print('Trained model with classes ', classes, ' seed ', seed)
-    print('Accuracy:', np.mean(predicted_label_dn==y_test.reshape(-1)))
 
     # train KGN model
     model_kdn = kdn(network=nn)
     model_kdn.fit(x_train, y_train, batch=5)
-    model_kdn.global_bias = -1e9 - np.log10(x_train.shape[0])
+    model_kdn.global_bias = -5e6 - np.log10(x_train.shape[0])
 
     mmcOut_dn = []
     mmcOut_kdn_geod = []
     mmcOut_kdn_euc = []
-    for r in np.arange(0,10.5,.5):
+    for r in np.arange(0,20.5,1):
         X_ood = sample_unifrom_circle(n=n_test, r=r, p=32*32*3)
         X_ood = X_ood.reshape(-1,32,32,3)
         mmcOut_dn.append(
@@ -392,7 +386,7 @@ for task in range(5):
                         seed=seed
                         ) for seed in seeds
                 )
-    
+    print(res)
     for ii, _ in enumerate(seeds):
         mmcOut_kdn_geod.append(
             res[ii][0]
@@ -405,25 +399,25 @@ for task in range(5):
         )
     
     mmcOut_kdn_geod_med =\
-        np.median(mmcOut_kdn_geod,axis=1)
+        np.median(mmcOut_kdn_geod,axis=0)
     mmcOut_kdn_euc_med =\
-        np.median(mmcOut_kdn_euc,axis=1)
+        np.median(mmcOut_kdn_euc,axis=0)
     mmcOut_dn_med =\
-        np.median(mmcOut_dn,axis=1)
+        np.median(mmcOut_dn,axis=0)
 
     mmcOut_kdn_geod_25 =\
-        np.quantile(mmcOut_kdn_geod, [0.25], axis=1)[0]
+        np.quantile(mmcOut_kdn_geod, [0.25], axis=0)[0]
     mmcOut_kdn_euc_25 =\
-        np.quantile(mmcOut_kdn_euc, [0.25], axis=1)[0]
+        np.quantile(mmcOut_kdn_euc, [0.25], axis=0)[0]
     mmcOut_dn_25 =\
-        np.quantile(mmcOut_dn, [0.25], axis=1)[0]
+        np.quantile(mmcOut_dn, [0.25], axis=0)[0]
 
     mmcOut_kdn_geod_75 =\
-        np.quantile(mmcOut_kdn_geod, [0.75], axis=1)[0]
+        np.quantile(mmcOut_kdn_geod, [0.75], axis=0)[0]
     mmcOut_kdn_euc_75 =\
-        np.quantile(mmcOut_kdn_euc, [0.75], axis=1)[0]
+        np.quantile(mmcOut_kdn_euc, [0.75], axis=0)[0]
     mmcOut_dn_75 =\
-        np.quantile(mmcOut_dn, [0.75], axis=1)[0]
+        np.quantile(mmcOut_dn, [0.75], axis=0)[0]
 
     df['mmcOut_kdn_geod_med'] = mmcOut_kdn_geod_med
     df['mmcOut_kdn_euc_med'] = mmcOut_kdn_euc_med
@@ -437,3 +431,4 @@ for task in range(5):
 
     with open('results/Task'+str(task+1)+'_OOD.pickle', 'wb') as f:
         pickle.dump(df, f)
+# %%

@@ -87,8 +87,10 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
             dtype=int
         )
     err = []
+    err_geod = []
     err_dn = []
     ece = []
+    ece_geod = []
     ece_dn = []
     mc_rep = []
     samples = []
@@ -103,13 +105,20 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
             model_kdn = kdn(network=nn)
             model_kdn.fit(X_train, y_train, mul=10)
             proba_kdn = model_kdn.predict_proba(X_test)
+            proba_kdn_geod = model_kdn.predict_proba(X_test, distance='Geodesic')
             proba_dn = model_kdn.network.predict(X_test)
             predicted_label_kdn = np.argmax(proba_kdn, axis = 1)
+            predicted_label_kdn_geod = np.argmax(proba_kdn_geod, axis = 1)
             predicted_label_dn = np.argmax(proba_dn, axis = 1)
 
             err.append(
                 1 - np.mean(
                         predicted_label_kdn==y_test
+                    )
+            )
+            err_geod.append(
+                1 - np.mean(
+                        predicted_label_kdn_geod==y_test
                     )
             )
             err_dn.append(
@@ -118,10 +127,13 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
                 )
             )
             ece.append(
-                get_ece(proba_kdn, predicted_label_kdn, y_test)
+                get_ece(proba_kdn, y_test)
+            )
+            ece_geod.append(
+                get_ece(proba_kdn_geod, y_test)
             )
             ece_dn.append(
-                get_ece(proba_dn, predicted_label_dn, y_test)
+                get_ece(proba_dn, y_test)
             )
             samples.append(
                 train_sample
@@ -130,8 +142,10 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
 
     df = pd.DataFrame() 
     df['err_kdn'] = err
+    df['err_kdn_geod'] = err_geod
     df['err_dn'] = err_dn
     df['ece_kdn'] = ece
+    df['ece_kdn_geod'] = ece_geod
     df['ece_dn'] = ece_dn
     df['rep'] = mc_rep
     df['samples'] = samples
@@ -141,13 +155,13 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
 
 # %%
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
-data_id_not_done = [554, 40996, 23517, 40923, 40927]
+#data_id_not_done = [554, 40996, 23517, 40923, 40927]
 
-for dataset_id in data_id_not_done:
+'''for dataset_id in data_id_not_done:
     print("Doing data ", dataset_id)
-    experiment(dataset_id) 
-'''Parallel(n_jobs=-1,verbose=1)(
+    experiment(dataset_id) '''
+Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment)(
                 dataset_id,
-                ) for dataset_id in data_id_not_done#openml.study.get_suite("OpenML-CC18").data
-            )'''
+                ) for dataset_id in benchmark_suite.data
+            )

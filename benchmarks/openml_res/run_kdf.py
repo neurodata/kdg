@@ -55,8 +55,10 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
             dtype=int
         )
     err = []
+    err_geod = []
     err_rf = []
     ece = []
+    ece_geod = []
     ece_rf = []
     mc_rep = []
     samples = []
@@ -68,15 +70,22 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
             
             
             model_kdf = kdf(k=1, kwargs={'n_estimators':n_estimators})
-            model_kdf.fit(X_train, y_train, epsilon=1e-2)
+            model_kdf.fit(X_train, y_train, epsilon=1e-6)
             proba_kdf = model_kdf.predict_proba(X_test)
+            proba_kdf_geod = model_kdf.predict_proba(X_test, distance='Geodesic')
             proba_rf = model_kdf.rf_model.predict_proba(X_test)
             predicted_label_kdf = np.argmax(proba_kdf, axis = 1)
+            predicted_label_kdf_geod = np.argmax(proba_kdf_geod, axis = 1)
             predicted_label_rf = np.argmax(proba_rf, axis = 1)
 
             err.append(
                 1 - np.mean(
                         predicted_label_kdf==y_test
+                    )
+            )
+            err_geod.append(
+                1 - np.mean(
+                        predicted_label_kdf_geod==y_test
                     )
             )
             err_rf.append(
@@ -85,10 +94,13 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
                 )
             )
             ece.append(
-                get_ece(proba_kdf, predicted_label_kdf, y_test)
+                get_ece(proba_kdf, y_test)
+            )
+            ece_geod.append(
+                get_ece(proba_kdf_geod, y_test)
             )
             ece_rf.append(
-                get_ece(proba_rf, predicted_label_rf, y_test)
+                get_ece(proba_rf, y_test)
             )
             samples.append(
                 train_sample
@@ -97,8 +109,10 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
 
     df = pd.DataFrame() 
     df['err_kdf'] = err
+    df['err_kdf_geod'] = err_geod
     df['err_rf'] = err_rf
     df['ece_kdf'] = ece
+    df['ece_kdf_geod'] = ece_geod
     df['ece_rf'] = ece_rf
     df['rep'] = mc_rep
     df['samples'] = samples
@@ -108,11 +122,11 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
 
 # %%
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
-data_id_not_done = [28, 554, 1485, 40996, 41027, 23517, 40923, 40927]
+#data_id_not_done = [28, 554, 1485, 40996, 41027, 23517, 40923, 40927]
 
 Parallel(n_jobs=-1,verbose=1)(
         delayed(experiment)(
                 dataset_id,
-                ) for dataset_id in data_id_not_done
+                ) for dataset_id in benchmark_suite.data
             )
 
