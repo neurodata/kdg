@@ -1,6 +1,6 @@
 #%%
 from kdg import kdf
-from kdg.utils import get_ece
+from kdg.utils import get_ece, get_ace
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -92,13 +92,13 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
                 )
             )
             ece.append(
-                get_ece(proba_kdf, y_test)
+                get_ace(proba_kdf, y_test)
             )
             ece_geod.append(
-                get_ece(proba_kdf_geod, y_test)
+                get_ace(proba_kdf_geod, y_test)
             )
             ece_rf.append(
-                get_ece(proba_rf, y_test)
+                get_ace(proba_rf, y_test)
             )
             samples.append(
                 train_sample
