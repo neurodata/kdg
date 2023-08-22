@@ -1,6 +1,6 @@
 #%%
 from kdg import kdn
-from kdg.utils import get_ece
+from kdg.utils import get_ece, get_ace
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -79,6 +79,7 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
         
     total_sample = X.shape[0]
     test_sample = total_sample//3
+    R = test_sample//66
     train_samples = np.logspace(
             np.log10(100),
             np.log10(total_sample-test_sample),
@@ -103,7 +104,7 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
             nn = getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1, layer_size=layer_size)
             history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
             model_kdn = kdn(network=nn)
-            model_kdn.fit(X_train, y_train, mul=10)
+            model_kdn.fit(X_train, y_train, mul=100)
             proba_kdn = model_kdn.predict_proba(X_test)
             proba_kdn_geod = model_kdn.predict_proba(X_test, distance='Geodesic')
             proba_dn = model_kdn.network.predict(X_test)
@@ -127,13 +128,13 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
                 )
             )
             ece.append(
-                get_ece(proba_kdn, y_test)
+                get_ace(proba_kdn, y_test, R=R)
             )
             ece_geod.append(
-                get_ece(proba_kdn_geod, y_test)
+                get_ace(proba_kdn_geod, y_test, R=R)
             )
             ece_dn.append(
-                get_ece(proba_dn, y_test)
+                get_ace(proba_dn, y_test, R=R)
             )
             samples.append(
                 train_sample

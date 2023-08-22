@@ -19,8 +19,8 @@ def get_ece(predicted_posterior, y):
                 hists.append(len(np.where(y[inds] == y_val)[0])*1./len(inds))
                 hists_hat.append(np.mean(predicted_posterior[inds, y_val]))
             else:
-                hists.append(prop)
-                hists_hat.append(prop + 0.5/num_bins)
+                hists.append(0)
+                hists_hat.append(0)
         eces_across_y_vals.append(np.dot(np.abs(np.array(hists) - np.array(hists_hat)), amts) / np.sum(amts))
     return np.mean(eces_across_y_vals)
 
@@ -40,11 +40,7 @@ def get_ace(predicted_posterior, true_label, R=15):
             predicted_label_ = predicted_label[indx]
             true_label_ = true_label[indx]
             indx_k = np.where(true_label_ == k)[0]
-            acc = (
-                np.nan_to_num(np.mean(predicted_label_[indx_k] == k))
-                if indx_k.size != 0
-                else 0
-            )
+            acc = len(np.where(predicted_label_[indx_k] == k)[0])/len(indx)
             
             conf = np.nan_to_num(np.mean(posteriors[indx])) if indx.size != 0 else 0
             score += len(indx) * np.abs(acc - conf)
@@ -52,9 +48,10 @@ def get_ace(predicted_posterior, true_label, R=15):
     score /= (K*total_sample)
     return score
 
-def plot_reliability(predicted_posterior, predicted_label, true_label, R=15):
+def plot_reliability(predicted_posterior, true_label, R=15):
     total_sample = len(true_label)
     K = predicted_posterior.shape[1]
+    predicted_label = np.argmax(predicted_posterior, axis=1)
     score = 0
     bin_size = total_sample//R
     fig, ax = plt.subplots(1, K, figsize=(8*K, 8))
@@ -70,11 +67,7 @@ def plot_reliability(predicted_posterior, predicted_label, true_label, R=15):
             predicted_label_ = predicted_label[indx]
             true_label_ = true_label[indx]
             indx_k = np.where(true_label_ == k)[0]
-            acc = (
-                np.nan_to_num(np.mean(predicted_label_[indx_k] == k))
-                if indx_k.size != 0
-                else 0
-            )
+            acc = len(np.where(predicted_label_[indx_k] == k)[0])/len(indx)
             
             conf = np.nan_to_num(np.mean(posteriors[indx])) if indx.size != 0 else 0
             score += len(indx) * np.abs(acc - conf)
