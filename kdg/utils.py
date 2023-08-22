@@ -4,25 +4,45 @@ from numpy.random import uniform, normal, shuffle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def get_ece(predicted_posterior, y):
-    hists = []
-    hists_hat = []
-    amts = []
-    num_bins = 40
-    eces_across_y_vals = []
-    for y_val in np.unique(y):
-        for i in range(num_bins):
-            prop = i*1./num_bins
-            inds = np.where((predicted_posterior[:, y_val] >= prop) & (predicted_posterior[:, y_val] <= prop+1./num_bins))[0]
-            amts.append(len(inds))
-            if len(inds) > 0:
-                hists.append(len(np.where(y[inds] == y_val)[0])*1./len(inds))
-                hists_hat.append(np.mean(predicted_posterior[inds, y_val]))
-            else:
-                hists.append(0)
-                hists_hat.append(0)
-        eces_across_y_vals.append(np.dot(np.abs(np.array(hists) - np.array(hists_hat)), amts) / np.sum(amts))
-    return np.mean(eces_across_y_vals)
+def _bin_data(y, n_bins):
+    """
+    Partitions the data into ordered bins based on
+    the probabilities. Returns the binned indices.
+    """
+    edges = np.linspace(0, 1, n_bins)
+    bin_idx = np.digitize(y, edges, right=True)
+    binned_idx = [np.where(bin_idx == i)[0] for i in range(n_bins)]
+
+    return binned_idx
+
+
+def _bin_stats(y_true, y_proba, bin_idx):
+    # mean accuracy within each bin
+    bin_acc = [
+        np.equal(np.argmax(y_proba[idx], axis=1),
+                 y_true[idx]).mean() if len(idx) > 0 else 0
+        for idx in bin_idx
+    ]
+    # mean confidence of prediction within each bin
+    bin_conf = [
+        np.mean(np.max(y_proba[idx], axis=1)) if len(idx) > 0 else 0
+        for idx in bin_idx
+    ]
+
+    return np.asarray(bin_acc), np.asarray(bin_conf)
+
+
+def get_ece( y_proba, y_true, n_bins=10):
+    bin_idx = _bin_data(y_proba.max(axis=1), n_bins)
+    n = len(y_true)
+
+    bin_acc, bin_conf = _bin_stats(y_true, y_proba, bin_idx)
+    bin_sizes = [len(idx) for idx in bin_idx]
+
+    ece = np.sum(np.abs(bin_acc - bin_conf) * np.asarray(bin_sizes)) / n
+
+    return ece
+
 
 def get_ace(predicted_posterior, true_label, R=15):
     total_sample = len(true_label)

@@ -12,7 +12,7 @@ res_folder_kdn = 'openml_res/openml_kdn_res'
 res_folder_kdf = 'openml_res/openml_kdf_res'
 res_folder_kdn_ood = 'openml_res/openml_kdn_res_ood'
 res_folder_kdf_ood = 'openml_res/openml_kdf_res_ood'
-files = os.listdir(res_folder_kdf)
+files = os.listdir(res_folder_kdn)
 files.remove('.DS_Store')
 # %%
 id_done_ood = [6,11,12,14,16,18,22,28,32,37,44,54,182,300,458, 554,1049,1050,1063,1067,1068, 1462, 1464, 1468, 1475, 1478, 1485, 1487, 1489, 1494, 1497, 1501, 1510, 4134, 4538, 40499, 40979, 40982, 40983, 40984, 40994, 40996]
@@ -168,9 +168,13 @@ sns.set(
 
 fig, ax = plt.subplots(2, 3, figsize=(21,14))
 
+plot_summary_error(files, res_folder_kdf, model='kdf_geod', ax=ax[0][0])
 plot_summary_error(files, res_folder_kdf, ax=ax[0][0])
+plot_summary_ece(files, res_folder_kdf, model='kdf_geod', ax=ax[0][1])
 plot_summary_ece(files, res_folder_kdf, ax=ax[0][1])
+plot_summary_error(files, res_folder_kdn, model='kdn_geod', parent='dn', ax=ax[1][0])
 plot_summary_error(files, res_folder_kdn, model='kdn', parent='dn', ax=ax[1][0])
+plot_summary_ece(files, res_folder_kdn, model='kdn_geod', parent='dn', ax=ax[1][1])
 plot_summary_ece(files, res_folder_kdn, model='kdn', parent='dn', ax=ax[1][1])
 plot_summary_ood(files, res_folder_kdf_ood, ax=ax[0][2])
 plot_summary_ood(files, res_folder_kdn_ood, model='kdn', parent='dn', ax=ax[1][2])

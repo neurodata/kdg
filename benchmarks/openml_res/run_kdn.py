@@ -128,13 +128,13 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
                 )
             )
             ece.append(
-                get_ace(proba_kdn, y_test, R=R)
+                get_ece(proba_kdn, y_test, R=R)
             )
             ece_geod.append(
-                get_ace(proba_kdn_geod, y_test, R=R)
+                get_ece(proba_kdn_geod, y_test, R=R)
             )
             ece_dn.append(
-                get_ace(proba_dn, y_test, R=R)
+                get_ece(proba_dn, y_test, R=R)
             )
             samples.append(
                 train_sample

@@ -93,13 +93,13 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
                 )
             )
             ece.append(
-                get_ace(proba_kdf, y_test, R=R)
+                get_ece(proba_kdf, y_test, R=R)
             )
             ece_geod.append(
-                get_ace(proba_kdf_geod, y_test, R=R)
+                get_ece(proba_kdf_geod, y_test, R=R)
             )
             ece_rf.append(
-                get_ace(proba_rf, y_test, R=R)
+                get_ece(proba_rf, y_test, R=R)
             )
             samples.append(
                 train_sample
