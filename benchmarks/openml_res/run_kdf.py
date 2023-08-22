@@ -46,7 +46,6 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
         
     total_sample = X.shape[0]
     test_sample = total_sample//3
-    R = test_sample//66
     train_samples = np.logspace(
             np.log10(100),
             np.log10(total_sample-test_sample),
@@ -93,13 +92,13 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
                 )
             )
             ece.append(
-                get_ece(proba_kdf, y_test, R=R)
+                get_ece(proba_kdf, y_test)
             )
             ece_geod.append(
-                get_ece(proba_kdf_geod, y_test, R=R)
+                get_ece(proba_kdf_geod, y_test)
             )
             ece_rf.append(
-                get_ece(proba_rf, y_test, R=R)
+                get_ece(proba_rf, y_test)
             )
             samples.append(
                 train_sample
