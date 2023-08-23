@@ -17,7 +17,7 @@ files.remove('.DS_Store')
 # %%
 id_done_ood = [6,11,12,14,16,18,22,28,32,37,44,54,182,300,458, 554,1049,1050,1063,1067,1068, 1462, 1464, 1468, 1475, 1478, 1485, 1487, 1489, 1494, 1497, 1501, 1510, 4134, 4538, 40499, 40979, 40982, 40983, 40984, 40994, 40996]
 #%%
-def plot_summary_ood(files, folder, model='kdf', parent='rf', ax=None):
+def plot_summary_ood(files, folder, model='kdf', parent='rf', color='r', ax=None):
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(8, 8), sharey=True, sharex=True, constrained_layout=True)
 
@@ -59,11 +59,11 @@ def plot_summary_ood(files, folder, model='kdf', parent='rf', ax=None):
             )
 
     qunatiles = np.nanquantile(np.array(err_diff_),[.25,.75],axis=0)
-    ax.plot(r[1:], np.nanmedian(np.array(err_diff_), axis=0)[1:], linewidth=4, c='r')
-    ax.fill_between(r[1:], qunatiles[0][1:], qunatiles[1][1:], facecolor='r', alpha=.3)
+    ax.plot(r[1:], np.nanmedian(np.array(err_diff_), axis=0)[1:], linewidth=4, c=color)
+    ax.fill_between(r[1:], qunatiles[0][1:], qunatiles[1][1:], facecolor=color, alpha=.3)
 
 
-def plot_summary_error(files, folder, model='kdf', parent='rf', ax=None):
+def plot_summary_error(files, folder, model='kdf', parent='rf', color='r', ax=None):
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(8, 8), sharey=True, sharex=True, constrained_layout=True)
 
@@ -108,11 +108,11 @@ def plot_summary_error(files, folder, model='kdf', parent='rf', ax=None):
         
        # ax.plot(samples, err_diff, linewidth=4, c='r', alpha=.1)
     qunatiles = np.nanquantile(np.array(err_diff_),[.25,.75],axis=0)
-    ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, c='r')    
-    ax.fill_between(sample_combined, qunatiles[0], qunatiles[1], facecolor='r', alpha=.3)
+    ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, c=color)    
+    ax.fill_between(sample_combined, qunatiles[0], qunatiles[1], facecolor=color, alpha=.3)
 
 
-def plot_summary_ece(files, folder, model='kdf', parent='rf', ax=None):
+def plot_summary_ece(files, folder, model='kdf', parent='rf', color='r', ax=None):
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(8, 8), sharey=True, sharex=True, constrained_layout=True)
 
@@ -157,8 +157,8 @@ def plot_summary_ece(files, folder, model='kdf', parent='rf', ax=None):
         
         #ax.plot(samples, err_diff, linewidth=4, c='r', alpha=.1)
     qunatiles = np.nanquantile(np.array(err_diff_),[.25,.75],axis=0)
-    ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, c='r')
-    ax.fill_between(sample_combined, qunatiles[0], qunatiles[1], facecolor='r', alpha=.3)
+    ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, c=color)
+    ax.fill_between(sample_combined, qunatiles[0], qunatiles[1], facecolor=color, alpha=.3)
 
 
 #%%
@@ -169,20 +169,20 @@ sns.set(
 fig, ax = plt.subplots(2, 3, figsize=(21,14))
 
 plot_summary_error(files, res_folder_kdf, model='kdf_geod', ax=ax[0][0])
-plot_summary_error(files, res_folder_kdf, ax=ax[0][0])
+plot_summary_error(files, res_folder_kdf, color='b', ax=ax[0][0])
 plot_summary_ece(files, res_folder_kdf, model='kdf_geod', ax=ax[0][1])
-plot_summary_ece(files, res_folder_kdf, ax=ax[0][1])
+plot_summary_ece(files, res_folder_kdf, color='b', ax=ax[0][1])
 plot_summary_error(files, res_folder_kdn, model='kdn_geod', parent='dn', ax=ax[1][0])
-plot_summary_error(files, res_folder_kdn, model='kdn', parent='dn', ax=ax[1][0])
+plot_summary_error(files, res_folder_kdn, model='kdn', parent='dn', color='b', ax=ax[1][0])
 plot_summary_ece(files, res_folder_kdn, model='kdn_geod', parent='dn', ax=ax[1][1])
-plot_summary_ece(files, res_folder_kdn, model='kdn', parent='dn', ax=ax[1][1])
-plot_summary_ood(files, res_folder_kdf_ood, ax=ax[0][2])
-plot_summary_ood(files, res_folder_kdn_ood, model='kdn', parent='dn', ax=ax[1][2])
+plot_summary_ece(files, res_folder_kdn, model='kdn', parent='dn', color='b', ax=ax[1][1])
+plot_summary_ood(files, res_folder_kdf_ood, color='b', ax=ax[0][2])
+plot_summary_ood(files, res_folder_kdn_ood, model='kdn', parent='dn', color='b', ax=ax[1][2])
 
-ax[1][0].set_xlim([100, 10000])
-ax[1][1].set_xlim([100, 10000])
-ax[0][0].set_xlim([100, 10000])
-ax[0][1].set_xlim([100, 10000])
+ax[1][0].set_xlim([100, 50000])
+ax[1][1].set_xlim([100, 50000])
+ax[0][0].set_xlim([100, 50000])
+ax[0][1].set_xlim([100, 50000])
 
 
 ax[0][0].set_title('Classification Error', fontsize=40)
