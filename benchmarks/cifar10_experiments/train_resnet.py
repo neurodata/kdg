@@ -12,6 +12,9 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.datasets import cifar10
 import numpy as np
 import os
+import random
+from sklearn.model_selection import train_test_split
+
 
 #import ssl
 #ssl._create_default_https_context = ssl._create_unverified_context
@@ -20,7 +23,7 @@ import os
 batch_size = 32  # orig paper trained all networks with batch_size=128
 epochs = 200
 data_augmentation = False
-num_classes = 2
+num_classes = 10
 
 # Subtracting pixel mean improves accuracy
 subtract_pixel_mean = True
@@ -39,7 +42,7 @@ subtract_pixel_mean = True
 # ResNet164 |27(18)| -----     | 94.07     | -----     | 94.54     | ---(---)
 # ResNet1001| (111)| -----     | 92.39     | -----     | 95.08+-.14| ---(---)
 # ---------------------------------------------------------------------------
-n = 5
+n = 3
 
 # Model version
 # Orig paper: version = 1 (ResNet v1), Improved ResNet: version = 2 (ResNet v2)
@@ -95,7 +98,7 @@ def resnet_layer(inputs,
         kernel_size (int): Conv2D square kernel dimensions
         strides (int): Conv2D square stride dimensions
         activation (string): activation name
-        batch_normalization (bool): whether to include batch normalization
+        batch_ntormalization (bool): whether to include batch normalization
         conv_first (bool): conv-bn-activation (True) or
             bn-activation-conv (False)
 
@@ -125,7 +128,7 @@ def resnet_layer(inputs,
     return x
 
 
-def resnet_v1(input_shape, depth, num_classes=2):
+def resnet_v1(input_shape, depth, num_classes=10):
     """ResNet Version 1 Model builder [a]
 
     Stacks of 2 x (3 x 3) Conv2D-BN-ReLU
@@ -199,7 +202,7 @@ def resnet_v1(input_shape, depth, num_classes=2):
     return model
 
 
-def resnet_v2(input_shape, depth, num_classes=2):
+def resnet_v2(input_shape, depth, num_classes=10):
     """ResNet Version 2 Model builder [b]
 
     Stacks of (1 x 1)-(3 x 3)-(1 x 1) BN-ReLU-Conv2D or also known as
@@ -320,128 +323,92 @@ print(x_train.shape[0], 'train samples')
 print(x_test.shape[0], 'test samples')
 print('y_train shape:', y_train.shape)
 
-tasks = [[0,1], [2,3], [4,5],
-         [6,7], [8,9]]
+sample_sizes = [50000]
+seeds = [0,100,200,400]
 
-for task, labels in enumerate(tasks):
-    print("Doing task ", task)
-    # Convert class vectors to binary class matrices.
-    idx_to_train = []
-    idx_to_test = []
+for sample in sample_sizes:
+    for seed in seeds:
+        random.seed(seed)
+        print("Doing sample ", sample, "with seed ", seed)
+        # Convert class vectors to binary class matrices.
+        (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
 
-    for label in labels:
-        idx_to_train.extend(np.where(y_train==label)[0])
-        idx_to_test.extend(np.where(y_test==label)[0])
+        if sample < 50000:
+            x_train, _, y_train, _ = train_test_split(
+                        x_train, y_train, test_size=10, train_size=sample, random_state=seed, stratify=y_train)
+            
+        x_train = x_train.astype('float32') / 255
+        x_test = x_test.astype('float32') / 255
+        x_train_mean = np.mean(x_train, axis=0)
+        if subtract_pixel_mean:
+            x_train -= x_train_mean
+            x_test -= x_train_mean
 
-    _, y_train_task = np.unique(y_train[idx_to_train], return_inverse=True)
-    _, y_test_task = np.unique(y_test[idx_to_test], return_inverse=True)
+        y_train_one_hot = keras.utils.to_categorical(y_train, num_classes)
+        y_test_one_hot = keras.utils.to_categorical(y_test, num_classes)
+        
 
-    y_train_task = keras.utils.to_categorical(y_train_task, num_classes)
-    y_test_task = keras.utils.to_categorical(y_test_task, num_classes)
-    
+        if version == 2:
+            model = resnet_v2(input_shape=input_shape, depth=depth)
+        else:
+            model = resnet_v1(input_shape=input_shape, depth=depth)
 
-    if version == 2:
-        model = resnet_v2(input_shape=input_shape, depth=depth)
-    else:
-        model = resnet_v1(input_shape=input_shape, depth=depth)
+        model.compile(loss='categorical_crossentropy',
+                    optimizer=Adam(lr=lr_schedule(0)),
+                    metrics=['accuracy'])
+        model.summary()
+        print(model_type)
 
-    model.compile(loss='categorical_crossentropy',
-                optimizer=Adam(lr=lr_schedule(0)),
-                metrics=['accuracy'])
-    model.summary()
-    print(model_type)
+        # Prepare model model saving directory.
+        save_dir = os.path.join(os.getcwd(), 'saved_models')
+        model_name = 'cifar10_%s_model.{epoch:03d}.h5' % model_type
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
+        filepath = os.path.join(save_dir, model_name)
 
-    # Prepare model model saving directory.
-    save_dir = os.path.join(os.getcwd(), 'saved_models')
-    model_name = 'cifar10_%s_model.{epoch:03d}.h5' % model_type
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
-    filepath = os.path.join(save_dir, model_name)
+        # Prepare callbacks for model saving and for learning rate adjustment.
+        checkpoint = ModelCheckpoint(filepath=filepath,
+                                    monitor='val_acc',
+                                    verbose=1,
+                                    save_best_only=True)
 
-    # Prepare callbacks for model saving and for learning rate adjustment.
-    checkpoint = ModelCheckpoint(filepath=filepath,
-                                monitor='val_acc',
-                                verbose=1,
-                                save_best_only=True)
+        lr_scheduler = LearningRateScheduler(lr_schedule)
 
-    lr_scheduler = LearningRateScheduler(lr_schedule)
+        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
+                                    cooldown=0,
+                                    patience=5,
+                                    min_lr=0.5e-6)
 
-    lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
-                                cooldown=0,
-                                patience=5,
-                                min_lr=0.5e-6)
+        callbacks = [checkpoint, lr_reducer, lr_scheduler]
 
-    callbacks = [checkpoint, lr_reducer, lr_scheduler]
+        # Run training, with or without data augmentation.
+        if not data_augmentation:
+            print('Not using data augmentation.')
+            model.fit(x_train, y_train_one_hot,
+                    batch_size=batch_size,
+                    epochs=epochs,
+                    validation_data=(x_test, y_test_one_hot),
+                    shuffle=True,
+                    callbacks=callbacks)
+        else:
+            print('Using real-time data augmentation.')
+            # This will do preprocessing and realtime data augmentation:
+            datagen = ImageDataGenerator()
 
-    # Run training, with or without data augmentation.
-    if not data_augmentation:
-        print('Not using data augmentation.')
-        model.fit(x_train[idx_to_train], y_train_task,
-                batch_size=batch_size,
-                epochs=epochs,
-                validation_data=(x_test[idx_to_test], y_test_task),
-                shuffle=True,
-                callbacks=callbacks)
-    else:
-        print('Using real-time data augmentation.')
-        # This will do preprocessing and realtime data augmentation:
-        datagen = ImageDataGenerator(
-            # set input mean to 0 over the dataset
-            featurewise_center=False,
-            # set each sample mean to 0
-            samplewise_center=False,
-            # divide inputs by std of dataset
-            featurewise_std_normalization=False,
-            # divide each input by its std
-            samplewise_std_normalization=False,
-            # apply ZCA whitening
-            zca_whitening=False,
-            # epsilon for ZCA whitening
-            zca_epsilon=1e-06,
-            # randomly rotate images in the range (deg 0 to 180)
-            rotation_range=0,
-            # randomly shift images horizontally
-            width_shift_range=0.1,
-            # randomly shift images vertically
-            height_shift_range=0.1,
-            # set range for random shear
-            shear_range=0.,
-            # set range for random zoom
-            zoom_range=0.,
-            # set range for random channel shifts
-            channel_shift_range=0.,
-            # set mode for filling points outside the input boundaries
-            fill_mode='nearest',
-            # value used for fill_mode = "constant"
-            cval=0.,
-            # randomly flip images
-            horizontal_flip=True,
-            # randomly flip images
-            vertical_flip=False,
-            # set rescaling factor (applied before any other transformation)
-            rescale=None,
-            # set function that will be applied on each input
-            preprocessing_function=None,
-            # image data format, either "channels_first" or "channels_last"
-            data_format=None,
-            # fraction of images reserved for validation (strictly between 0 and 1)
-            validation_split=0.0,
-            )
+            # Compute quantities required for featurewise normalization
+            # (std, mean, and principal components if ZCA whitening is applied).
+            datagen.fit(x_train)
 
-        # Compute quantities required for featurewise normalization
-        # (std, mean, and principal components if ZCA whitening is applied).
-        datagen.fit(x_train[idx_to_train])
+            # Fit the model on the batches generated by datagen.flow().
+            model.fit(datagen.flow(x_train, y_train_one_hot, batch_size=batch_size),
+                                validation_data=(x_test, y_test),
+                                epochs=epochs, verbose=1, workers=-1,
+                                callbacks=callbacks,
+                                use_multiprocessing=False)
 
-        # Fit the model on the batches generated by datagen.flow().
-        model.fit(datagen.flow(x_train[idx_to_train], y_train_task, batch_size=batch_size),
-                            validation_data=(x_test, y_test),
-                            epochs=epochs, verbose=1, workers=-1,
-                            callbacks=callbacks,
-                            use_multiprocessing=False)
+        # Score trained model.
+        scores = model.evaluate(x_test, y_test_one_hot, verbose=1)
+        print('Test loss:', scores[0])
+        print('Test accuracy:', scores[1])
 
-    # Score trained model.
-    scores = model.evaluate(x_test[idx_to_test], y_test_task, verbose=1)
-    print('Test loss:', scores[0])
-    print('Test accuracy:', scores[1])
-
-    model.save('resnet_models/cifar_model_'+str(task))
+        model.save('resnet20_models/cifar_model_'+str(sample)+'_'+str(seed))
