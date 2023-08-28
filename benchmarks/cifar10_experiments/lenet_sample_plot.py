@@ -17,7 +17,7 @@ def unpickle(filename):
 datasets = ['CIFAR10-0,1', 'CIFAR10-2,3', 'CIFAR10-4,5', 'CIFAR10-6,7', 'CIFAR10-8,9']
 sample_size = [10, 100, 1000, 10000]
 r = np.arange(0,20.5,1)
-r = r = np.arange(0,10.5,.5)
+r = np.arange(0,20.5,1)
 linewidth = [6,3]
 
 #sns.set_context('talk')

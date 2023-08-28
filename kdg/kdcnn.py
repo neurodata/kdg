@@ -85,6 +85,39 @@ class kdcnn(KernelDensityGraph):
                 << np.arange(activations.shape[1]), axis=1) + (1<<activations.shape[1])
       
        return polytope_ids
+    
+   def _compute_geodesic(self, polytope_id_test, polytope_ids):
+       total_samples = polytope_id_test.shape[0]
+       total_polytopes = polytope_ids.shape[0]
+       normalizing_factor = np.sum(np.log(self.network_shape))
+       w = np.zeros((total_samples, total_polytopes), dtype=float)
+       print('Calculating weight for ', self.total_samples, ' samples')
+       for ii in tqdm(range(self.total_samples)):
+           #print('Calculating weight for ', ii)
+           unmatched_pattern = polytope_ids ^ polytope_id_test[ii]
+           w[ii] = np.array(
+            Parallel(n_jobs=-1)(
+                    delayed(_worker)(
+                            unmatch,
+                            self.network_shape
+                            ) for unmatch in unmatched_pattern
+                    )  
+            )
+           
+       w = np.exp(w - normalizing_factor)
+       return 1 - w 
+
+
+   def _compute_euclidean(self, test_X):
+       total_samples = test_X.shape[0]
+       total_polytopes = len(self.polytope_means)
+       w = np.zeros((total_samples, total_polytopes), dtype=float)
+       for ii in range(total_samples):
+           w[ii,:] = np.sum(
+               ((test_X[ii] - self.polytope_means)**2).reshape(total_polytopes,-1),
+               axis=1
+           )
+       return w
    
    
    def fit(self, X, y, k=1, epsilon=1e-12, batch=100):
@@ -150,26 +183,13 @@ class kdcnn(KernelDensityGraph):
                )
        
        
-       def worker(unmatch, shape):
-        total_count = 0
-        for ii,n1 in enumerate(unmatch):
-            count = shape[ii] 
-
-            while(n1):
-                n1 = n1 & (n1-1)
-                count -= 1
-            total_count += np.log(count)
-            
-        return total_count
-       
-       
        print('Calculating weight for ', self.total_samples, ' samples')
        for ii in tqdm(range(self.total_samples)):
            #print('Calculating weight for ', ii)
            unmatched_pattern = polytope_ids ^ polytope_ids[ii]
            self.w[ii] = np.array(
             Parallel(n_jobs=-1)(
-                    delayed(worker)(
+                    delayed(_worker)(
                             unmatch,
                             self.network_shape
                             ) for unmatch in unmatched_pattern
@@ -229,7 +249,7 @@ class kdcnn(KernelDensityGraph):
 
         return likelihood
 
-   def predict_proba(self, X, return_likelihood=False):
+   def predict_proba(self, X, distance = 'Euclidean', return_likelihood=False):
         r"""
         Calculate posteriors using the kernel density forest.
         Parameters
@@ -237,27 +257,29 @@ class kdcnn(KernelDensityGraph):
         X : ndarray
             Input data matrix.
         """
-        X = X.reshape(-1, self.feature_dim)
-        X = check_array(X)
-
+        #X = check_array(X)
+        
         total_polytope = len(self.polytope_means)
         log_likelihoods = np.zeros(
             (np.size(X,0), len(self.labels)),
             dtype=float
         )
-        distance = np.zeros(
-                (
-                    np.size(X,0),
-                    total_polytope
-                ),
-                dtype=float
-            )
         
-        for polytope in range(total_polytope):
-            distance[:,polytope] = self._compute_distance(X, polytope)
-
+        if distance == 'Euclidean':
+            distance = self._compute_euclidean(X)
+        elif distance == 'Geodesic':
+            distance = self._compute_geodesic(
+                self._get_polytope_ids(X),
+                self._get_polytope_ids(
+                    np.array(
+                    self.polytope_means
+                    )
+                )
+            )
+        else:
+            raise ValueError("Unknown distance measure!")
+        
         polytope_idx = np.argmin(distance, axis=1)
-
         for ii,label in enumerate(self.labels):
             for jj in range(X.shape[0]):
                 log_likelihoods[jj, ii] = self._compute_log_likelihood(X[jj], label, polytope_idx[jj])
@@ -287,14 +309,26 @@ class kdcnn(KernelDensityGraph):
         else:
             return proba 
 
-   def predict(self, X):
+   def predict(self, X, distance='Euclidean'):
         r"""
-        Perform inference using the kernel density forest.
+        Perform inference using the kernel density network.
         Parameters
         ----------
         X : ndarray
             Input data matrix.
         """
         
-        return np.argmax(self.predict_proba(X), axis = 1)
+        return np.argmax(self.predict_proba(X, distance=distance), axis = 1)
 
+##################################
+def _worker(unmatch, shape):
+    total_count = 0
+    for ii,n1 in enumerate(unmatch):
+        count = shape[ii] 
+
+        while(n1):
+            n1 = n1 & (n1-1)
+            count -= 1
+        total_count += np.log(count)
+        
+    return total_count

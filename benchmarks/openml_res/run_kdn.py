@@ -52,7 +52,7 @@ def getNN(input_size, num_classes, layer_size=1000):
     return network_base
 
 
-def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
+def experiment(dataset_id, layer_size = 1000, reps=5, random_state=42):
 
     filename = 'Dataset_' + str(dataset_id) + '.csv'
     if os.path.exists(os.path.join(root_dir, filename)):

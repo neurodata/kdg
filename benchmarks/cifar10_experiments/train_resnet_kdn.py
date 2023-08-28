@@ -31,10 +31,10 @@ for seed in seeds:
     nn_file = 'resnet20_models/cifar_model_50000_'+str(seed)
     network = keras.models.load_model(nn_file)
     
-    model_kdn = kdn(
+    model_kdn = kdcnn(
         network=network
     )
-    model_kdn.fit(x_train, y_train, batch=10)
+    model_kdn.fit(x_train, y_train, batch=100)
 
     with open('kdn_models/resnet_kdn_50000_'+str(seed)+'.pickle', 'wb') as f:
         pickle.dump(model_kdn, f)
