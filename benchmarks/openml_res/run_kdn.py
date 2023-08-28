@@ -159,9 +159,9 @@ def experiment(dataset_id, layer_size = 1000, reps=5, random_state=42):
 
 # %%
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
-#data_id_not_done = [554, 40996, 23517, 40923, 40927]
+data_id_not_done = [554, 40996, 40923, 40927]
 
-for dataset_id in benchmark_suite.data:
+for dataset_id in data_id_not_done:
     print("Doing data ", dataset_id)
     experiment(dataset_id)
 '''Parallel(n_jobs=-1,verbose=1)(
