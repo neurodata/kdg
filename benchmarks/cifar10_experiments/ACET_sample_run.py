@@ -214,10 +214,12 @@ def get_data(classes):
         x_test -= x_train_mean
     return (x_train, y_train), (x_test, y_test), x_train_mean
 # %%
-def experiment(task, sample_size, batchsize=20, epochs=20, seed=0):
+def experiment(task, sample_size, batchsize=40, epochs=10, seed=0):
 
     if sample_size<batchsize:
         batchsize = sample_size
+    elif sample_size == 100:
+        batchsize = 50
 
     random.seed(seed)
     classes = classes_to_consider[task]
