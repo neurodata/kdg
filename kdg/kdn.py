@@ -7,7 +7,7 @@ from sklearn.covariance import LedoitWolf
 from tensorflow.keras.models import Model
 from joblib import Parallel, delayed
 from tensorflow.keras import backend as bknd
-from scipy.sparse import csr_matrix, vstack
+from scipy.spatial.distance import cdist as dist
 from tqdm import tqdm
 
 class kdn(KernelDensityGraph):
@@ -73,47 +73,38 @@ class kdn(KernelDensityGraph):
        activation = []
        for layer_out in layer_outs[:-1]:
            activation.append(
-               (layer_out>0).astype('int').reshape(total_samples, -1)
+               (layer_out>0).astype('bool').reshape(total_samples, -1)
            )
         # add the last layer
        activation.append(
-               (layer_outs[-1]>1/len(self.labels)).astype('int').reshape(total_samples, -1)
+               (layer_outs[-1]>1/len(self.labels)).astype('bool').reshape(total_samples, -1)
            )
        polytope_ids = np.concatenate(activation, axis=1)
       
        return polytope_ids
    
    def _compute_geodesic(self, polytope_id_test, polytope_ids):
-       total_samples = polytope_id_test.shape[0]
-       total_polytopes = polytope_ids.shape[0]
-       normalizing_factor = np.sum(np.log(self.network_shape))
-       w = np.zeros((total_samples, total_polytopes), dtype=float)
-       for ii in range(total_samples):
-           matched_pattern = (polytope_ids==polytope_id_test[ii])
-           matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
-           end_node = 0
-           for layer in range(self.total_layers):
-                end_node += self.network_shape[layer]
-                matched_nodes[:, layer] = \
-                        np.sum(
-                            matched_pattern[:,end_node-self.network_shape[layer]:end_node], 
-                            axis=1
-                        )
+       total_layers = len(self.network_shape)
+       id_thresholds = np.zeros(total_layers+1,dtype=int)
+       id_thresholds[1:] = np.cumsum(self.network_shape)
+       w = 1-np.array(Parallel(n_jobs=-1)(
+            delayed(dist)(
+                        polytope_id_test[:,id_thresholds[ii]:id_thresholds[ii+1]],
+                        polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
+                        'hamming'
+                    ) for ii in range(total_layers)
+            ))    
+       w = np.product(w,axis=0)
 
-           w[ii,:] = (np.exp(np.sum(np.log(matched_nodes), axis=1)\
-                - normalizing_factor))
        return 1 - w
 
    def _compute_euclidean(self, test_X):
        total_samples = test_X.shape[0]
        total_polytopes = len(self.polytope_means)
-       w = np.zeros((total_samples, total_polytopes), dtype=float)
-       for ii in range(total_samples):
-           w[ii,:] = np.sum(
-               ((test_X[ii] - self.polytope_means)**2).reshape(total_polytopes,-1),
-               axis=1
-           )
-       return w
+       return dist(
+           test_X.reshape(total_samples,-1),
+           np.array(self.polytope_means).reshape(total_polytopes,-1)
+        )
 
    def fit(self, X, y, k=1, epsilon=1e-6, batch=1, mul=1):
        r"""
@@ -173,25 +164,19 @@ class kdn(KernelDensityGraph):
                    self._get_polytope_ids(X[indx_X2:])),
                    axis=0
                )
-           
-       #print('Calculating weight for ', self.total_samples, ' samples')
-       normalizing_factor = np.sum(np.log(self.network_shape))
-       for ii in range(self.total_samples):
-           matched_pattern = (polytope_ids==polytope_ids[ii])
-           matched_nodes = np.zeros((len(polytope_ids),self.total_layers))
-           end_node = 0
-           for layer in range(self.total_layers):
-                end_node += self.network_shape[layer]
-                matched_nodes[:, layer] = \
-                        np.sum(
-                            matched_pattern[:,end_node-self.network_shape[layer]:end_node], 
-                            axis=1
-                        )
+       
+       total_layers = len(self.network_shape)
+       id_thresholds = np.zeros(total_layers+1,dtype=int)
+       id_thresholds[1:] = np.cumsum(self.network_shape)
 
-           self.w[:,ii] = (np.exp(np.sum(np.log(matched_nodes), axis=1)\
-                - normalizing_factor))
-           self.w[ii,:] = self.w[:,ii]
-
+       w = 1-np.array(Parallel(n_jobs=-1,verbose=1)(
+            delayed(dist)(
+                        polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
+                        polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
+                        'hamming'
+                    ) for ii in range(total_layers)
+            ))    
+       self.w = np.product(w,axis=0)
            
        used = []
        for ii in range(self.total_samples):
