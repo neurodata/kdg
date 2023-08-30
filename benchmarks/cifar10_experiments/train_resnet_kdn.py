@@ -29,7 +29,7 @@ x_test -= x_train_mean
 for seed in seeds:
     print("Doing seed ", seed)
 
-    nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_50000_'+str(seed)
+    nn_file = 'resnet20_models/cifar_model_50000_'+str(seed)
     network = keras.models.load_model(nn_file)
     
     model_kdn = kdn(
