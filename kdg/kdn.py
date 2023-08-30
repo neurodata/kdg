@@ -106,7 +106,7 @@ class kdn(KernelDensityGraph):
            np.array(self.polytope_means).reshape(total_polytopes,-1)
         )
 
-   def fit(self, X, y, k=1, epsilon=1e-6, batch=1, mul=1):
+   def fit(self, X, y, k=1, epsilon=1e-6, batch=1, mul=1, n_jobs=-1):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -169,7 +169,7 @@ class kdn(KernelDensityGraph):
        id_thresholds = np.zeros(total_layers+1,dtype=int)
        id_thresholds[1:] = np.cumsum(self.network_shape)
 
-       w = 1-np.array(Parallel(n_jobs=-1,verbose=1)(
+       w = 1-np.array(Parallel(n_jobs=n_jobs,verbose=1)(
             delayed(dist)(
                         polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
                         polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],

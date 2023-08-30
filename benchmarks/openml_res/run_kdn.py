@@ -159,8 +159,8 @@ def experiment(dataset_id, layer_size = 1000, reps=5, random_state=42):
 
 # %%
 benchmark_suite = openml.study.get_suite('OpenML-CC18')
-data_id_not_done = [554, 40996, 40923, 40927]
-
+data_id_not_done = [554, 40996, 40923, 40927, 41027]
+#23527
 for dataset_id in data_id_not_done:
     print("Doing data ", dataset_id)
     experiment(dataset_id)
@@ -169,3 +169,28 @@ for dataset_id in data_id_not_done:
                 dataset_id,
                 ) for dataset_id in benchmark_suite.data
             )'''
+
+#%%
+'''
+benchmark_suite = openml.study.get_suite('OpenML-CC18')
+root_dir = "/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdn_res"
+for dataset_id in benchmark_suite.data:
+    filename = 'Dataset_' + str(dataset_id) + '.csv'
+    if os.path.exists(os.path.join(root_dir, filename)):
+        #print('exists')
+        continue
+    dataset = openml.datasets.get_dataset(dataset_id)
+    X, y, is_categorical, _ = dataset.get_data(
+                dataset_format="array", target=dataset.default_target_attribute
+            )
+    if np.mean(is_categorical) >0:
+        continue
+
+    if np.isnan(np.sum(y)):
+        continue
+
+    if np.isnan(np.sum(X)):
+        continue
+    
+    print(dataset_id)
+'''

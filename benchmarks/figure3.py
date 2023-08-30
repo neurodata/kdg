@@ -8,10 +8,10 @@ import openml
 from scipy.interpolate import interp1d
 
 # %%
-res_folder_kdn = 'openml_res/openml_kdn_res'
-res_folder_kdf = 'openml_res/openml_kdf_res'
-res_folder_kdn_ood = 'openml_res/openml_kdn_res_ood'
-res_folder_kdf_ood = 'openml_res/openml_kdf_res_ood'
+res_folder_kdn = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdn_res'
+res_folder_kdf = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdf_res'
+res_folder_kdn_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdn_res_ood'
+res_folder_kdf_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdf_res_ood'
 files = os.listdir(res_folder_kdn)
 files.remove('.DS_Store')
 # %%
