@@ -55,7 +55,7 @@ class kdn(KernelDensityGraph):
            )
        
    def _get_polytope_ids(self, X):
-       total_samples = X.shape[0]
+       total_samples = len(X)
          
        outputs = []
        inp = self.network.input
