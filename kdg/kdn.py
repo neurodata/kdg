@@ -242,13 +242,56 @@ class kdn(KernelDensityGraph):
         if distance == 'Euclidean':
             distance = self._compute_euclidean(X)
         elif distance == 'Geodesic':
-            distance = self._compute_geodesic(
-                self._get_polytope_ids(X),
-                self._get_polytope_ids(
-                    np.array(
-                    self.polytope_means
-                    )
+            total_polytope = len(self.polytope_means)
+            batch = total_polytope//1000 + 1
+            batchsize = self.total_samples//batch
+            polytope_ids = self._get_polytope_ids(self.polytope_means[:batchsize]) 
+
+            indx_X2 = np.inf
+            for ii in range(1,batch):
+                #print("doing batch ", ii)
+                indx_X1 = ii*batchsize
+                indx_X2 = (ii+1)*batchsize
+                polytope_ids = np.concatenate(
+                    (polytope_ids,
+                    self._get_polytope_ids(self.polytope_means[indx_X1:indx_X2])),
+                    axis=0
                 )
+            
+            if indx_X2 < len(self.polytope_means):
+                polytope_ids = np.concatenate(
+                        (polytope_ids,
+                        self._get_polytope_ids(self.polytope_means[indx_X2:])),
+                        axis=0
+                    )
+
+            total_sample = X.shape[0]
+            batch = total_sample//1000 + 1
+            batchsize = self.total_samples//batch
+            test_ids = self._get_polytope_ids(X[:batchsize]) 
+
+            indx_X2 = np.inf
+            for ii in range(1,batch):
+                #print("doing batch ", ii)
+                indx_X1 = ii*batchsize
+                indx_X2 = (ii+1)*batchsize
+                test_ids = np.concatenate(
+                    (test_ids,
+                    self._get_polytope_ids(X[indx_X1:indx_X2])),
+                    axis=0
+                )
+            
+            if indx_X2 < X.shape[0]:
+                test_ids = np.concatenate(
+                        (test_ids,
+                        self._get_polytope_ids(X[indx_X2:])),
+                        axis=0
+                    )
+               
+            
+            distance = self._compute_geodesic(
+                test_ids,
+                polytope_ids
             )
         else:
             raise ValueError("Unknown distance measure!")
