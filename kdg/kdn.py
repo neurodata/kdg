@@ -267,8 +267,7 @@ class kdn(KernelDensityGraph):
                 polytope_ids = np.concatenate(
                         (polytope_ids,
                         self._get_polytope_ids(
-                    np.aray(self.polytope_means[indx_X2:])
-                    )),
+                    np.aray(self.polytope_means[indx_X2:]))),
                         axis=0
                     )
 
