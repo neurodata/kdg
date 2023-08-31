@@ -246,7 +246,9 @@ class kdn(KernelDensityGraph):
             total_polytope = len(self.polytope_means)
             batch = total_polytope//1000 + 1
             batchsize = self.total_samples//batch
-            polytope_ids = self._get_polytope_ids(self.polytope_means[:batchsize]) 
+            polytope_ids = self._get_polytope_ids(
+                np.array(self.polytope_means[:batchsize])
+                ) 
 
             indx_X2 = np.inf
             for ii in range(1,batch):
@@ -255,14 +257,18 @@ class kdn(KernelDensityGraph):
                 indx_X2 = (ii+1)*batchsize
                 polytope_ids = np.concatenate(
                     (polytope_ids,
-                    self._get_polytope_ids(self.polytope_means[indx_X1:indx_X2])),
+                    self._get_polytope_ids(
+                    np.array(self.polytope_means[indx_X1:indx_X2])
+                    )),
                     axis=0
                 )
             
             if indx_X2 < len(self.polytope_means):
                 polytope_ids = np.concatenate(
                         (polytope_ids,
-                        self._get_polytope_ids(self.polytope_means[indx_X2:])),
+                        self._get_polytope_ids(
+                    np.aray(self.polytope_means[indx_X2:])
+                    )),
                         axis=0
                     )
 
