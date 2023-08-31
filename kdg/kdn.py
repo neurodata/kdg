@@ -87,7 +87,7 @@ class kdn(KernelDensityGraph):
        total_layers = len(self.network_shape)
        id_thresholds = np.zeros(total_layers+1,dtype=int)
        id_thresholds[1:] = np.cumsum(self.network_shape)
-       w = 1-np.array(Parallel(n_jobs=-1)(
+       w = 1-np.array(Parallel(n_jobs=-1, verbose=1)(
             delayed(dist)(
                         polytope_id_test[:,id_thresholds[ii]:id_thresholds[ii+1]],
                         polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
@@ -239,6 +239,7 @@ class kdn(KernelDensityGraph):
             dtype=float
         )
         
+        print('Calculating distance')
         if distance == 'Euclidean':
             distance = self._compute_euclidean(X)
         elif distance == 'Geodesic':
@@ -288,7 +289,7 @@ class kdn(KernelDensityGraph):
                         axis=0
                     )
                
-            
+            print('Polytope extracted!')
             distance = self._compute_geodesic(
                 test_ids,
                 polytope_ids
