@@ -10,7 +10,7 @@ import pickle
 from tensorflow.keras.datasets import cifar10
 import timeit
 #%%
-seeds = [200, 400]
+seeds = [0, 100, 200, 400]
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 

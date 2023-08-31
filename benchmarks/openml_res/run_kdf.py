@@ -20,6 +20,10 @@ except:
     print("directory already exists!!!")
 # %%
 def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
+    filename = 'Dataset_' + str(dataset_id) + '.csv'
+    if os.path.exists(os.path.join(root_dir, filename)):
+        return
+    
     dataset = openml.datasets.get_dataset(dataset_id)
     X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
