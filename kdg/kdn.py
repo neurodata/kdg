@@ -282,7 +282,7 @@ class kdn(KernelDensityGraph):
 
             total_sample = X.shape[0]
             batch = total_sample//1000 + 1
-            batchsize = self.total_samples//batch
+            batchsize = total_sample//batch
             test_ids = self._get_polytope_ids(X[:batchsize]) 
 
             indx_X2 = np.inf
