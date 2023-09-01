@@ -6,6 +6,7 @@ from scipy.stats import multivariate_normal
 from sklearn.covariance import LedoitWolf
 from tensorflow.keras.models import Model
 from joblib import Parallel, delayed
+import multiprocessing
 from tensorflow.keras import backend as bknd
 from scipy.spatial.distance import cdist as dist
 from tqdm import tqdm
@@ -83,19 +84,37 @@ class kdn(KernelDensityGraph):
       
        return polytope_ids
    
-   def _compute_geodesic(self, polytope_id_test, polytope_ids):
+   def _compute_geodesic(self, polytope_id_test, polytope_ids, batch=-1):
+       if batch == -1:
+           batch = multiprocessing.cpu_count()-1
+
        total_layers = len(self.network_shape)
+       total_test_samples = len(polytope_id_test)
+       total_polytopes = len(polytope_ids)
        id_thresholds = np.zeros(total_layers+1,dtype=int)
        id_thresholds[1:] = np.cumsum(self.network_shape)
-       w = 1-np.array(Parallel(n_jobs=-1, verbose=1)(
-            delayed(dist)(
-                        polytope_id_test[:,id_thresholds[ii]:id_thresholds[ii+1]],
-                        polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
-                        'hamming'
-                    ) for ii in range(total_layers)
-            ))    
-       w = np.product(w,axis=0)
 
+       sample_per_batch = total_test_samples//batch
+       
+       print("Calculating Geodesic...")
+       w = np.ones((total_test_samples, total_polytopes), dtype=float)
+       indx = [jj*sample_per_batch for jj in range(batch+1)]
+       if indx[-1]<total_test_samples:
+           indx.append(
+               total_test_samples
+           )
+       for ii in tqdm(range(total_layers)):
+           w_ = 1-np.array(Parallel(n_jobs=-1)(
+                        delayed(dist)(
+                                    polytope_id_test[indx[jj]:indx[jj+1],id_thresholds[ii]:id_thresholds[ii+1]],
+                                    polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
+                                    'hamming'
+                                ) for jj in range(len(indx)-1)
+                        )
+           )
+           w_ = np.concatenate(w_, axis=0)    
+           w = w*w_
+           
        return 1 - w
 
    def _compute_euclidean(self, test_X):
@@ -164,25 +183,14 @@ class kdn(KernelDensityGraph):
                    self._get_polytope_ids(X[indx_X2:])),
                    axis=0
                )
-       
-       total_layers = len(self.network_shape)
-       id_thresholds = np.zeros(total_layers+1,dtype=int)
-       id_thresholds[1:] = np.cumsum(self.network_shape)
 
-       w = 1-np.array(Parallel(n_jobs=n_jobs,verbose=1)(
-            delayed(dist)(
-                        polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
-                        polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
-                        'hamming'
-                    ) for ii in range(total_layers)
-            ))    
-       self.w = np.product(w,axis=0)
+       w = 1- self._compute_geodesic(polytope_ids, polytope_ids, batch=n_jobs)
            
        used = []
        for ii in range(self.total_samples):
            if ii in used:
                continue
-           scales = self.w[ii,:].copy()
+           scales = w[ii,:].copy()
            scales = scales**np.log2(self.total_samples*mul)
            
            idx_with_scale_1 = np.where(
@@ -223,7 +231,7 @@ class kdn(KernelDensityGraph):
 
         return likelihood
 
-   def predict_proba(self, X, distance = 'Euclidean', return_likelihood=False):
+   def predict_proba(self, X, distance = 'Euclidean', return_likelihood=False, n_jobs=-1):
         r"""
         Calculate posteriors using the kernel density forest.
         Parameters
@@ -242,12 +250,13 @@ class kdn(KernelDensityGraph):
         print('Calculating distance')
         if distance == 'Euclidean':
             distance = self._compute_euclidean(X)
+            polytope_idx = np.argmin(distance, axis=1)
         elif distance == 'Geodesic':
             total_polytope = len(self.polytope_means)
             batch = total_polytope//1000 + 1
-            batchsize = self.total_samples//batch
+            batchsize = total_polytope//batch
             polytope_ids = self._get_polytope_ids(
-                np.array(self.polytope_means[:batchsize])
+                    np.array(self.polytope_means[:batchsize])
                 ) 
 
             indx_X2 = np.inf
@@ -267,7 +276,7 @@ class kdn(KernelDensityGraph):
                 polytope_ids = np.concatenate(
                         (polytope_ids,
                         self._get_polytope_ids(
-                    np.aray(self.polytope_means[indx_X2:]))),
+                    np.array(self.polytope_means[indx_X2:]))),
                         axis=0
                     )
 
@@ -295,14 +304,27 @@ class kdn(KernelDensityGraph):
                     )
                
             print('Polytope extracted!')
-            distance = self._compute_geodesic(
-                test_ids,
-                polytope_ids
-            )
+            ####################################
+            batch = total_sample//50000 + 1
+            batchsize = total_sample//batch
+            distance = []
+            indx = [jj*batchsize for jj in range(batch+1)]
+            if indx[-1] < total_sample:
+                indx.append(total_sample)
+
+            for ii in range(len(indx)-1):    
+                distance.extend(
+                    list(np.argmin(
+                        self._compute_geodesic(
+                            test_ids[indx[ii]:indx[ii+1]],
+                            polytope_ids,
+                            batch=n_jobs
+                        ), axis=1
+                    ))
+                )
         else:
             raise ValueError("Unknown distance measure!")
         
-        polytope_idx = np.argmin(distance, axis=1)
         for ii,label in enumerate(self.labels):
             for jj in range(X.shape[0]):
                 log_likelihoods[jj, ii] = self._compute_log_likelihood(X[jj], label, polytope_idx[jj])
@@ -342,4 +364,3 @@ class kdn(KernelDensityGraph):
         """
         
         return np.argmax(self.predict_proba(X, distance=distance), axis = 1)
-

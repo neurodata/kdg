@@ -35,7 +35,7 @@ for seed in seeds:
     model_kdn = kdn(
         network=network
     )
-    model_kdn.fit(x_train, y_train, batch=10, n_jobs=10)
+    model_kdn.fit(x_train, y_train, batch=10)
     
     with open('resnet_kdn_50000_'+str(seed)+'.pickle', 'wb') as f:
         pickle.dump(model_kdn, f)
