@@ -307,13 +307,13 @@ class kdn(KernelDensityGraph):
             ####################################
             batch = total_sample//50000 + 1
             batchsize = total_sample//batch
-            distance = []
+            polytope_idx = []
             indx = [jj*batchsize for jj in range(batch+1)]
             if indx[-1] < total_sample:
                 indx.append(total_sample)
 
             for ii in range(len(indx)-1):    
-                distance.extend(
+                polytope_idx.extend(
                     list(np.argmin(
                         self._compute_geodesic(
                             test_ids[indx[ii]:indx[ii+1]],
