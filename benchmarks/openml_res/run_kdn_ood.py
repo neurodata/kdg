@@ -79,6 +79,7 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
     r = []    
     conf_dn = []
     conf_kdn = []
+    conf_kdn_geod = []
     distances = np.arange(1, 5.5, .5)
 
     for rep in range(reps):
@@ -91,6 +92,7 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
         model_kdn.global_bias = -100
 
         proba_kdn = model_kdn.predict_proba(X_test)
+        proba_kdn_geod = model_kdn.predict_proba(X_test, distance='Geodesic')
         proba_dn = model_kdn.network.predict(X_test)
 
         conf_dn.append(
@@ -103,23 +105,34 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
                     np.max(proba_kdn, axis=1)
                 )
         )
+        conf_kdn_geod.append(
+            np.nanmean(
+                    np.max(proba_kdn_geod, axis=1)
+                )
+        )
         r.append(
             0
         )
         for distance in distances:
             X_ood = sample_unifrom_circle(1000, r=distance, p=X_train.shape[1])
-            proba_kdf = model_kdn.predict_proba(X_ood)
-            proba_rf = model_kdn.network.predict(X_ood)
+            proba_kdn = model_kdn.predict_proba(X_ood)
+            proba_kdn_geod = model_kdn.predict_proba(X_ood, distance='Geodesic')
+            proba_dn = model_kdn.network.predict(X_ood)
             
 
             conf_dn.append(
                 np.nanmean(
-                    np.max(proba_rf, axis=1)
+                    np.max(proba_dn, axis=1)
                 )
             )
             conf_kdn.append(
                 np.nanmean(
-                        np.max(proba_kdf, axis=1)
+                        np.max(proba_kdn, axis=1)
+                    )
+            )
+            conf_kdn_geod.append(
+                np.nanmean(
+                        np.max(proba_kdn_geod, axis=1)
                     )
             )
             r.append(
@@ -129,6 +142,7 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
 
     df = pd.DataFrame() 
     df['conf_kdn'] = conf_kdn
+    df['conf_kdn_geod'] = conf_kdn_geod
     df['conf_dn'] = conf_dn
     df['distance'] = r
 
@@ -145,8 +159,8 @@ id_done = [6,11,12,14,16,18,22,28,32,37,44,54,182,300,458, 554,1049,1050,1063,10
             )'''
 
 for dataset_id in openml.study.get_suite("OpenML-CC18").data:
-    if dataset_id in id_done:
-        continue
+    '''if dataset_id in id_done:
+        continue'''
     
     print("Doing ", dataset_id)
     experiment(dataset_id) 
