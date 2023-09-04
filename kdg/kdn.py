@@ -10,6 +10,7 @@ import multiprocessing
 from tensorflow.keras import backend as bknd
 from scipy.spatial.distance import cdist as dist
 from tqdm import tqdm
+import gc
 
 class kdn(KernelDensityGraph):
    def __init__(
@@ -114,6 +115,7 @@ class kdn(KernelDensityGraph):
            )
            w_ = np.concatenate(w_, axis=0)    
            w = w*w_
+           gc.collect()
            
        return 1 - w
 
