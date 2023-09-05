@@ -15,7 +15,7 @@ def unpickle(filename):
 
 # %%
 simulations = ['gxor', 'spiral', 'circle', 'sinewave', 'polynomial']
-models = ['kdn', 'kdf']
+models = ['kdf', 'kdn']
 sample_size = [50, 100, 500, 1000, 5000, 10000]
 r = r = np.arange(0,10.5,.5)
 linewidth = [6,3]
