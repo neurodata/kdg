@@ -10,6 +10,7 @@ import multiprocessing
 from tensorflow.keras import backend as bknd
 from scipy.spatial.distance import cdist as dist
 from tqdm import tqdm
+import gc
 
 class kdn(KernelDensityGraph):
    def __init__(
@@ -104,7 +105,7 @@ class kdn(KernelDensityGraph):
                total_test_samples
            )
        for ii in tqdm(range(total_layers)):
-           w_ = 1-np.array(Parallel(n_jobs=-1)(
+           w_ = 1-np.array(Parallel(n_jobs=-1, backend='loky')(
                         delayed(dist)(
                                     polytope_id_test[indx[jj]:indx[jj+1],id_thresholds[ii]:id_thresholds[ii+1]],
                                     polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
@@ -114,6 +115,7 @@ class kdn(KernelDensityGraph):
            )
            w_ = np.concatenate(w_, axis=0)    
            w = w*w_
+           gc.collect()
            
        return 1 - w
 
