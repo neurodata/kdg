@@ -77,8 +77,8 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
     
         
     total_sample = X.shape[0]
-    test_sample = total_sample//3
-    train_sample = total_sample-test_sample
+    test_sample = 1000 if total_sample//3>1000 else total_sample//3
+    train_sample = 1000 if total_sample-test_sample>1000 else total_sample-test_sample
 
     r = []    
     conf_dn = []

@@ -10,7 +10,7 @@ import pickle
 from tensorflow.keras.datasets import cifar10
 import timeit
 #%%
-seeds = [0, 100, 200, 400]
+seeds = [100, 200, 400]
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
@@ -29,7 +29,7 @@ x_test -= x_train_mean
 for seed in seeds:
     print("Doing seed ", seed)
 
-    nn_file = 'resnet20_models/cifar_model_50000_'+str(seed)
+    nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_50000_'+str(seed)
     network = keras.models.load_model(nn_file)
     
     model_kdn = kdn(
