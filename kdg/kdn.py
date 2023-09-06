@@ -143,15 +143,6 @@ class kdn(KernelDensityGraph):
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
        self.global_bias = np.log(k) - 10**(self.feature_dim**(1/2)) 
-       self.w = np.zeros(
-                (
-                    self.total_samples,
-                    self.total_samples
-                ),
-                dtype=float
-            )
-       
-
 
        idx_with_label = {}
        for label in self.labels:
