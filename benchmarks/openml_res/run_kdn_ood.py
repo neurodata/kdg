@@ -52,6 +52,10 @@ def getNN(input_size, num_classes, layer_size=1000):
     return network_base
 # %%
 def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
+    filename = 'Dataset_' + str(dataset_id) + '.csv'
+    if os.path.exists(os.path.join(root_dir, filename)):
+        return
+        
     dataset = openml.datasets.get_dataset(dataset_id)
     X, y, is_categorical, _ = dataset.get_data(
                 dataset_format="array", target=dataset.default_target_attribute
@@ -146,7 +150,6 @@ def experiment(dataset_id, layer_size = 1000, reps=10, random_state=42):
     df['conf_dn'] = conf_dn
     df['distance'] = r
 
-    filename = 'Dataset_' + str(dataset_id) + '.csv'
     df.to_csv(os.path.join(root_dir, filename))
 
 # %%
