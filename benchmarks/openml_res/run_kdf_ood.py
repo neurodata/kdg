@@ -48,8 +48,8 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     
         
     total_sample = X.shape[0]
-    test_sample = 1000#total_sample//3
-    train_sample = 1000#total_sample-test_sample
+    test_sample = total_sample//3
+    train_sample = total_sample-test_sample
 
     r = []    
     conf_rf = []
