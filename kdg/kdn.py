@@ -189,7 +189,8 @@ class kdn(KernelDensityGraph):
        w = 1- self._compute_geodesic(polytope_ids, polytope_ids, batch=n_jobs)
            
        used = []
-       for ii in range(self.total_samples):
+       print('Fitting data!')
+       for ii in tqdm(range(self.total_samples)):
            if ii in used:
                continue
            scales = w[ii,:].copy()
