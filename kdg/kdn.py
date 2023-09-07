@@ -87,7 +87,7 @@ class kdn(KernelDensityGraph):
    
    def _compute_geodesic(self, polytope_id_test, polytope_ids, batch=-1):
        if batch == -1:
-           batch = multiprocessing.cpu_count()-1
+           batch = 2*multiprocessing.cpu_count()//3
 
        total_layers = len(self.network_shape)
        total_test_samples = len(polytope_id_test)
@@ -105,7 +105,7 @@ class kdn(KernelDensityGraph):
                total_test_samples
            )
        for ii in tqdm(range(total_layers)):
-           w_ = 1-np.array(Parallel(n_jobs=-1, prefer="threads")(
+           w_ = 1-np.array(Parallel(n_jobs=-1, backend='multiprocessing')(
                         delayed(dist)(
                                     polytope_id_test[indx[jj]:indx[jj+1],id_thresholds[ii]:id_thresholds[ii+1]],
                                     polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
