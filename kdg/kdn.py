@@ -11,6 +11,7 @@ from tensorflow.keras import backend as bknd
 from scipy.spatial.distance import cdist as dist
 from tqdm import tqdm
 import gc
+from joblib.externals.loky import get_reusable_executor
 
 class kdn(KernelDensityGraph):
    def __init__(
@@ -113,6 +114,7 @@ class kdn(KernelDensityGraph):
                                 ) for jj in range(len(indx)-1)
                         )
            )
+           get_reusable_executor().shutdown(wait=True)
            gc.collect()
            w_ = np.concatenate(w_, axis=0)    
            w = w*w_
