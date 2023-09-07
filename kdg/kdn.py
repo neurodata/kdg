@@ -113,9 +113,11 @@ class kdn(KernelDensityGraph):
                                 ) for jj in range(len(indx)-1)
                         )
            )
+           gc.collect()
            w_ = np.concatenate(w_, axis=0)    
            w = w*w_
-           gc.collect()
+           del w_
+           
            
        return 1 - w
 
