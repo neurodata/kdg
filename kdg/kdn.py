@@ -2,14 +2,14 @@ from matplotlib.pyplot import sca
 from .base import KernelDensityGraph
 from sklearn.utils.validation import check_array, check_X_y
 import numpy as np
-from scipy.stats import multivariate_normal
-from sklearn.covariance import LedoitWolf
 from tensorflow.keras.models import Model
 from joblib import Parallel, delayed
 import multiprocessing
 from tensorflow.keras import backend as bknd
 from scipy.spatial.distance import cdist as dist
 from tqdm import tqdm
+import pickle
+import os
 import gc
 from joblib.externals.loky import get_reusable_executor
 
@@ -86,7 +86,14 @@ class kdn(KernelDensityGraph):
       
        return polytope_ids
    
-   def _compute_geodesic(self, polytope_id_test, polytope_ids, batch=-1):
+   def _compute_geodesic(self, polytope_id_test, polytope_ids, batch=-1, save_temp=False):
+       
+       if save_temp:
+           try:
+              os.mkdir('temp')
+           except:
+              print('Temporary result dirctory already exists!!!')
+
        if batch == -1:
            batch = multiprocessing.cpu_count()
 
@@ -106,17 +113,40 @@ class kdn(KernelDensityGraph):
                total_test_samples
            )
        for ii in tqdm(range(total_layers)):
-           w_ = 1-np.array(Parallel(n_jobs=batch//2, prefer="threads")(
-                        delayed(dist)(
-                                    polytope_id_test[indx[jj]:indx[jj+1],id_thresholds[ii]:id_thresholds[ii+1]],
-                                    polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
-                                    'hamming'
-                                ) for jj in range(len(indx)-1)
-                        )
-           )
-           get_reusable_executor().shutdown(wait=True)
-           gc.collect()
-           w_ = np.concatenate(w_, axis=0)    
+           
+           if save_temp:
+               if os.path.exists('temp/temp'+str(ii)+'.pickle'):
+                   with open('temp/temp'+str(ii)+'.pickle','rb') as f:
+                       w_ = pickle.load(f)
+               else:
+                    w_ = 1-np.array(Parallel(n_jobs=batch//2, prefer="threads")(
+                                    delayed(dist)(
+                                                polytope_id_test[indx[jj]:indx[jj+1],id_thresholds[ii]:id_thresholds[ii+1]],
+                                                polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
+                                                'hamming'
+                                            ) for jj in range(len(indx)-1)
+                                    )
+                    )
+                    get_reusable_executor().shutdown(wait=True)
+                    gc.collect()
+                    w_ = np.concatenate(w_, axis=0) 
+                    
+                    with open('temp/temp'+str(ii)+'.pickle','wb') as f:
+                            pickle.dump(w_, f)
+           else:
+                w_ = 1-np.array(Parallel(n_jobs=batch//2, prefer="threads")(
+                            delayed(dist)(
+                                        polytope_id_test[indx[jj]:indx[jj+1],id_thresholds[ii]:id_thresholds[ii+1]],
+                                        polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
+                                        'hamming'
+                                    ) for jj in range(len(indx)-1)
+                            )
+                )
+                get_reusable_executor().shutdown(wait=True)
+                gc.collect()
+                w_ = np.concatenate(w_, axis=0) 
+              
+
            w = w*w_
            del w_
            
@@ -131,7 +161,7 @@ class kdn(KernelDensityGraph):
            np.array(self.polytope_means).reshape(total_polytopes,-1)
         )
 
-   def fit(self, X, y, k=1, epsilon=1e-6, batch=1, mul=1, n_jobs=-1):
+   def fit(self, X, y, k=1, epsilon=1e-6, batch=1, mul=1, n_jobs=-1, save_temp=False):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -181,7 +211,7 @@ class kdn(KernelDensityGraph):
                    axis=0
                )
 
-       w = 1- self._compute_geodesic(polytope_ids, polytope_ids, batch=n_jobs)
+       w = 1- self._compute_geodesic(polytope_ids, polytope_ids, batch=n_jobs, save_temp=save_temp)
            
        used = []
        print('Fitting data!')

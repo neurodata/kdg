@@ -10,7 +10,7 @@ import pickle
 from tensorflow.keras.datasets import cifar10
 import timeit
 #%%
-seeds = [100, 200, 400]
+seeds = [0, 200, 400]
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
@@ -35,7 +35,7 @@ for seed in seeds:
     model_kdn = kdn(
         network=network
     )
-    model_kdn.fit(x_train, y_train, batch=10)
+    model_kdn.fit(x_train, y_train, batch=10, save_temp=True)
     
     with open('resnet_kdn_50000_'+str(seed)+'.pickle', 'wb') as f:
         pickle.dump(model_kdn, f)
