@@ -145,3 +145,4 @@ benchmarks/cifar10_experiments/kdn_models
 
 # ignore temporary files
 temp*.pickle
+resnet_kdn*.pickle
