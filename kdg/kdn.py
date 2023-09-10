@@ -219,7 +219,7 @@ class kdn(KernelDensityGraph):
            if ii in used:
                continue
            scales = w[ii,:].copy()
-           #scales = scales**np.log2(self.total_samples*mul)
+           scales = scales**np.log(np.log(self.total_samples))
            
            idx_with_scale_1 = np.where(
                    scales>.9999999
