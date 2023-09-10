@@ -161,7 +161,7 @@ class kdn(KernelDensityGraph):
            np.array(self.polytope_means).reshape(total_polytopes,-1)
         )
 
-   def fit(self, X, y, k=1, epsilon=1e-6, batch=1, mul=1, n_jobs=-1, save_temp=False):
+   def fit(self, X, y, k=1, epsilon=1e-6, batch=1, n_jobs=-1, save_temp=False):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -219,7 +219,7 @@ class kdn(KernelDensityGraph):
            if ii in used:
                continue
            scales = w[ii,:].copy()
-           scales = scales**np.log2(self.total_samples*mul)
+           #scales = scales**np.log2(self.total_samples*mul)
            
            idx_with_scale_1 = np.where(
                    scales>.9999999
