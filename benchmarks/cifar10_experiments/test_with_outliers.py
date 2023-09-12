@@ -42,12 +42,19 @@ arg = np.argsort(w_[idx_to_visualize])
 plt.plot(w_[arg])
 # %%
 a = []
-for jj in range(50000):
+for jj in range(1000):
     w = []
-    scale = w_[jj]**1.38
-    for ii in range(10):
-        idx = np.where(y_train.ravel()==ii)[0]
+    scale = w_[jj]**1
+    for ii in range(2):
+        idx = np.where(y_train[idx_to_train]==ii)[0]
         w.append(np.sum(scale[idx]))
+    print(w)
     a.append(np.max(w/np.sum(w)))
 print(np.mean(a))
 # %%
+for ii in range(5):
+    with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/temp/temp'+str(ii)+'.pickle', 'rb') as f:
+        if ii ==0:
+            w_ = pickle.load(f)
+        else:
+            w_ *= pickle.load(f)

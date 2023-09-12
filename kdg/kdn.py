@@ -219,7 +219,8 @@ class kdn(KernelDensityGraph):
            if ii in used:
                continue
            scales = w[ii,:].copy()
-           scales = scales**1.38#np.log(np.log(self.total_samples))
+           exponent = (0.1275442031920726*np.log(self.total_samples)) if self.total_samples>1000 else 1
+           scales = scales**exponent
            
            idx_with_scale_1 = np.where(
                    scales>.9999999
