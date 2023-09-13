@@ -42,7 +42,7 @@ x_cifar100 -= x_train_mean
 x_svhn -= x_train_mean
 #%% Load model file
 seed = 400
-filename = 'resnet20_models/resnet_kdn_50000_'+str(seed)+'.pickle'
+filename = 'resnet_kdn_50000_'+str(seed)+'.pickle'
 
 with open(filename, 'rb') as f:
     model_kdn = pickle.load(f)
