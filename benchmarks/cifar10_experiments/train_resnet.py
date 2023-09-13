@@ -324,7 +324,7 @@ print(x_test.shape[0], 'test samples')
 print('y_train shape:', y_train.shape)
 
 sample_sizes = [50000]
-seeds = [0,100,200,400]
+seeds = [100,200,400]
 
 for sample in sample_sizes:
     for seed in seeds:
@@ -337,8 +337,8 @@ for sample in sample_sizes:
             x_train, _, y_train, _ = train_test_split(
                         x_train, y_train, test_size=10, train_size=sample, random_state=seed, stratify=y_train)
             
-        x_train = x_train.astype('float32') / 255
-        x_test = x_test.astype('float32') / 255
+        x_train = x_train.astype('float32') #/ 255
+        x_test = x_test.astype('float32') #/ 255
         x_train_mean = np.mean(x_train, axis=0)
         if subtract_pixel_mean:
             x_train -= x_train_mean
