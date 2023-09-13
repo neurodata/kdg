@@ -22,7 +22,7 @@ def fpr_at_95_tpr(conf_in, conf_out):
 # Load the CIFAR10 and CIFAR100 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
-x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
+x_svhn = loadmat('../../../train_32x32.mat')['X']
 test_ids =  random.sample(range(0, x_svhn.shape[3]), 1000)
 x_svhn = x_svhn[:,:,:,test_ids].astype('float32').reshape(1000,32,32,3)
 
@@ -41,8 +41,8 @@ x_test -= x_train_mean
 x_cifar100 -= x_train_mean
 x_svhn -= x_train_mean
 #%% Load model file
-seed = 400
-filename = 'resnet_kdn_50000_'+str(seed)+'.pickle'
+seed = 0
+filename = 'resnet20_models/resnet_kdn_50000_'+str(seed)+'.pickle'
 
 with open(filename, 'rb') as f:
     model_kdn = pickle.load(f)
