@@ -9,8 +9,9 @@ from kdg import kdcnn, kdf, kdn
 import pickle
 from tensorflow.keras.datasets import cifar10
 import timeit
+from joblib import dump, load
 #%%
-seeds = [0]
+seeds = [100]
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
@@ -18,8 +19,8 @@ seeds = [0]
 input_shape = x_train.shape[1:]
 
 # Normalize data.
-x_train = x_train.astype('float32') #/ 255
-x_test = x_test.astype('float32') #/ 255
+x_train = x_train.astype('float32') / 255
+x_test = x_test.astype('float32') / 255
 
 x_train_mean = np.mean(x_train, axis=0)
 x_train -= x_train_mean
@@ -37,6 +38,5 @@ for seed in seeds:
     )
     model_kdn.fit(x_train, y_train, batch=10, save_temp=True)
     
-    with open('resnet_kdn_50000_'+str(seed)+'unnormalized.pickle', 'wb') as f:
-        pickle.dump(model_kdn, f)
+    dump(model_kdn, 'resnet_kdn_50000_'+str(seed)+'.joblib')
 # %%
