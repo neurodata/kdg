@@ -107,6 +107,7 @@ class kdf(KernelDensityGraph):
             idx_with_scale_1 = list(np.where(
                     scales>0.999999
                 )[0])
+            scales[ii] = 0 #new change
             used.extend(idx_with_scale_1)
             
             location = np.mean(X[idx_with_scale_1], axis=0)    
