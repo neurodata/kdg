@@ -11,7 +11,7 @@ from tensorflow.keras.datasets import cifar10
 import timeit
 from joblib import dump, load
 #%%
-seeds = [100]
+seeds = [0]
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 

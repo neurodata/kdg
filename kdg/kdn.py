@@ -243,9 +243,10 @@ class kdn(KernelDensityGraph):
            counts = {}
            for label in self.labels:
                counts[label] = 0
-
+           
+           k = min(k,self.total_samples)
            for neighbor in range(k):
-                counts[y[scale_indx_to_consider[neighbor]]] += \
+                counts[int(y[scale_indx_to_consider[neighbor]])] += \
                     scales[scale_indx_to_consider[neighbor]]
                 
            for label in self.labels:
