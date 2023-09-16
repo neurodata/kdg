@@ -91,7 +91,7 @@ for ii in range(100):
 
 x_ -= x_train_mean
 #%%
-#x_ = x_test[:100]
+x_ = x_train[:200]
 test_ids = model._get_polytope_ids(x_)
 #%%
 total_polytope = len(model.polytope_means)
@@ -130,7 +130,7 @@ arg_min = np.argmin(distances,axis=1)
 arg_sort = np.argsort(distances,axis=1)
 #%%
 import matplotlib.pyplot as plt
-id = 61
+id = 65
 sorted_arg = arg_sort[id,:]
 plt.imshow(model.polytope_means[arg_min[id]]+x_train_mean)
 #%%
@@ -138,14 +138,22 @@ plt.imshow(x_[id]+x_train_mean)
 
 #%%
 #diff = np.abs(x_[id]-x_[id])
-diff = (1-distances[id,arg_min[id]])*(model.polytope_means[arg_min[id]]-x_[id])**2
-sum = 1-distances[id,arg_min[id]]
-for ii in range(1,100):
-    diff += (1-distances[id,sorted_arg[ii]])* (model.polytope_means[arg_sort[id,ii]]-x_[id])**2
-    sum += 1-distances[id,sorted_arg[ii]]
+#diff = (1-distances[id,arg_min[id]])*(model.polytope_means[arg_min[id]]-x_[id])**2
+#sum = 1-distances[id,arg_min[id]]
+ex = 1
+diff = (1-distances[id,sorted_arg[0]])**ex* (model.polytope_means[arg_sort[id,0]]-x_[id])**2
+sum = (1-distances[id,sorted_arg[0]])**ex
+for ii in range(1,30):
+
+    '''if ii==id:
+        continue'''
+
+    diff += (1-distances[id,sorted_arg[ii]])**ex* (model.polytope_means[arg_sort[id,ii]]-x_[id])**2
+    sum += (1-distances[id,sorted_arg[ii]])**ex
     #print(1-distances[id,sorted_arg[ii]])
 
-plt.imshow(diff/sum)
+diff /= sum
+plt.imshow(diff/np.max(diff.ravel()))
 plt.colorbar()
 #%%
 plt.hist(diff.ravel())
@@ -178,4 +186,6 @@ print(sum)
 # %%
 for ii in range(total_polytope):
     model.polytope_cov[ii] = 1e-2*np.ones((32,32,3),dtype=float)
+# %%
+plt.imshow(model.polytope_cov[9]/np.max(model.polytope_cov[9].ravel()))
 # %%

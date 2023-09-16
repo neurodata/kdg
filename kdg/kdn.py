@@ -161,7 +161,7 @@ class kdn(KernelDensityGraph):
            np.array(self.polytope_means).reshape(total_polytopes,-1)
         )
 
-   def fit(self, X, y, k=1, epsilon=1e-6, batch=1, n_jobs=-1, save_temp=False):
+   def fit(self, X, y, k=30, epsilon=1e-6, batch=1, n_jobs=-1, save_temp=False):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -176,7 +176,7 @@ class kdn(KernelDensityGraph):
        self.labels = np.unique(y)
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
-       self.global_bias = np.log(k) - 10**(self.feature_dim**(1/2)) 
+       self.global_bias = - 10**(self.feature_dim**(1/2)) 
 
        idx_with_label = {}
        for label in self.labels:
@@ -219,26 +219,40 @@ class kdn(KernelDensityGraph):
            if ii in used:
                continue
            scales = w[ii,:].copy()
-           exponent = (0.1275442031920726*np.log(self.total_samples)) if self.total_samples>1000 else 1
-           scales = scales**exponent
+           
+           if self.total_samples > k:
+               arg_scale = np.argsort(scales)[::-1]
+               scale_indx_to_consider = arg_scale[:k]
            
            idx_with_scale_1 = np.where(
                    scales>.9999999
                )[0]
-           scales[ii] = 0 #new change
            used.extend(idx_with_scale_1)
             
            location = np.mean(X[idx_with_scale_1], axis=0)
-           X_tmp = X.copy() - location
-           covariance = np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales)
+           X_tmp = X[scale_indx_to_consider].copy() - location
+           covariance = np.average(
+               X_tmp**2+epsilon/np.sum(scales[scale_indx_to_consider]), 
+               axis=0, 
+               weights=scales[scale_indx_to_consider]
+            )
            self.polytope_cov.append(covariance)
            self.polytope_means.append(location)
- 
-           for label in self.labels:     
-               self.polytope_cardinality[label].append(
-                    np.sum(scales[idx_with_label[label]])
-                )
-               self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
+           
+
+           counts = {}
+           for label in self.labels:
+               counts[label] = 0
+
+           for neighbor in range(k):
+                counts[y[scale_indx_to_consider[neighbor]]] += \
+                    scales[scale_indx_to_consider[neighbor]]
+                
+           for label in self.labels:
+                self.polytope_cardinality[label].append(
+                        counts[label]
+                    )
+                self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
  
  
        self.global_bias = self.global_bias - np.log10(self.total_samples)
