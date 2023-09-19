@@ -229,7 +229,11 @@ class kdn(KernelDensityGraph):
                )[0]
            used.extend(idx_with_scale_1)
             
-           location = np.mean(X[idx_with_scale_1], axis=0)
+           location = np.average(
+               X[scale_indx_to_consider],
+               axis=0, 
+               weights=scales[scale_indx_to_consider]
+            )
            X_tmp = X[scale_indx_to_consider].copy() - location
            covariance = np.average(
                X_tmp**2+epsilon/np.sum(scales[scale_indx_to_consider]), 

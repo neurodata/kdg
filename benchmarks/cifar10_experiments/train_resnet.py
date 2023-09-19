@@ -25,8 +25,6 @@ epochs = 200
 data_augmentation = False
 num_classes = 10
 
-# Subtracting pixel mean improves accuracy
-subtract_pixel_mean = True
 
 # Model parameter
 # ----------------------------------------------------------------------------
@@ -313,10 +311,13 @@ x_train = x_train.astype('float32') / 255
 x_test = x_test.astype('float32') / 255
 
 # If subtract pixel mean is enabled
-if subtract_pixel_mean:
-    x_train_mean = np.mean(x_train, axis=0)
-    x_train -= x_train_mean
-    x_test -= x_train_mean
+for channel in range(3):
+    x_train_mean = np.mean(x_train[:,:,:,channel])
+    x_train_std = np.std(x_train[:,:,:,channel])
+    x_train[:,:,:,channel] -= x_train_mean
+    x_train[:,:,:,channel] /= x_train_std
+    x_test[:,:,:,channel] -= x_train_mean
+    x_test[:,:,:,channel] /= x_train_std
 
 print('x_train shape:', x_train.shape)
 print(x_train.shape[0], 'train samples')
@@ -331,7 +332,7 @@ for sample in sample_sizes:
         random.seed(seed)
         print("Doing sample ", sample, "with seed ", seed)
         # Convert class vectors to binary class matrices.
-        (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+        '''(x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
 
         if sample < 50000:
             x_train, _, y_train, _ = train_test_split(
@@ -342,7 +343,7 @@ for sample in sample_sizes:
         x_train_mean = np.mean(x_train, axis=0)
         if subtract_pixel_mean:
             x_train -= x_train_mean
-            x_test -= x_train_mean
+            x_test -= x_train_mean'''
 
         y_train_one_hot = keras.utils.to_categorical(y_train, num_classes)
         y_test_one_hot = keras.utils.to_categorical(y_test, num_classes)

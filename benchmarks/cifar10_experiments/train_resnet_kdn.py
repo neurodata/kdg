@@ -11,7 +11,7 @@ from tensorflow.keras.datasets import cifar10
 import timeit
 from joblib import dump, load
 #%%
-seeds = [100]
+seeds = [0]
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
@@ -22,9 +22,13 @@ input_shape = x_train.shape[1:]
 x_train = x_train.astype('float32') / 255
 x_test = x_test.astype('float32') / 255
 
-x_train_mean = np.mean(x_train, axis=0)
-x_train -= x_train_mean
-x_test -= x_train_mean
+for channel in range(3):
+    x_train_mean = np.mean(x_train[:,:,:,channel])
+    x_train_std = np.std(x_train[:,:,:,channel])
+    x_train[:,:,:,channel] -= x_train_mean
+    x_train[:,:,:,channel] /= x_train_std
+    x_test[:,:,:,channel] -= x_train_mean
+    x_test[:,:,:,channel] /= x_train_std
 
 #%%
 for seed in seeds:
