@@ -223,7 +223,9 @@ class kdn(KernelDensityGraph):
            if self.total_samples > k:
                arg_scale = np.argsort(scales)[::-1]
                scale_indx_to_consider = arg_scale[:k]
-           
+           else:
+               scale_indx_to_consider = np.arange(self.total_samples)
+               
            idx_with_scale_1 = np.where(
                    scales>.9999999
                )[0]

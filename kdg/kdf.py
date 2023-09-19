@@ -52,7 +52,7 @@ class kdf(KernelDensityGraph):
            )
         return w
     
-    def fit(self, X, y, k=1, epsilon=1e-6):
+    def fit(self, X, y, k=30, epsilon=1e-6):
         r"""
         Fits the kernel density forest.
         Parameters
@@ -74,9 +74,8 @@ class kdf(KernelDensityGraph):
         self.labels = np.unique(y)
         self.rf_model = rf(**self.kwargs).fit(X, y)
         self.feature_dim = X.shape[1] 
-        self.global_bias = np.log(k) - 10**(self.feature_dim**(1/2)) 
+        self.global_bias = - 10**(self.feature_dim**(1/2)) 
         
-        ### change code to calculate one kernel per polytope
         idx_with_label = {}
         for label in self.labels:
             self.polytope_cardinality[label] = []
@@ -87,44 +86,64 @@ class kdf(KernelDensityGraph):
                 )/X.shape[0]
 
 
-        predicted_leaf_ids_across_trees = self._get_polytope_ids(X)
+        polytope_ids = np.array(
+            self._get_polytope_ids(X)
+        )
 
         
-        self.w = np.zeros((self.total_samples,self.total_samples), dtype=float)
-        for ii in range(self.total_samples):
-            matched_samples = np.sum(
-                    predicted_leaf_ids_across_trees == predicted_leaf_ids_across_trees[ii],
-                    axis=1
-                )
-            self.w[ii,:] = (matched_samples/np.max(matched_samples)) + 1e-30
-        
+        self.w = 1 - self._compute_geodesic(
+                        polytope_ids,
+                        polytope_ids
+                    )
+            
         used = []
         for ii in range(self.total_samples):
             if ii in used:
                continue
 
-            scales= (self.w[ii,:])**(1+np.floor(np.log10(self.total_samples)/3))
-            idx_with_scale_1 = list(np.where(
-                    scales>0.999999
-                )[0])
-            scales[ii] = 0 #new change
+            scales= self.w[ii,:].copy()
+
+            if self.total_samples > k:
+               arg_scale = np.argsort(scales)[::-1]
+               scale_indx_to_consider = arg_scale[:k]
+            else:
+               scale_indx_to_consider = np.arange(self.total_samples)
+               
+            idx_with_scale_1 = np.where(
+                   scales>.9999999
+               )[0]
             used.extend(idx_with_scale_1)
             
-            location = np.mean(X[idx_with_scale_1], axis=0)    
-
-            X_tmp = X.copy() - location
-            covariance = np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales)
-            
+            location = np.average(
+               X[scale_indx_to_consider],
+               axis=0, 
+               weights=scales[scale_indx_to_consider]
+            )
+            X_tmp = X[scale_indx_to_consider].copy() - location
+            covariance = np.average(
+               X_tmp**2+epsilon/np.sum(scales[scale_indx_to_consider]), 
+               axis=0, 
+               weights=scales[scale_indx_to_consider]
+            )
             self.polytope_cov.append(covariance)
             self.polytope_means.append(location)
+           
 
+            counts = {}
             for label in self.labels:
-                idx = idx_with_label[label]      
+                counts[label] = 0
+           
+            k = min(k,self.total_samples)
+            for neighbor in range(k):
+                counts[int(y[scale_indx_to_consider[neighbor]])] += \
+                    scales[scale_indx_to_consider[neighbor]]
+                
+            for label in self.labels:
                 self.polytope_cardinality[label].append(
-                    np.sum(scales[idx])
-                )
+                        counts[label]
+                    )
                 self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
-
+ 
         self.global_bias = self.global_bias - np.log10(self.total_samples)
         self.is_fitted = True
         
@@ -160,7 +179,6 @@ class kdf(KernelDensityGraph):
         """
         #X = check_array(X)
         
-        total_polytope = len(self.polytope_means)
         log_likelihoods = np.zeros(
             (np.size(X,0), len(self.labels)),
             dtype=float
