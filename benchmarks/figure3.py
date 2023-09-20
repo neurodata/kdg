@@ -13,7 +13,7 @@ res_folder_kdf = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdf_res'
 res_folder_kdn_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdn_res_ood'
 res_folder_kdf_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdf_res_ood'
 files = os.listdir(res_folder_kdn)
-files.remove('.DS_Store')
+#files.remove('.DS_Store')
 # %%
 id_done_ood = [6,11,12,14,16,18,22,28,32,37,44,54,182,300,458, 554,1049,1050,1063,1067,1068, 1462, 1464, 1468, 1475, 1478, 1485, 1487, 1489, 1494, 1497, 1501, 1510, 4134, 4538, 40499, 40979, 40982, 40983, 40984, 40994, 40996]
 #%%

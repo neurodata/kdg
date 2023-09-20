@@ -27,7 +27,7 @@ def fpr_at_95_tpr(conf_in, conf_out):
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
 x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
 test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
-x_svhn = x_svhn[:,:,:,test_ids].astype('float32').reshape(1000,32,32,3)
+x_svhn = x_svhn[:,:,:,test_ids].astype('float32')
 x_tmp = np.zeros((2000,32,32,3), dtype=float)
 
 for ii in range(2000):
@@ -84,7 +84,7 @@ file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/res
 with open(file_to_save, 'wb') as f:
     pickle.dump(summary, f)
 # %% funny tests
-'''arg_in = np.argmin(distance_cifar10,axis=1)
+arg_in = np.argmin(distance_cifar10,axis=1)
 arg_out = np.argmin(distance_cifar100,axis=1)
 md_in = []
 md_out = []
@@ -111,7 +111,7 @@ for ii in range(100):
 
 x_ -= x_train_mean
 #%%
-x_ = x_test[:100]
+x_ = x_svhn[:100]
 test_ids = model._get_polytope_ids(x_)
 #%%
 total_polytope = len(model.polytope_means)
@@ -143,14 +143,16 @@ if indx_X2 < len(model.polytope_means):
 
 # %%
 distances = model._compute_geodesic(test_ids, polytope_ids)
+#%%
+distances_ = model._compute_geodesic(test_ids, polytope_ids)
 # %%
-arg_min = np.argmin(distances,axis=1)
+arg_min = np.argmin(distances_,axis=1)
 
 #%%
-arg_sort = np.argsort(distances,axis=1)
+arg_sort = np.argsort(distances_,axis=1)
 #%%
 import matplotlib.pyplot as plt
-id = 6
+id = 41
 sorted_arg = arg_sort[id,:]
 plt.imshow(model.polytope_means[arg_min[id]]+x_train_mean)
 #%%
@@ -168,7 +170,7 @@ diff = (1-distances[id,sorted_arg[0]])**ex* (model.polytope_means[arg_sort[id,0]
 sum = (1-distances[id,sorted_arg[0]])**ex
 for ii in range(1,30):
 
-    #if ii==id:
+    if ii==id:
         continue
 
     diff += (1-distances[id,sorted_arg[ii]])**ex* (model.polytope_means[arg_sort[id,ii]]-x_[id])**2
@@ -202,14 +204,15 @@ for ii in range(32):
         for kk in range(3):
             #if ii>.9*model.feature_dim:
             #    continue
-            #if polytope_cov[ii,jj,kk]>np.percentile(polytope_cov.ravel(),q=95):
+            if polytope_cov[ii,jj,kk]<np.percentile(polytope_cov.ravel(),q=95):
                 #print('found')
-                #count += 1
+                count += 1
+                continue
             img[ii,jj,kk] = model._compute_log_likelihood_1d(X[ii,jj,kk], polytope_mean[ii,jj,kk], polytope_cov[ii,jj,kk])
                 
             sum += img[ii,jj,kk]
 
-print(sum)
+print(sum/count)
 
 fig, ax = plt.subplots(1,3, figsize=(24,8))
 sns.heatmap(img[:,:,0], cmap='autumn', ax=ax[0])
@@ -229,7 +232,7 @@ sns.heatmap(img[:,:,1], cmap='autumn', ax=ax[1])
 sns.heatmap(img[:,:,2], cmap='autumn', ax=ax[2])
 
 #%%
-img = model.polytope_cov[arg_min[id]]
+img = model.polytope_cov[arg_min[id]]/np.max(model.polytope_cov[arg_min[id]].ravel())
  
 fig, ax = plt.subplots(1,3, figsize=(24,8))
 sns.heatmap(img[:,:,0], cmap='autumn', ax=ax[0])
@@ -249,5 +252,5 @@ print(sum)
 for ii in range(total_polytope):
     model.polytope_cov[ii] = 1e-2*np.ones((32,32,3),dtype=float)
 # %%
-plt.imshow(model.polytope_cov[9]/np.max(model.polytope_cov[9].ravel()))'''
+plt.imshow(model.polytope_cov[9]/np.max(model.polytope_cov[9].ravel()))
 # %%
