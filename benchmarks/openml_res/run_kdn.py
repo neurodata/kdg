@@ -108,7 +108,7 @@ def experiment(dataset_id, layer_size = 1000, reps=5, random_state=42):
             nn = getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1, layer_size=layer_size)
             history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
             model_kdn = kdn(network=nn)
-            model_kdn.fit(X_train, y_train, mul=100)
+            model_kdn.fit(X_train, y_train)
             proba_kdn = model_kdn.predict_proba(X_test)
             proba_kdn_geod = model_kdn.predict_proba(X_test, distance='Geodesic')
             proba_dn = model_kdn.network.predict(X_test)
