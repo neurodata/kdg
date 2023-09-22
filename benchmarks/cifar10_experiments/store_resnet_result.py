@@ -111,7 +111,7 @@ for ii in range(100):
 
 x_ -= x_train_mean
 #%%
-x_ = x_svhn[:100]
+#x_ = x_svhn[:100]
 test_ids = model._get_polytope_ids(x_)
 #%%
 total_polytope = len(model.polytope_means)

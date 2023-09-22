@@ -11,7 +11,7 @@ from tensorflow.keras.datasets import cifar10
 import timeit
 from joblib import dump, load
 #%%
-seeds = [0]
+seeds = [100]
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
@@ -34,7 +34,7 @@ for channel in range(3):
 for seed in seeds:
     print("Doing seed ", seed)
 
-    nn_file = 'resnet20_models/cifar_model_50000_'+str(seed)
+    nn_file = 'resnet20_models/cifar_model_pretrained_50000_'+str(seed)
     network = keras.models.load_model(nn_file)
     
     model_kdn = kdn(
@@ -42,5 +42,5 @@ for seed in seeds:
     )
     model_kdn.fit(x_train, y_train, batch=10, save_temp=True)
     
-    dump(model_kdn, 'resnet_kdn_50000_'+str(seed)+'.joblib')
+    dump(model_kdn, 'resnet_kdn_pretrained_50000_'+str(seed)+'.joblib')
 # %%

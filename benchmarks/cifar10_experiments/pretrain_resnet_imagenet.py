@@ -1,5 +1,6 @@
 #%%
 from __future__ import print_function
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation
 from tensorflow.keras.layers import AveragePooling2D, Input, Flatten
@@ -10,22 +11,67 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
-from tensorflow.keras.datasets import cifar10
+from tensorflow.keras.datasets import cifar10, cifar100
+import tensorflow_datasets as tfds
 import numpy as np
 import os
 import random
 from sklearn.model_selection import train_test_split
+from scipy.io import loadmat
+
+from tensorflow.python.ops.numpy_ops import np_config
+np_config.enable_numpy_behavior()
 #%%
+x_train_mean = [0.485, 0.456, 0.406]
+x_train_var = [0.229, 0.224, 0.225]
 
-#import ssl
-#ssl._create_default_https_context = ssl._create_unverified_context
+# %%
+input_shape = (32,32,3)
+num_classes = 1000
+batch_size = 768  
+epochs = 120
+AUTOTUNE = tf.data.AUTOTUNE
+normalize = tf.keras.layers.experimental.preprocessing.Normalization(
+    axis=-1, mean=x_train_mean, variance=x_train_var
+)
+def augmentimages(image, label):
+  #image = tf.make_ndarray(image)
+  image = image/255.0
+  image = tf.image.resize(image, input_shape[:-1])
+  image = normalize(image)
+  
+  label = tf.one_hot(label, num_classes)
+  return image, label
 
-# Training parameters
-batch_size = 32  # orig paper trained all networks with batch_size=128
-epochs = 10
-data_augmentation = False
-num_classes = 10
+def configure_for_performance(ds):
+  ds = ds.cache()
+  ds = ds.shuffle(buffer_size=1000)
+  ds = ds.batch(batch_size)
+  ds = ds.prefetch(buffer_size=AUTOTUNE)
+  return ds
+#%%
+imagenet = tfds.image.Imagenet2012()
+## describe the dataset with DatasetInfo
+C = imagenet.info.features['label'].num_classes
+n_train = imagenet.info.splits['train'].num_examples
+n_validation = imagenet.info.splits['validation'].num_examples
 
+imagenet.download_and_prepare() 
+
+# %%
+# load imagenet data from disk as tf.data.Datasets
+datasets = imagenet.as_dataset(as_supervised=True)
+# %%
+validation_tmp_data= datasets['validation']
+validation_data = configure_for_performance(
+   validation_tmp_data.map(augmentimages)
+)
+# %%
+train_tmp_data= datasets['train']
+train_data = configure_for_performance(
+   train_tmp_data.map(augmentimages)
+)
+# %%
 
 # Model parameter
 # ----------------------------------------------------------------------------
@@ -69,14 +115,14 @@ def lr_schedule(epoch):
     # Returns
         lr (float32): learning rate
     """
-    lr = .001
-    if epoch > 8:
+    lr = 1e-3
+    if epoch > 180:
         lr *= 0.5e-3
-    elif epoch > 6:
+    elif epoch > 100:
         lr *= 1e-3
-    elif epoch > 4:
+    elif epoch > 60:
         lr *= 1e-2
-    elif epoch > 2:
+    elif epoch > 30:
         lr *= 1e-1
     print('Learning rate: ', lr)
     return lr
@@ -288,7 +334,6 @@ def resnet_v2(input_shape, depth, num_classes=10):
     x = Activation('relu')(x)
     x = AveragePooling2D(pool_size=8)(x)
     y = Flatten()(x)
-    
     outputs = Dense(num_classes,
                     activation='softmax',
                     kernel_initializer='he_normal')(y)
@@ -298,132 +343,46 @@ def resnet_v2(input_shape, depth, num_classes=10):
     return model
 
 
-
-
 #%%
 
-# Load the CIFAR10 data.
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+if version == 2:
+    model = resnet_v2(input_shape=input_shape, depth=depth, num_classes=num_classes)
+else:
+    model = resnet_v1(input_shape=input_shape, depth=depth, num_classes=num_classes)
 
-# Input image dimensions.
-input_shape = x_train.shape[1:]
+model.compile(loss='categorical_crossentropy',
+            optimizer=Adam(lr=lr_schedule(0), decay=1e-4),
+            metrics=['accuracy'])
+model.summary()
+print(model_type)
 
-# Normalize data.
-x_train = x_train.astype('float32') / 255
-x_test = x_test.astype('float32') / 255
+# Prepare model model saving directory.
+save_dir = os.path.join(os.getcwd(), 'saved_models')
+model_name = 'imagenet_%s_model.{epoch:03d}.h5' % model_type
+if not os.path.isdir(save_dir):
+    os.makedirs(save_dir)
+filepath = os.path.join(save_dir, model_name)
 
-# If subtract pixel mean is enabled
-for channel in range(3):
-    x_train_mean = np.mean(x_train[:,:,:,channel])
-    x_train_std = np.std(x_train[:,:,:,channel])
-    x_train[:,:,:,channel] -= x_train_mean
-    x_train[:,:,:,channel] /= x_train_std
-    x_test[:,:,:,channel] -= x_train_mean
-    x_test[:,:,:,channel] /= x_train_std
+# Prepare callbacks for model saving and for learning rate adjustment.
+checkpoint = ModelCheckpoint(filepath=filepath,
+                            monitor='val_acc',
+                            verbose=1,
+                            save_best_only=True)
 
-print('x_train shape:', x_train.shape)
-print(x_train.shape[0], 'train samples')
-print(x_test.shape[0], 'test samples')
-print('y_train shape:', y_train.shape)
+lr_scheduler = LearningRateScheduler(lr_schedule)
 
-sample_sizes = [50000]
-seeds = [0,100,200,400]
+lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
+                            cooldown=0,
+                            patience=5,
+                            min_lr=0.5e-6)
 
-for sample in sample_sizes:
-    for seed in seeds:
-        random.seed(seed)
-        print("Doing sample ", sample, "with seed ", seed)
-        # Convert class vectors to binary class matrices.
-        '''(x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+callbacks = [checkpoint, lr_reducer, lr_scheduler]
 
-        if sample < 50000:
-            x_train, _, y_train, _ = train_test_split(
-                        x_train, y_train, test_size=10, train_size=sample, random_state=seed, stratify=y_train)
-            
-        x_train = x_train.astype('float32') #/ 255
-        x_test = x_test.astype('float32') #/ 255
-        x_train_mean = np.mean(x_train, axis=0)
-        if subtract_pixel_mean:
-            x_train -= x_train_mean
-            x_test -= x_train_mean'''
+# Run training, with or without data augmentation.
+model.fit(train_data,
+         epochs=epochs,
+         validation_data=validation_data,
+         shuffle=True,
+         callbacks=callbacks)
 
-        y_train_one_hot = keras.utils.to_categorical(y_train, num_classes)
-        y_test_one_hot = keras.utils.to_categorical(y_test, num_classes)
-        
-
-        if version == 2:
-            model = resnet_v2(input_shape=input_shape, depth=depth)
-        else:
-            model = resnet_v1(input_shape=input_shape, depth=depth)
-
-        model.compile(loss='categorical_crossentropy',
-                    optimizer=Adam(lr=lr_schedule(0)),
-                    metrics=['accuracy'])
-        model.summary()
-        print(model_type)
-
-
-        #load pretrained model
-        pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_pretrained')
-
-        for layer_id, layer in enumerate(model.layers[:-1]):
-            pretrained_weights = pretrained_model.layers[layer_id].get_weights()
-            layer.set_weights(pretrained_weights)
-            layer.trainable = False
-
-        model.summary()
-        print(model_type)
-
-        # Prepare model model saving directory.
-        save_dir = os.path.join(os.getcwd(), 'saved_models')
-        model_name = 'cifar10_%s_model.{epoch:03d}.h5' % model_type
-        if not os.path.isdir(save_dir):
-            os.makedirs(save_dir)
-        filepath = os.path.join(save_dir, model_name)
-
-        # Prepare callbacks for model saving and for learning rate adjustment.
-        checkpoint = ModelCheckpoint(filepath=filepath,
-                                    monitor='val_acc',
-                                    verbose=1,
-                                    save_best_only=True)
-
-        lr_scheduler = LearningRateScheduler(lr_schedule)
-
-        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
-                                    cooldown=0,
-                                    patience=5,
-                                    min_lr=0.5e-6)
-
-        callbacks = [checkpoint, lr_reducer, lr_scheduler]
-
-        # Run training, with or without data augmentation.
-        if not data_augmentation:
-            print('Not using data augmentation.')
-            model.fit(x_train, y_train_one_hot,
-                    batch_size=batch_size,
-                    epochs=epochs,
-                    validation_data=(x_test, y_test_one_hot),
-                    shuffle=True,
-                    callbacks=callbacks)
-        else:
-            print('Using real-time data augmentation.')
-            # This will do preprocessing and realtime data augmentation:
-            datagen = ImageDataGenerator()
-
-            # Compute quantities required for featurewise normalization
-            # (std, mean, and principal components if ZCA whitening is applied).
-            datagen.fit(x_train)
-
-            # Fit the model on the batches generated by datagen.flow().
-            model.fit(datagen.flow(x_train, y_train_one_hot, batch_size=batch_size),
-                                validation_data=(x_test, y_test),
-                                epochs=epochs, verbose=1, workers=-1,
-                                callbacks=callbacks,
-                                use_multiprocessing=False)
-
-        # Score trained model.
-        scores = model.evaluate(x_test, y_test_one_hot, verbose=1)
-        print('Test loss:', scores[0])
-        print('Test accuracy:', scores[1])
-
-        model.save('resnet20_models/cifar_model_pretrained_'+str(sample)+'_'+str(seed))
+model.save('resnet20_models/cifar_model_pretrained_imagenet')
