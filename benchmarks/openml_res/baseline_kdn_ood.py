@@ -157,8 +157,8 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
 
 
     df = pd.DataFrame() 
-    df['conf_rf_isotonic'] = conf_nn_isotonic
-    df['conf_rf_sigmoid'] = conf_nn_sigmoid
+    df['conf_nn_isotonic'] = conf_nn_isotonic
+    df['conf_nn_sigmoid'] = conf_nn_sigmoid
     df['distance'] = r
 
     filename = 'Dataset_' + str(dataset_id) + '.csv'

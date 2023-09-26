@@ -1,4 +1,4 @@
-,conf_rf_isotonic,conf_rf_sigmoid,distance
+,conf_nn_isotonic,conf_nn_sigmoid,distance
 0,0.9076457924027204,0.9063839482826372,0.0
 1,1.0,0.9271424785256386,1.0
 2,1.0,0.9271424785256386,1.5
