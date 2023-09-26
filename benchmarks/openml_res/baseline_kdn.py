@@ -14,7 +14,7 @@ from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.calibration import CalibratedClassifierCV as calcv
 # %%
-root_dir = "openml_kdf_res_baseline"
+root_dir = "openml_kdn_res_baseline"
 
 try:
     os.mkdir(root_dir)
