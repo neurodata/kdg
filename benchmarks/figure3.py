@@ -113,9 +113,9 @@ def plot_summary_error(files, folder, baseline_folder, model='kdf', parent='rf',
                 np.median(sigmoid)
             )
 
-        err_diff = np.array(err_x_med) - np.array(err_kdx_med)
-        err_diff_isotonic = np.array(err_x_med) - np.array(err_isotonic_med)
-        err_diff_sigmoid = np.array(err_x_med) - np.array(err_sigmoid_med)
+        err_diff = (np.array(err_x_med) - np.array(err_kdx_med))/np.array(err_x_med)
+        err_diff_isotonic = (np.array(err_x_med) - np.array(err_isotonic_med))/np.array(err_x_med)
+        err_diff_sigmoid = (np.array(err_x_med) - np.array(err_sigmoid_med))/np.array(err_x_med)
 
         idx = np.where(sample_combined<=samples[-1])[0]
         f = interp1d(samples, err_diff, kind='linear')
@@ -207,9 +207,9 @@ def plot_summary_ece(files, folder, baseline_folder, model='kdf', parent='rf', c
                 np.median(sigmoid)
             )
 
-        err_diff = np.array(err_x_med) - np.array(err_kdx_med)
-        err_diff_isotonic = np.array(err_x_med) - np.array(err_isotonic_med)
-        err_diff_sigmoid = np.array(err_x_med) - np.array(err_sigmoid_med)
+        err_diff = (np.array(err_x_med) - np.array(err_kdx_med))/np.array(err_x_med)
+        err_diff_isotonic = (np.array(err_x_med) - np.array(err_isotonic_med))/np.array(err_x_med)
+        err_diff_sigmoid = (np.array(err_x_med) - np.array(err_sigmoid_med))/np.array(err_x_med)
 
         idx = np.where(sample_combined<=samples[-1])[0]
         f = interp1d(samples, err_diff, kind='linear')
@@ -277,8 +277,8 @@ ax[0][1].set_xlim([100, 50000])
 ax[0][0].set_title('Classification Error', fontsize=40)
 
 ax[0][0].set_xscale("log")
-ax[0][0].set_ylim([-0.1, .1])
-ax[0][0].set_yticks([-.1,0,.1])
+#ax[0][0].set_ylim([-0.1, .1])
+#ax[0][0].set_yticks([-.1,0,.1])
 ax[0][0].set_xticks([])
 
 ax[0][0].set_ylabel('Difference', fontsize=35)
@@ -288,8 +288,8 @@ ax[0][0].set_ylabel('Difference', fontsize=35)
 ax[0][1].set_title('ID Calibration Error', fontsize=40)
 
 ax[0][1].set_xscale("log")
-ax[0][1].set_ylim([-0.1, .1])
-ax[0][1].set_yticks([-.1,0,.4])
+#ax[0][1].set_ylim([-0.1, .1])
+#ax[0][1].set_yticks([-.1,0,.4])
 ax[0][1].set_xticks([])
 ax[0][1].set_ylabel('', fontsize=35)
 #ax[0][1].text(100, .3, 'KGF wins')
