@@ -146,10 +146,10 @@ def plot_summary_error(files, folder, baseline_folder, model='kdf', parent='rf',
     qunatiles_sigmoid = np.nanquantile(np.array(err_diff_sigmoid_),[.25,.75],axis=0)
 
     if linestyle != None:
-        ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, linestyle=linestyle, c=color[0], label=model) 
+        ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, linestyle=linestyle, c=color[0], label=model[:3].upper()+'-Euclidean') 
         ax.fill_between(sample_combined, qunatiles[0], qunatiles[1], facecolor=color[0], alpha=.3)   
     else:
-        ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, c=color[0], label=model)    
+        ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, c=color[0], label=model[:3].upper()+'-Geodesic')    
 
         ax.fill_between(sample_combined, qunatiles[0], qunatiles[1], facecolor=color[0], alpha=.3)
         ax.plot(sample_combined, np.nanmedian(np.array(err_diff_isotonic_), axis=0), linewidth=2, c=color[1], label='Isotonic')    
@@ -277,19 +277,19 @@ ax[0][1].set_xlim([100, 50000])
 ax[0][0].set_title('Classification Error', fontsize=40)
 
 ax[0][0].set_xscale("log")
-#ax[0][0].set_ylim([-0.1, .1])
-#ax[0][0].set_yticks([-.1,0,.1])
+ax[0][0].set_ylim([-0.3, .25])
+ax[0][0].set_yticks([-.3,0,.2])
 ax[0][0].set_xticks([])
 
-ax[0][0].set_ylabel('Difference', fontsize=35)
+ax[0][0].set_ylabel('Kohen Kappa', fontsize=35)
 #ax[0][0].text(100, .05, 'KGF wins')
 #ax[0][0].text(100, -.08, 'RF wins')
 
 ax[0][1].set_title('ID Calibration Error', fontsize=40)
 
 ax[0][1].set_xscale("log")
-#ax[0][1].set_ylim([-0.1, .1])
-#ax[0][1].set_yticks([-.1,0,.4])
+ax[0][1].set_ylim([-2.5, 1])
+ax[0][1].set_yticks([-2,0,1])
 ax[0][1].set_xticks([])
 ax[0][1].set_ylabel('', fontsize=35)
 #ax[0][1].text(100, .3, 'KGF wins')
@@ -298,7 +298,7 @@ ax[0][1].set_ylabel('', fontsize=35)
 ax[1][0].set_xscale("log")
 ax[1][0].set_ylim([-0.05, .05])
 ax[1][0].set_yticks([-.05,0,.05])
-ax[1][0].set_ylabel('Difference', fontsize=35)
+ax[1][0].set_ylabel('Kohen Kappa', fontsize=35)
 #ax[1][0].text(100, .05, 'KGN wins')
 #ax[1][0].text(100, -.08, 'DN wins')
 
