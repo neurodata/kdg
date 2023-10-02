@@ -3,6 +3,7 @@ from sklearn.datasets import make_blobs
 from numpy.random import uniform, normal, shuffle
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.stats import truncnorm
 
 def _bin_data(y, n_bins):
     """
@@ -332,16 +333,55 @@ def trunk_sim(n_samples, p_star=3, p=3, center_box=(-1.0, 1.0), random_state=Non
     samples_per_class = np.random.multinomial(n_samples, 1 / 2 * np.ones(2))
 
     mean = 1.0 / np.sqrt(np.arange(1, p_star + 1, 1))
- 
+    
+    X_1 = truncnorm.rvs(
+        (center_box[0]-mean[0]),
+        (center_box[1]-mean[0]),
+        mean[0],
+        1,
+        size=samples_per_class[0]
+    ).reshape(-1,1)
+    
+    for ii in range(1,p_star):
+        X_1 = np.concatenate(
+            (X_1,
+            truncnorm.rvs(
+                    (center_box[0]-mean[ii]),
+                    (center_box[1]-mean[ii]),
+                    mean[ii],
+                    1,
+                    size=samples_per_class[0]
+                ).reshape(-1,1)
+            ),
+            axis=1
+        )
+    
+    
+    X_2 = truncnorm.rvs(
+        (center_box[0]+mean[0]),
+        (center_box[1]+mean[0]),
+        -mean[0],
+        1,
+        size=samples_per_class[1]
+    ).reshape(-1,1)
+    
+    for ii in range(1,p_star):
+        X_2 = np.concatenate(
+            (X_2,
+            truncnorm.rvs(
+                    (center_box[0]+mean[ii]),
+                    (center_box[1]+mean[ii]),
+                    -mean[ii],
+                    1,
+                    size=samples_per_class[1]
+                ).reshape(-1,1)
+            ),
+            axis=1
+        )
+        
+
     X = np.concatenate(
-        (
-            np.random.multivariate_normal(
-                mean, np.eye(p_star), size=samples_per_class[0]
-            ),
-            np.random.multivariate_normal(
-                -mean, np.eye(p_star), size=samples_per_class[1]
-            ),
-        ),
+        (X_1,X_2),
         axis=0,
     )
     y = np.concatenate(

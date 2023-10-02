@@ -13,6 +13,24 @@ def unpickle(filename):
         df = pickle.load(f)
     return df
 
+def get_stat(data, reps=10):
+    total_dim = len(data)//reps
+
+    med = []
+    quantile_25 = []
+    quantile_75 = []
+    for ii in range(total_dim):
+        med.append(
+                np.median(data[ii*reps:(ii+1)*reps])
+            )
+        quantile_25.append(
+        np.quantile(data[ii*reps:(ii+1)*reps], [0.25])[0]
+            )
+        quantile_75.append(
+        np.quantile(data[ii*reps:(ii+1)*reps], [0.75])[0]
+            )
+    return med, quantile_25, quantile_75
+
 # %%
 simulations = ['gxor', 'spiral', 'circle', 'sinewave', 'polynomial']
 models = ['kdf', 'kdn']
@@ -23,7 +41,7 @@ linewidth = [6,3]
 #sns.set_context('talk')
 ticksize = 45
 labelsize = 50
-fig1, ax = plt.subplots(5, 6, figsize=(60, 40))
+fig1, ax = plt.subplots(6, 6, figsize=(60, 40))
 
 for ii, model in enumerate(models):
     for jj, simulation in enumerate(simulations):
@@ -146,6 +164,123 @@ for ii, model in enumerate(models):
         right_side.set_visible(False)
         top_side = ax[jj][ii*3+2].spines["top"]
         top_side.set_visible(False)
+
+df_trunk = unpickle('/Users/jayantadey/kdg/benchmarks/high_dim_exp/trunk.pickle')
+dim = np.unique(df_trunk['dimension'])
+
+err_rf_med, err_rf_25, err_rf_75 = get_stat(df_trunk['err_rf'])
+err_kdf_med, err_kdf_25, err_kdf_75 = get_stat(df_trunk['err_kdf'])
+err_kdf_geod_med, err_kdf_geod_25, err_kdf_geod_75 = get_stat(df_trunk['err_kdf_geodesic'])
+ax[5][0].plot(dim, err_kdf_geod_med, c='b', linewidth=linewidth[0], label='KDF-Geodesic')
+ax[5][0].plot(dim, err_kdf_med, c='b', linewidth=linewidth[0], label='KDF-Euclidean', linestyle='dashed')
+ax[5][0].plot(dim, err_rf_med, c="k", label='RF')
+ax[5][0].fill_between(dim, err_kdf_25, err_kdf_75, facecolor='b', alpha=.3)
+ax[5][0].fill_between(dim, err_kdf_25, err_kdf_25, facecolor='b', alpha=.3)
+ax[5][0].fill_between(dim, err_rf_25, err_rf_75, facecolor='k', alpha=.3)
+
+ax[5][0].set_xscale('log')
+
+ax[5][0].tick_params(labelsize=ticksize)
+right_side = ax[5][0].spines["right"]
+right_side.set_visible(False)
+top_side = ax[5][0].spines["top"]
+top_side.set_visible(False)
+
+
+err_rf_med, err_rf_25, err_rf_75 = get_stat(df_trunk['rf_hellinger'])
+err_kdf_med, err_kdf_25, err_kdf_75 = get_stat(df_trunk['kdf_hellinger'])
+err_kdf_geod_med, err_kdf_geod_25, err_kdf_geod_75 = get_stat(df_trunk['kdf_geodesic_hellinger'])
+ax[5][1].plot(dim, err_kdf_geod_med, c='b', linewidth=linewidth[0], label='KDF-Geodesic')
+ax[5][1].plot(dim, err_kdf_med, c='b', linewidth=linewidth[0], label='KDF-Euclidean', linestyle='dashed')
+ax[5][1].plot(dim, err_rf_med, c="k", label='RF')
+ax[5][1].fill_between(dim, err_kdf_25, err_kdf_75, facecolor='b', alpha=.3)
+ax[5][1].fill_between(dim, err_kdf_25, err_kdf_25, facecolor='b', alpha=.3)
+ax[5][1].fill_between(dim, err_rf_25, err_rf_75, facecolor='k', alpha=.3)
+
+ax[5][1].set_xscale('log')
+
+ax[5][1].tick_params(labelsize=ticksize)
+right_side = ax[5][1].spines["right"]
+right_side.set_visible(False)
+top_side = ax[5][1].spines["top"]
+top_side.set_visible(False)
+
+
+
+
+err_rf_med, err_rf_25, err_rf_75 = get_stat(df_trunk['conf_rf_ood'])
+err_kdf_med, err_kdf_25, err_kdf_75 = get_stat(df_trunk['conf_kdf_ood'])
+err_kdf_geod_med, err_kdf_geod_25, err_kdf_geod_75 = get_stat(df_trunk['conf_kdf_geodesic_ood'])
+ax[5][2].plot(dim, err_kdf_geod_med, c='b', linewidth=linewidth[0], label='KDF-Geodesic')
+ax[5][2].plot(dim, err_kdf_med, c='b', linewidth=linewidth[0], label='KDF-Euclidean', linestyle='dashed')
+ax[5][2].plot(dim, err_rf_med, c="k", label='RF')
+ax[5][2].fill_between(dim, err_kdf_25, err_kdf_75, facecolor='b', alpha=.3)
+ax[5][2].fill_between(dim, err_kdf_25, err_kdf_25, facecolor='b', alpha=.3)
+ax[5][2].fill_between(dim, err_rf_25, err_rf_75, facecolor='k', alpha=.3)
+
+ax[5][2].set_xscale('log')
+
+ax[5][2].tick_params(labelsize=ticksize)
+right_side = ax[5][2].spines["right"]
+right_side.set_visible(False)
+top_side = ax[5][2].spines["top"]
+top_side.set_visible(False)
+
+
+err_dn_med, err_dn_25, err_dn_75 = get_stat(df_trunk['err_dn'])
+err_kdn_med, err_kdn_25, err_kdn_75 = get_stat(df_trunk['err_kdn'])
+err_kdn_geod_med, err_kdn_geod_25, err_kdn_geod_75 = get_stat(df_trunk['err_kdn_geodesic'])
+ax[5][3].plot(dim, err_kdn_geod_med, c='r', linewidth=linewidth[0], label='KDN-Geodesic')
+ax[5][3].plot(dim, err_kdn_med, c='r', linewidth=linewidth[0], label='KDN-Euclidean', linestyle='dashed')
+ax[5][3].plot(dim, err_dn_med, c="k", label='DN')
+ax[5][3].fill_between(dim, err_kdn_25, err_kdn_75, facecolor='r', alpha=.3)
+ax[5][3].fill_between(dim, err_kdn_25, err_kdn_25, facecolor='r', alpha=.3)
+ax[5][3].fill_between(dim, err_dn_25, err_dn_75, facecolor='k', alpha=.3)
+
+ax[5][3].set_xscale('log')
+
+ax[5][3].tick_params(labelsize=ticksize)
+right_side = ax[5][3].spines["right"]
+right_side.set_visible(False)
+top_side = ax[5][3].spines["top"]
+top_side.set_visible(False)
+
+
+err_dn_med, err_dn_25, err_dn_75 = get_stat(df_trunk['dn_hellinger'])
+err_kdn_med, err_kdn_25, err_kdn_75 = get_stat(df_trunk['kdn_hellinger'])
+err_kdn_geod_med, err_kdn_geod_25, err_kdn_geod_75 = get_stat(df_trunk['kdn_geodesic_hellinger'])
+ax[5][4].plot(dim, err_kdn_geod_med, c='r', linewidth=linewidth[0], label='KDN-Geodesic')
+ax[5][4].plot(dim, err_kdn_med, c='r', linewidth=linewidth[0], label='KDN-Euclidean', linestyle='dashed')
+ax[5][4].plot(dim, err_dn_med, c="k", label='DN')
+ax[5][4].fill_between(dim, err_kdn_25, err_kdn_75, facecolor='r', alpha=.3)
+ax[5][4].fill_between(dim, err_kdn_25, err_kdn_25, facecolor='r', alpha=.3)
+ax[5][4].fill_between(dim, err_dn_25, err_dn_75, facecolor='k', alpha=.3)
+
+ax[5][4].set_xscale('log')
+
+ax[5][4].tick_params(labelsize=ticksize)
+right_side = ax[5][4].spines["right"]
+right_side.set_visible(False)
+top_side = ax[5][4].spines["top"]
+top_side.set_visible(False)
+
+err_dn_med, err_dn_25, err_dn_75 = get_stat(df_trunk['conf_dn_ood'])
+err_kdn_med, err_kdn_25, err_kdn_75 = get_stat(df_trunk['conf_kdn_ood'])
+err_kdn_geod_med, err_kdn_geod_25, err_kdn_geod_75 = get_stat(df_trunk['conf_kdn_geodesic_ood'])
+ax[5][5].plot(dim, err_kdn_geod_med, c='r', linewidth=linewidth[0], label='KDN-Geodesic')
+ax[5][5].plot(dim, err_kdn_med, c='r', linewidth=linewidth[0], label='KDN-Euclidean', linestyle='dashed')
+ax[5][5].plot(dim, err_dn_med, c="k", label='DN')
+ax[5][5].fill_between(dim, err_kdn_25, err_kdn_75, facecolor='r', alpha=.3)
+ax[5][5].fill_between(dim, err_kdn_25, err_kdn_25, facecolor='r', alpha=.3)
+ax[5][5].fill_between(dim, err_dn_25, err_dn_75, facecolor='k', alpha=.3)
+
+ax[5][5].set_xscale('log')
+
+ax[5][5].tick_params(labelsize=ticksize)
+right_side = ax[5][5].spines["right"]
+right_side.set_visible(False)
+top_side = ax[5][5].spines["top"]
+top_side.set_visible(False)
 
 plt.subplots_adjust(hspace=.6,wspace=.4)
 #plt.tight_layout()
