@@ -41,7 +41,7 @@ linewidth = [6,3]
 #sns.set_context('talk')
 ticksize = 45
 labelsize = 50
-fig1, ax = plt.subplots(6, 6, figsize=(60, 40))
+fig1, ax = plt.subplots(6, 6, figsize=(60, 50))
 
 for ii, model in enumerate(models):
     for jj, simulation in enumerate(simulations):
@@ -75,13 +75,15 @@ for ii, model in enumerate(models):
         
         ax[jj][ii*3+0].set_yticks([min_val,max_val])
 
-        if len(model)>6:
-            offset=0
+        if len(simulation)>8:
+            offset=.1
+        elif len(simulation)>6:
+            offset= 0
         else:
             offset= min_val+(max_val-min_val)/3
 
         if ii == 0:
-            ax[jj][0].text(1,offset, simulation[0].upper()+simulation[1:], fontsize=labelsize+20, rotation=90)
+            ax[jj][0].text(1,offset, simulation[0].upper()+simulation[1:], fontsize=labelsize+10, rotation=90)
             
         ax[jj][ii*3+0].tick_params(labelsize=ticksize)
         right_side = ax[jj][ii*3+0].spines["right"]
@@ -165,7 +167,7 @@ for ii, model in enumerate(models):
         top_side = ax[jj][ii*3+2].spines["top"]
         top_side.set_visible(False)
 
-df_trunk = unpickle('/Users/jayantadey/kdg/benchmarks/high_dim_exp/trunk.pickle')
+df_trunk = unpickle('/Users/jayantadey/kdg/benchmarks/high_dim_exp/trunk2.pickle')
 dim = np.unique(df_trunk['dimension'])
 
 err_rf_med, err_rf_25, err_rf_75 = get_stat(df_trunk['err_rf'])
@@ -181,6 +183,10 @@ ax[5][0].fill_between(dim, err_rf_25, err_rf_75, facecolor='k', alpha=.3)
 ax[5][0].set_xscale('log')
 
 ax[5][0].tick_params(labelsize=ticksize)
+ax[5][0].text(0.01, 0.2, 'Trunk', fontsize=labelsize+10, rotation=90)
+ax[5][0].set_ylabel('Error', fontsize=labelsize)
+ax[5][0].set_xlabel('Dimensions', fontsize=labelsize)
+
 right_side = ax[5][0].spines["right"]
 right_side.set_visible(False)
 top_side = ax[5][0].spines["top"]
@@ -200,6 +206,9 @@ ax[5][1].fill_between(dim, err_rf_25, err_rf_75, facecolor='k', alpha=.3)
 ax[5][1].set_xscale('log')
 
 ax[5][1].tick_params(labelsize=ticksize)
+ax[5][1].set_ylabel('Hellinger Dist.', fontsize=labelsize)
+ax[5][1].set_xlabel('Dimensions', fontsize=labelsize)
+
 right_side = ax[5][1].spines["right"]
 right_side.set_visible(False)
 top_side = ax[5][1].spines["top"]
@@ -221,6 +230,9 @@ ax[5][2].fill_between(dim, err_rf_25, err_rf_75, facecolor='k', alpha=.3)
 ax[5][2].set_xscale('log')
 
 ax[5][2].tick_params(labelsize=ticksize)
+ax[5][2].set_ylabel('Mean Max Conf.', fontsize=labelsize)
+ax[5][2].set_xlabel('Dimensions', fontsize=labelsize)
+
 right_side = ax[5][2].spines["right"]
 right_side.set_visible(False)
 top_side = ax[5][2].spines["top"]
@@ -240,6 +252,9 @@ ax[5][3].fill_between(dim, err_dn_25, err_dn_75, facecolor='k', alpha=.3)
 ax[5][3].set_xscale('log')
 
 ax[5][3].tick_params(labelsize=ticksize)
+ax[5][3].set_ylabel('Error', fontsize=labelsize)
+ax[5][3].set_xlabel('Dimensions', fontsize=labelsize)
+
 right_side = ax[5][3].spines["right"]
 right_side.set_visible(False)
 top_side = ax[5][3].spines["top"]
@@ -259,6 +274,9 @@ ax[5][4].fill_between(dim, err_dn_25, err_dn_75, facecolor='k', alpha=.3)
 ax[5][4].set_xscale('log')
 
 ax[5][4].tick_params(labelsize=ticksize)
+ax[5][4].set_ylabel('Hellinger Dist.', fontsize=labelsize)
+ax[5][4].set_xlabel('Dimensions', fontsize=labelsize)
+
 right_side = ax[5][4].spines["right"]
 right_side.set_visible(False)
 top_side = ax[5][4].spines["top"]
@@ -277,12 +295,15 @@ ax[5][5].fill_between(dim, err_dn_25, err_dn_75, facecolor='k', alpha=.3)
 ax[5][5].set_xscale('log')
 
 ax[5][5].tick_params(labelsize=ticksize)
+ax[5][5].set_ylabel('Mean Max Conf.', fontsize=labelsize)
+ax[5][5].set_xlabel('Dimensions', fontsize=labelsize)
+
 right_side = ax[5][5].spines["right"]
 right_side.set_visible(False)
 top_side = ax[5][5].spines["top"]
 top_side.set_visible(False)
 
-plt.subplots_adjust(hspace=.6,wspace=.4)
+plt.subplots_adjust(hspace=.7,wspace=.8)
 #plt.tight_layout()
 plt.savefig('/Users/jayantadey/kdg/benchmarks/plots/simulation_res.pdf')
 # %%
