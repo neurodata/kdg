@@ -15,7 +15,7 @@ res_folder_kdf_baseline = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kd
 res_folder_kdn_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdn_res_ood'
 res_folder_kdf_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdf_res_ood'
 files = os.listdir(res_folder_kdn)
-files.remove('.DS_Store')
+#files.remove('.DS_Store')
 # %%
 id_done_ood = [6,11,12,14,16,18,22,28,32,37,44,54,182,300,458, 554,1049,1050,1063,1067,1068, 1462, 1464, 1468, 1475, 1478, 1485, 1487, 1489, 1494, 1497, 1501, 1510, 4134, 4538, 40499, 40979, 40982, 40983, 40984, 40994, 40996]
 
@@ -85,7 +85,7 @@ def plot_summary_error(files, folder, baseline_folder, model='kdf', parent='rf',
 
     for file in files:
         df = pd.read_csv(folder+'/'+file)
-        df_baseline = pd.read_csv(baseline_folder+'/'+file)
+        #df_baseline = pd.read_csv(baseline_folder+'/'+file)
         samples = np.unique(df['samples'])
         err_kdx_med = []
         err_x_med = []
@@ -95,8 +95,8 @@ def plot_summary_error(files, folder, baseline_folder, model='kdf', parent='rf',
         for sample in samples:
             kdx = df['err_'+model][df['samples']==sample]
             x = df['err_'+parent][df['samples']==sample]
-            isotonic = df_baseline['err_isotonic'][df_baseline['samples']==sample]
-            sigmoid = df_baseline['err_sigmoid'][df_baseline['samples']==sample]
+            isotonic = df['err_isotonic'][df['samples']==sample]
+            sigmoid = df['err_sigmoid'][df['samples']==sample]
 
             err_kdx_med.append(
                 np.median(kdx)
@@ -178,7 +178,7 @@ def plot_summary_ece(files, folder, baseline_folder, model='kdf', parent='rf', c
     err_diff_sigmoid_ = []
     for file in files:
         df = pd.read_csv(folder+'/'+file)
-        df_baseline = pd.read_csv(baseline_folder+'/'+file)
+        #df_baseline = pd.read_csv(baseline_folder+'/'+file)
         samples = np.unique(df['samples'])
         err_kdx_med = []
         err_x_med = []
@@ -189,8 +189,8 @@ def plot_summary_ece(files, folder, baseline_folder, model='kdf', parent='rf', c
         for sample in samples:
             kdx = df['ece_'+model][df['samples']==sample]
             x = df['ece_'+parent][df['samples']==sample]
-            isotonic = df_baseline['ece_isotonic'][df_baseline['samples']==sample]
-            sigmoid = df_baseline['ece_sigmoid'][df_baseline['samples']==sample]
+            isotonic = df['ece_isotonic'][df['samples']==sample]
+            sigmoid = df['ece_sigmoid'][df['samples']==sample]
 
             err_kdx_med.append(
                 np.median(kdx)
