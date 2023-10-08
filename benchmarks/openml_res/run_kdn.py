@@ -162,12 +162,12 @@ def experiment(dataset_id, layer_size = 1000, reps=5, random_state=42):
             mc_rep.append(rep)
 
             ### train baseline ###
-            if train_sample >= 600:
+            if train_sample >= 100:
                 X_train, X_cal, y_train, y_cal = train_test_split(
                 X_train, y_train, train_size=0.9, random_state=random_state+rep, stratify=y_train)
             else:
                 X_train, X_cal, y_train, y_cal = train_test_split(
-                X_train, y_train, train_size=0.7, random_state=random_state+rep)
+                X_train, y_train, train_size=0.5, random_state=random_state+rep, stratify=y_train)
 
             #print(X_train.shape, X_cal.shape)
             uncalibrated_nn = KerasClassifier(build_fn=getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1, layer_size=layer_size))
