@@ -112,7 +112,7 @@ class kdn(KernelDensityGraph):
            indx.append(
                total_test_samples
            )
-       for ii in tqdm(range(total_layers)):
+       for ii in range(total_layers):
            
            if save_temp:
                if os.path.exists('temp/temp'+str(ii)+'.pickle'):
@@ -161,7 +161,7 @@ class kdn(KernelDensityGraph):
            np.array(self.polytope_means).reshape(total_polytopes,-1)
         )
 
-   def fit(self, X, y, k=1, epsilon=1e-6, batch=1, n_jobs=-1, save_temp=False):
+   def fit(self, X, y, epsilon=1e-6, batch=1, n_jobs=-1, k=10, save_temp=False):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -176,7 +176,7 @@ class kdn(KernelDensityGraph):
        self.labels = np.unique(y)
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
-       self.global_bias = np.log(k) - 10**(self.feature_dim**(1/2)) 
+       self.global_bias = - 10**(self.feature_dim) 
 
        idx_with_label = {}
        for label in self.labels:
@@ -215,28 +215,47 @@ class kdn(KernelDensityGraph):
            
        used = []
        print('Fitting data!')
-       for ii in tqdm(range(self.total_samples)):
+
+       #k = int(np.ceil(np.sqrt(self.total_samples)))
+       for ii in range(self.total_samples):
            if ii in used:
                continue
-           scales = w[ii,:].copy()
-           scales = scales**1.36#np.log(np.log(self.total_samples))
            
+           scales = w[ii,:].copy()
+           
+           arg_scale = np.argsort(scales)[::-1]
+           scale_indx_to_consider = arg_scale[:k]
+           #scale_indx_to_consider = np.where(scales>k)[0]
+               
            idx_with_scale_1 = np.where(
                    scales>.9999999
                )[0]
            used.extend(idx_with_scale_1)
             
-           location = np.mean(X[idx_with_scale_1], axis=0)
-           X_tmp = X.copy() - location
-           covariance = np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales)
+           location = np.mean(
+               X[idx_with_scale_1],
+               axis=0
+               )
+           X_tmp = X[idx_with_scale_1].copy() - location
+           covariance = np.mean(
+                        X_tmp**2+epsilon, 
+                        axis=0
+                    )
            self.polytope_cov.append(covariance)
-           self.polytope_means.append(location)
- 
-           for label in self.labels:     
-               self.polytope_cardinality[label].append(
-                    np.sum(scales[idx_with_label[label]])
-                )
-               self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
+           self.polytope_means.append(location)   
+
+           counts = {}
+           for label in self.labels:
+               counts[label] = 0
+           
+           for neighbor in scale_indx_to_consider:
+                counts[int(y[neighbor])] += 1
+
+           for label in self.labels:
+                self.polytope_cardinality[label].append(
+                        counts[label]
+                    )
+                self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
  
  
        self.global_bias = self.global_bias - np.log10(self.total_samples)

@@ -27,6 +27,7 @@ def fpr_at_95_tpr(conf_in, conf_out):
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
 x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
+y_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['y']
 test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
 x_svhn = x_svhn[:,:,:,test_ids].astype('float32')
 x_tmp = np.zeros((2000,32,32,3), dtype=float)
@@ -112,7 +113,7 @@ for ii in range(100):
 
 x_ -= x_train_mean
 #%%
-x_ = x_svhn[:100]
+x_ = x_svhn[:300]
 test_ids = model._get_polytope_ids(x_)
 #%%
 total_polytope = len(model.polytope_means)
@@ -153,7 +154,7 @@ arg_min = np.argmin(distances,axis=1)
 arg_sort = np.argsort(distances,axis=1)
 #%%
 import matplotlib.pyplot as plt
-id = 1
+id = 11
 sorted_arg = arg_sort[id,0]
 plt.imshow(model.polytope_means[arg_min[id]]- np.min(model.polytope_means[arg_min[id]].ravel()))
 #%%

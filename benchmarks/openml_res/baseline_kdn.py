@@ -33,7 +33,7 @@ compile_kwargs = {
     }
 callback = keras.callbacks.EarlyStopping(monitor="loss", patience=10, verbose=True)
 fit_kwargs = {
-        "epochs": 2000,
+        "epochs": 200,
         "batch_size": 32,
         "verbose": False,
         "callbacks": [callback],
@@ -115,10 +115,10 @@ def experiment(dataset_id, reps=10, random_state=42):
             
             if train_sample >= 600:
                 X_train, X_cal, y_train, y_cal = train_test_split(
-                X_train, y_train, train_size=0.6666666666666666, random_state=random_state+rep, stratify=y_train)
+                X_train, y_train, train_size=0.9, random_state=random_state+rep, stratify=y_train)
             else:
                 X_train, X_cal, y_train, y_cal = train_test_split(
-                X_train, y_train, train_size=0.6666666666666666, random_state=random_state+rep)
+                X_train, y_train, train_size=0.9, random_state=random_state+rep)
 
             uncalibrated_nn = KerasClassifier(build_fn=getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1),epochs=5, batch_size=32)  
             history = uncalibrated_nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)

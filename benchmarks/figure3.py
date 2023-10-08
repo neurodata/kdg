@@ -15,9 +15,10 @@ res_folder_kdf_baseline = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kd
 res_folder_kdn_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdn_res_ood'
 res_folder_kdf_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdf_res_ood'
 files = os.listdir(res_folder_kdn)
-#files.remove('.DS_Store')
+files.remove('.DS_Store')
 # %%
 id_done_ood = [6,11,12,14,16,18,22,28,32,37,44,54,182,300,458, 554,1049,1050,1063,1067,1068, 1462, 1464, 1468, 1475, 1478, 1485, 1487, 1489, 1494, 1497, 1501, 1510, 4134, 4538, 40499, 40979, 40982, 40983, 40984, 40994, 40996]
+
 #%%
 def plot_summary_ood(files, folder, model='kdf', parent='rf', color='r', ax=None):
     if ax is None:
@@ -113,9 +114,9 @@ def plot_summary_error(files, folder, baseline_folder, model='kdf', parent='rf',
                 np.median(sigmoid)
             )
 
-        err_diff = (np.array(err_x_med) - np.array(err_kdx_med))/np.array(err_x_med)
-        err_diff_isotonic = (np.array(err_x_med) - np.array(err_isotonic_med))/np.array(err_x_med)
-        err_diff_sigmoid = (np.array(err_x_med) - np.array(err_sigmoid_med))/np.array(err_x_med)
+        err_diff = (np.array(err_x_med) - np.array(err_kdx_med))/(np.array(err_x_med)+1e-12)
+        err_diff_isotonic = (np.array(err_x_med) - np.array(err_isotonic_med))/(np.array(err_x_med)+1e-12)
+        err_diff_sigmoid = (np.array(err_x_med) - np.array(err_sigmoid_med))/(np.array(err_x_med)+1e-12)
 
         idx = np.where(sample_combined<=samples[-1])[0]
         f = interp1d(samples, err_diff, kind='linear')
@@ -188,8 +189,8 @@ def plot_summary_ece(files, folder, baseline_folder, model='kdf', parent='rf', c
         for sample in samples:
             kdx = df['ece_'+model][df['samples']==sample]
             x = df['ece_'+parent][df['samples']==sample]
-            isotonic = df_baseline['err_isotonic'][df_baseline['samples']==sample]
-            sigmoid = df_baseline['err_sigmoid'][df_baseline['samples']==sample]
+            isotonic = df_baseline['ece_isotonic'][df_baseline['samples']==sample]
+            sigmoid = df_baseline['ece_sigmoid'][df_baseline['samples']==sample]
 
             err_kdx_med.append(
                 np.median(kdx)
@@ -207,9 +208,9 @@ def plot_summary_ece(files, folder, baseline_folder, model='kdf', parent='rf', c
                 np.median(sigmoid)
             )
 
-        err_diff = (np.array(err_x_med) - np.array(err_kdx_med))/np.array(err_x_med)
-        err_diff_isotonic = (np.array(err_x_med) - np.array(err_isotonic_med))/np.array(err_x_med)
-        err_diff_sigmoid = (np.array(err_x_med) - np.array(err_sigmoid_med))/np.array(err_x_med)
+        err_diff = (np.array(err_x_med) - np.array(err_kdx_med))/(np.array(err_x_med)+1e-12)
+        err_diff_isotonic = (np.array(err_x_med) - np.array(err_isotonic_med))/(np.array(err_x_med)+1e-12)
+        err_diff_sigmoid = (np.array(err_x_med) - np.array(err_sigmoid_med))/(np.array(err_x_med)+1e-12)
 
         idx = np.where(sample_combined<=samples[-1])[0]
         f = interp1d(samples, err_diff, kind='linear')
@@ -261,12 +262,12 @@ plot_summary_error(files, res_folder_kdf, res_folder_kdf_baseline, model='kdf_ge
 plot_summary_error(files, res_folder_kdf, res_folder_kdf_baseline, linestyle='dashed', ax=ax[0][0])
 plot_summary_ece(files, res_folder_kdf, res_folder_kdf_baseline, model='kdf_geod', ax=ax[0][1])
 plot_summary_ece(files, res_folder_kdf, res_folder_kdf_baseline, linestyle='dashed', ax=ax[0][1])
-#plot_summary_error(files, res_folder_kdn, res_folder_kdn_baseline, color=['b','y','k'], model='kdn_geod', parent='dn', ax=ax[1][0])
-#plot_summary_error(files, res_folder_kdn, res_folder_kdf_baseline, color=['b','y','k'], model='kdn', parent='dn', ax=ax[1][0])
-#plot_summary_ece(files, res_folder_kdn, res_folder_kdn_baseline, model='kdn_geod', parent='dn', ax=ax[1][1])
-#plot_summary_ece(files, res_folder_kdn, res_folder_kdn_baseline, model='kdn', parent='dn', ax=ax[1][1])
-#plot_summary_ood(files, res_folder_kdf_ood, color='b', ax=ax[0][2])
-#plot_summary_ood(files, res_folder_kdn_ood, model='kdn', parent='dn', color='b', ax=ax[1][2])
+plot_summary_error(files, res_folder_kdn, res_folder_kdn_baseline, color=['b','#8E388E','k'], model='kdn_geod', parent='dn', ax=ax[1][0])
+plot_summary_error(files, res_folder_kdn, res_folder_kdf_baseline, color=['b','#8E388E','k'], model='kdn', parent='dn', linestyle='dashed', ax=ax[1][0])
+plot_summary_ece(files, res_folder_kdn, res_folder_kdn_baseline, color=['b','#8E388E','k'], model='kdn_geod', parent='dn', ax=ax[1][1])
+plot_summary_ece(files, res_folder_kdn, res_folder_kdn_baseline, color=['b','#8E388E','k'], model='kdn', parent='dn', linestyle='dashed', ax=ax[1][1])
+plot_summary_ood(files, res_folder_kdf_ood, color='b', ax=ax[0][2])
+plot_summary_ood(files, res_folder_kdn_ood, model='kdn', parent='dn', color='b', ax=ax[1][2])
 
 ax[1][0].set_xlim([100, 50000])
 ax[1][1].set_xlim([100, 50000])
@@ -288,23 +289,23 @@ ax[0][0].set_ylabel('Kohen Kappa', fontsize=35)
 ax[0][1].set_title('ID Calibration Error', fontsize=40)
 
 ax[0][1].set_xscale("log")
-ax[0][1].set_ylim([-2.5, 1])
-ax[0][1].set_yticks([-2,0,1])
+#ax[0][1].set_ylim([-2.5, 1])
+#ax[0][1].set_yticks([-2,0,1])
 ax[0][1].set_xticks([])
 ax[0][1].set_ylabel('', fontsize=35)
 #ax[0][1].text(100, .3, 'KGF wins')
 #ax[0][1].text(100, -.05, 'RF wins')
 
 ax[1][0].set_xscale("log")
-ax[1][0].set_ylim([-0.05, .05])
-ax[1][0].set_yticks([-.05,0,.05])
+#ax[1][0].set_ylim([-0.05, .05])
+#ax[1][0].set_yticks([-.05,0,.05])
 ax[1][0].set_ylabel('Kohen Kappa', fontsize=35)
 #ax[1][0].text(100, .05, 'KGN wins')
 #ax[1][0].text(100, -.08, 'DN wins')
 
 ax[1][1].set_xscale("log")
-ax[1][1].set_ylim([-0.05, .05])
-ax[1][1].set_yticks([-.05,0,.05])
+#ax[1][1].set_ylim([-0.05, .05])
+#ax[1][1].set_yticks([-.05,0,.05])
 ax[1][1].set_ylabel('', fontsize=35)
 #ax[1][1].text(100, .05, 'KGN wins')
 #ax[1][1].text(100, -.08, 'DN wins')
