@@ -1,4 +1,3 @@
-from matplotlib.pyplot import sca
 from .base import KernelDensityGraph
 from sklearn.utils.validation import check_array, check_X_y
 import numpy as np
