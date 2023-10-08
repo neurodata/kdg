@@ -7,10 +7,10 @@ for line in open(os.path.join(PROJECT_PATH, "kdg", "__init__.py")):
     if line.startswith("__version__ = "):
         VERSION = line.strip().split()[2][1:-1]
 
-with open("README.rst", mode="r", encoding = "utf8") as f:
+with open("README.rst", mode="r") as f:
     LONG_DESCRIPTION = f.read()
 
-with open("requirements.txt", mode="r", encoding = "utf8") as f:
+with open("requirements.txt", mode="r") as f:
     REQUIREMENTS = f.read()
 
 setup(
