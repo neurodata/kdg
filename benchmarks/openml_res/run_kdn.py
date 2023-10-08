@@ -174,10 +174,10 @@ def experiment(dataset_id, layer_size = 1000, reps=5, random_state=42):
             seed(random_state+rep)
             history = uncalibrated_nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
             
-            calibrated_nn_isotonic = calcv(uncalibrated_nn, method = 'isotonic', ensemble=False, cv='prefit')
+            calibrated_nn_isotonic = calcv(uncalibrated_nn, method = 'isotonic', cv='prefit')
             calibrated_nn_isotonic.fit(X_cal, y_cal)
 
-            calibrated_nn_sigmoid = calcv(uncalibrated_nn, method = 'sigmoid', ensemble=False, cv='prefit')
+            calibrated_nn_sigmoid = calcv(uncalibrated_nn, method = 'sigmoid', cv='prefit')
             calibrated_nn_sigmoid.fit(X_cal, y_cal)
 
             y_proba_isotonic = calibrated_nn_isotonic.predict_proba(X_test)
