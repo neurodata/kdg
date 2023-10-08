@@ -120,7 +120,7 @@ def experiment(dataset_id, layer_size = 1000, reps=5, random_state=42):
                      X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep, stratify=y)
             
             #print(X_train.shape, X_test.shape)
-            nn = KerasClassifier(build_fn=getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1, layer_size=layer_size))
+            nn = getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1, layer_size=layer_size)
             seed(random_state+rep)
             history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
             model_kdn = kdn(network=nn)
