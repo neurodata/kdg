@@ -258,10 +258,10 @@ sns.set(
 
 fig, ax = plt.subplots(2, 3, figsize=(21,14))
 
-plot_summary_error(files, res_folder_kdf, res_folder_kdf_baseline, model='kdf_geod', ax=ax[0][0])
-plot_summary_error(files, res_folder_kdf, res_folder_kdf_baseline, linestyle='dashed', ax=ax[0][0])
-plot_summary_ece(files, res_folder_kdf, res_folder_kdf_baseline, model='kdf_geod', ax=ax[0][1])
-plot_summary_ece(files, res_folder_kdf, res_folder_kdf_baseline, linestyle='dashed', ax=ax[0][1])
+#plot_summary_error(files, res_folder_kdf, res_folder_kdf_baseline, model='kdf_geod', ax=ax[0][0])
+#plot_summary_error(files, res_folder_kdf, res_folder_kdf_baseline, linestyle='dashed', ax=ax[0][0])
+#plot_summary_ece(files, res_folder_kdf, res_folder_kdf_baseline, model='kdf_geod', ax=ax[0][1])
+#plot_summary_ece(files, res_folder_kdf, res_folder_kdf_baseline, linestyle='dashed', ax=ax[0][1])
 plot_summary_error(files, res_folder_kdn, res_folder_kdn_baseline, color=['b','#8E388E','k'], model='kdn_geod', parent='dn', ax=ax[1][0])
 plot_summary_error(files, res_folder_kdn, res_folder_kdf_baseline, color=['b','#8E388E','k'], model='kdn', parent='dn', linestyle='dashed', ax=ax[1][0])
 plot_summary_ece(files, res_folder_kdn, res_folder_kdn_baseline, color=['b','#8E388E','k'], model='kdn_geod', parent='dn', ax=ax[1][1])
