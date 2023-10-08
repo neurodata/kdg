@@ -123,7 +123,7 @@ def experiment(dataset_id, layer_size = 1000, reps=5, random_state=42):
             seed(random_state+rep)
             history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
             model_kdn = kdn(network=nn)
-            model_kdn.fit(X_train, y_train, k=int(np.ceil(train_sample*95/100)))
+            model_kdn.fit(X_train, y_train, k=int(np.ceil(train_sample*3.33/100)))
             model_kdn.global_bias = -1e100
             proba_kdn = model_kdn.predict_proba(X_test)
             proba_kdn_geod = model_kdn.predict_proba(X_test, distance='Geodesic')
