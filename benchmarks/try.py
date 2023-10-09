@@ -66,41 +66,43 @@ max_val = np.max(X, axis=0)
 X = (X-min_val)/(max_val-min_val+1e-12)
 _, y = np.unique(y, return_inverse=True)
 #%%
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=400, train_size=972, random_state=10, stratify=y)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1000, train_size=1000, random_state=10, stratify=y)
+X_train, X_cal, y_train, y_cal = train_test_split(
+                X_train, y_train, train_size=0.9, random_state=10, stratify=y_train)
 
 nn = getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1, layer_size=1000)
 history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
 #%%
 model_kdn = kdn(network=nn)
-model_kdn.fit(X_train, y_train, k=50)#int(np.ceil(.01*13000)))
+model_kdn.fit(X_train, y_train, X_cal, y_cal)#, k=int(np.ceil(.4*1000)))
 model_kdn.global_bias=-1e100
 
 #%%
 proba = model_kdn.predict_proba(X_test,distance='Geodesic')
-print(np.mean(y_test==np.argmax(proba,axis=1)))
+print('Accuracy=',np.mean(y_test==np.argmax(proba,axis=1)))
 
-get_ece(proba,y_test, n_bins=15)
+print('ECE=',get_ece(proba,y_test, n_bins=15))
 #%%
 proba_dn = model_kdn.network.predict(X_test)
-print(np.mean(y_test==np.argmax(proba_dn,axis=1)))
-get_ece(proba_dn,y_test, n_bins=15)
+print('Accuracy=',np.mean(y_test==np.argmax(proba_dn,axis=1)))
+print('ECE=',get_ece(proba_dn,y_test, n_bins=15))
 #%%
 polytope_ids = model_kdn._get_polytope_ids(
                     np.array(X_train)
                 )
 w = 1- model_kdn._compute_geodesic(polytope_ids, polytope_ids)
 #%%
-k = 100#int(np.ceil(np.sqrt(X_train.shape[0])/2))#int(0.0006474*X_train.shape[0]*X.shape[1]**(1/1.323))
+k = 600#int(np.ceil(np.sqrt(X_train.shape[0])/2))#int(0.0006474*X_train.shape[0]*X.shape[1]**(1/1.323))
 for id in range(100):
     #id = 15
     idx = np.argsort(w[id])[::-1]
 
-    lbl = np.zeros(26,dtype=float)
+    lbl = np.zeros(np.max(y_train)+1,dtype=float)
     for ii in idx[:k]:
         lbl[int(y_train[ii])] += 1#w[id,ii]
         #print(w[id,ii], int(y_train[ii]))
 
-    print(np.max(lbl)/np.sum(lbl))
+    print(lbl, w[id,ii], np.max(lbl)/np.sum(lbl))
 print(X_train.shape)
 
 

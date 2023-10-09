@@ -11,6 +11,7 @@ import pickle
 import os
 import gc
 from joblib.externals.loky import get_reusable_executor
+from .utils import get_ece
 
 class kdn(KernelDensityGraph):
    def __init__(
@@ -159,8 +160,14 @@ class kdn(KernelDensityGraph):
            test_X.reshape(total_samples,-1),
            np.array(self.polytope_means).reshape(total_polytopes,-1)
         )
+   
+   def _reset_param(self):
+       for label in self.labels:
+           self.polytope_cardinality[label] = []
+           self.total_samples_this_label[label] = 0 
 
-   def fit(self, X, y, epsilon=1e-6, batch=1, n_jobs=-1, k=10, save_temp=False):
+
+   def fit(self, X, y, X_val=None, y_val=None, epsilon=1e-6, batch=1, n_jobs=-1, k=None, save_temp=False):
        r"""
        Fits the kernel density forest.
        Parameters
@@ -175,7 +182,7 @@ class kdn(KernelDensityGraph):
        self.labels = np.unique(y)
        self.total_samples = X.shape[0]
        self.feature_dim = np.product(X.shape[1:])
-       self.global_bias = - 10**(self.feature_dim) 
+       self.global_bias = - 1e100 
 
        idx_with_label = {}
        for label in self.labels:
@@ -185,9 +192,7 @@ class kdn(KernelDensityGraph):
            self.prior[label] = len(
                     idx_with_label[label]
                 )/X.shape[0]
-           idx_with_label[label] = np.where(
-                    y == label
-                )[0] 
+            
  
        # get polytope ids and unique polytope ids
        batchsize = self.total_samples//batch
@@ -216,14 +221,14 @@ class kdn(KernelDensityGraph):
        print('Fitting data!')
 
        #k = int(np.ceil(np.sqrt(self.total_samples)))
+       polytope_filtered_id = []
        for ii in range(self.total_samples):
            if ii in used:
                continue
            
+           polytope_filtered_id.append(ii)
            scales = w[ii,:].copy()
            
-           arg_scale = np.argsort(scales)[::-1]
-           scale_indx_to_consider = arg_scale[:k]
            #scale_indx_to_consider = np.where(scales>k)[0]
                
            idx_with_scale_1 = np.where(
@@ -242,22 +247,105 @@ class kdn(KernelDensityGraph):
                     )
            self.polytope_cov.append(covariance)
            self.polytope_means.append(location)   
-
-           counts = {}
-           for label in self.labels:
-               counts[label] = 0
-           
-           for neighbor in scale_indx_to_consider:
-                counts[int(y[neighbor])] += 1
-
-           for label in self.labels:
-                self.polytope_cardinality[label].append(
-                        counts[label]
-                    )
-                self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
- 
- 
+       
        self.global_bias = self.global_bias - np.log10(self.total_samples)
+       ### cross validate for k
+       def _count_polytope_cardinality(scale_indx_to_consider):
+            counts = {}
+            for label in self.labels:
+                counts[label] = 0
+            
+            for neighbor in scale_indx_to_consider:
+                    counts[int(y[neighbor])] += 1
+
+            for label in self.labels:
+                    self.polytope_cardinality[label].append(
+                            counts[label]
+                        )
+                    self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
+       
+       def _get_likelihoods(min_id):
+            log_likelihoods = np.zeros(
+                (np.size(X_val,0), len(self.labels)),
+                dtype=float
+            )
+            for ii,label in enumerate(self.labels):
+                for jj in range(X_val.shape[0]):
+                    log_likelihoods[jj, ii] = self._compute_log_likelihood(X_val[jj], label, min_id[jj])
+                    max_pow = max(log_likelihoods[jj, ii], self.global_bias)
+                    log_likelihoods[jj, ii] = np.log(
+                        (np.exp(log_likelihoods[jj, ii] - max_pow)\
+                            + np.exp(self.global_bias - max_pow))
+                            *self.prior[label]
+                    ) + max_pow
+                     
+            max_pow = np.nan_to_num(
+                np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(self.labels)))
+            )
+            log_likelihoods -= max_pow
+            likelihoods = np.exp(log_likelihoods)
+
+            total_likelihoods = np.sum(likelihoods, axis=1)
+
+            proba = (likelihoods.T/total_likelihoods).T
+
+            return proba
+
+
+       if k == None:
+            val_id = self._get_polytope_ids(X_val)
+            distance = self._compute_geodesic(val_id, polytope_ids[polytope_filtered_id])
+            min_dis_id = np.argmin(distance,axis=1)
+            
+            #k = int(np.ceil(np.sqrt(self.total_samples)))
+            k_ = [1.33,3.33,10,20,30,40,50,60,70,80,90]
+            min_ece = 1
+            k = 0
+            max_acc = 0
+            for tmp_k in k_:
+                neighbor = int(np.ceil(self.total_samples*tmp_k/100))
+                used = []
+                for ii in range(self.total_samples):
+
+                    if ii in used:
+                        continue
+
+                    scales = w[ii,:].copy()
+                    idx_with_scale_1 = np.where(
+                                scales>.9999999
+                            )[0]
+                    used.extend(idx_with_scale_1)
+                    arg_scale = np.argsort(scales)[::-1]
+                    indx_to_consider = arg_scale[:neighbor]
+                    _count_polytope_cardinality(indx_to_consider)
+                
+                prob = _get_likelihoods(min_dis_id)
+                
+                accuracy = np.mean(np.argmax(prob,axis=1)==y_val)
+                ece = get_ece(prob, y_val)
+                if ece < min_ece and accuracy>=max_acc:
+                    min_ece = ece
+                    max_acc = accuracy
+                    k = neighbor
+                
+
+                self._reset_param()
+            
+       used = []
+       for ii in range(self.total_samples):
+            if ii in used:
+                continue
+            
+            scales = w[ii,:].copy()
+            idx_with_scale_1 = np.where(
+                        scales>.9999999
+                    )[0]
+            used.extend(idx_with_scale_1)
+            arg_scale = np.argsort(scales)[::-1]
+            indx_to_consider = arg_scale[:k]
+            _count_polytope_cardinality(indx_to_consider)
+
+             
        self.is_fitted = True      
 
    def _compute_log_likelihood_1d(self, X, location, variance):        
