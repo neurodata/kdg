@@ -54,7 +54,7 @@ def getNN(input_size, num_classes, layer_size=1000):
     return network_base
 
 #%%
-dataset_id = 1049#44#11#22#11#40979#1067#1468#44#40979#1468#11#44#1050#
+dataset_id = 40979#44#11#22#11#40979#1067#1468#44#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -72,7 +72,7 @@ nn = getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1, layer_siz
 history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
 #%%
 model_kdn = kdn(network=nn)
-model_kdn.fit(X_train, y_train, k=900)#int(np.ceil(.01*13000)))
+model_kdn.fit(X_train, y_train, k=50)#int(np.ceil(.01*13000)))
 model_kdn.global_bias=-1e100
 
 #%%
