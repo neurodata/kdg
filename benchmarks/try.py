@@ -54,7 +54,7 @@ def getNN(input_size, num_classes, layer_size=1000):
     return network_base
 
 #%%
-dataset_id = 6#44#11#22#11#40979#1067#1468#44#40979#1468#11#44#1050#
+dataset_id = 4134#44#11#22#11#40979#1067#1468#44#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
