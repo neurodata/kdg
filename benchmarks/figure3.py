@@ -75,7 +75,7 @@ def plot_summary_error(files, folder, baseline_folder, model='kdf', parent='rf',
         print(file)
         df = pd.read_csv(folder+'/'+file)
         sample_combined.extend(np.unique(df['samples']))
-
+        print(np.unique(df['samples']))
     sample_combined = np.unique(
             sample_combined
         )
@@ -306,7 +306,7 @@ ax[1][0].set_ylabel('Kohen Kappa', fontsize=35)
 #ax[1][0].text(100, -.08, 'DN wins')
 
 ax[1][1].set_xscale("log")
-#ax[1][1].set_ylim([-0.05, .05])
+ax[1][1].set_ylim([-2, 1])
 #ax[1][1].set_yticks([-.05,0,.05])
 ax[1][1].set_ylabel('', fontsize=35)
 #ax[1][1].text(100, .05, 'KGN wins')

@@ -298,7 +298,7 @@ class kdn(KernelDensityGraph):
             min_dis_id = np.argmin(distance,axis=1)
             
             #k = int(np.ceil(np.sqrt(self.total_samples)))
-            k_ = [1.33,3.33,10,20,30,40,50,60,70,80,90]
+            k_ = [0.3333, 1.33,3.33,10,20,30,40,50,60,70,80,90]
             min_ece = 1
             k = 0
             max_acc = 0
