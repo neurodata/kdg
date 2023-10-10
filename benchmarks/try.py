@@ -66,7 +66,7 @@ max_val = np.max(X, axis=0)
 X = (X-min_val)/(max_val-min_val+1e-12)
 _, y = np.unique(y, return_inverse=True)
 #%%
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1000, train_size=700, random_state=10, stratify=y)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1000, train_size=1000, random_state=10, stratify=y)
 X_train, X_cal, y_train, y_cal = train_test_split(
                 X_train, y_train, train_size=0.9, random_state=10, stratify=y_train)
 
@@ -74,7 +74,7 @@ nn = getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1, layer_siz
 history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
 #%%
 model_kdn = kdn(network=nn)
-model_kdn.fit(X_train, y_train, X_cal, y_cal, k=18)#, k=int(np.ceil(.4*1000)))
+model_kdn.fit(X_train, y_train, X_cal, y_cal)#, k=int(np.ceil(.4*1000)))
 model_kdn.global_bias=-1e100
 
 #%%
