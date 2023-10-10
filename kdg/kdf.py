@@ -51,7 +51,13 @@ class kdf(KernelDensityGraph):
                axis=1
            )
         return w
-    
+
+    def _reset_param(self):
+       for label in self.labels:
+           self.polytope_cardinality[label] = []
+           self.total_samples_this_label[label] = 0 
+  
+  
     def fit(self, X, y, k=1, epsilon=1e-6):
         r"""
         Fits the kernel density forest.
