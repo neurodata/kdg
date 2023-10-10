@@ -297,6 +297,8 @@ class kdn(KernelDensityGraph):
             for _ in range(2):
                 if k==None:
                     k_ = np.arange(1,20,2)
+                else:
+                    k_ = np.arange(k,k+2,.2)
                 for tmp_k in k_:
                     used = []
                     for ii in range(self.total_samples):
