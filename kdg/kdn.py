@@ -250,19 +250,13 @@ class kdn(KernelDensityGraph):
        
        self.global_bias = self.global_bias - np.log10(self.total_samples)
        ### cross validate for k
-       def _count_polytope_cardinality(scale_indx_to_consider):
-            counts = {}
-            for label in self.labels:
-                counts[label] = 0
-            
-            for neighbor in scale_indx_to_consider:
-                    counts[int(y[neighbor])] += 1
+       def _count_polytope_cardinality(weight):
+            for label in self.labels:     
+               self.polytope_cardinality[label].append(
+                    np.sum(weight[idx_with_label[label]])
+                )
+               self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
 
-            for label in self.labels:
-                    self.polytope_cardinality[label].append(
-                            counts[label]
-                        )
-                    self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
        
        def _get_likelihoods(min_id):
             log_likelihoods = np.zeros(
@@ -298,12 +292,10 @@ class kdn(KernelDensityGraph):
             min_dis_id = np.argmin(distance,axis=1)
             
             #k = int(np.ceil(np.sqrt(self.total_samples)))
-            k_ = [0.3333, 1.33,3.33,10,20,30,40,50,60,70,80,90]
+            k_ = np.arange(1,8,.2)
             min_ece = 1
-            k = 0
             max_acc = 0
             for tmp_k in k_:
-                neighbor = int(np.ceil(self.total_samples*tmp_k/100))
                 used = []
                 for ii in range(self.total_samples):
 
@@ -315,20 +307,21 @@ class kdn(KernelDensityGraph):
                                 scales>.9999999
                             )[0]
                     used.extend(idx_with_scale_1)
-                    arg_scale = np.argsort(scales)[::-1]
-                    indx_to_consider = arg_scale[:neighbor]
-                    _count_polytope_cardinality(indx_to_consider)
+                    
+                    _count_polytope_cardinality(scales**tmp_k)
                 
                 prob = _get_likelihoods(min_dis_id)
                 
-                accuracy = np.mean(np.argmax(prob,axis=1)==y_val)
+                #accuracy = np.mean(np.argmax(prob,axis=1)==y_val)
                 ece = get_ece(prob, y_val)
-                if ece < min_ece and accuracy>=max_acc:
+                #print(k, ece)
+                if ece < min_ece:
                     min_ece = ece
-                    max_acc = accuracy
-                    k = neighbor
+                    #max_acc = accuracy
+                    k = tmp_k
                 
-
+                
+                    #print('taken')
                 self._reset_param()
             
        used = []
@@ -341,9 +334,8 @@ class kdn(KernelDensityGraph):
                         scales>.9999999
                     )[0]
             used.extend(idx_with_scale_1)
-            arg_scale = np.argsort(scales)[::-1]
-            indx_to_consider = arg_scale[:k]
-            _count_polytope_cardinality(indx_to_consider)
+
+            _count_polytope_cardinality(scales**k)
 
              
        self.is_fitted = True      
