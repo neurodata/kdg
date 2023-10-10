@@ -98,7 +98,7 @@ def experiment(dataset_id, layer_size=1000, reps=5, random_state=42):
         if len(unique_val) < 10:
             return'''
 
-    total_sample = 10000 if X.shape[0]<10000 else X.shape[0]
+    total_sample = 10000 if X.shape[0]>10000 else X.shape[0]
     test_sample = total_sample//3 if total_sample//3 < 1000 else 1000
     train_samples = np.logspace(
         np.log10(100),
