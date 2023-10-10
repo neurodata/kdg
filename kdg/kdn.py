@@ -291,38 +291,40 @@ class kdn(KernelDensityGraph):
             distance = self._compute_geodesic(val_id, polytope_ids[polytope_filtered_id])
             min_dis_id = np.argmin(distance,axis=1)
             
-            #k = int(np.ceil(np.sqrt(self.total_samples)))
-            k_ = np.arange(1,8,.2)
+            #k = int(np.ceil(np.sqrt(self.total_samples))
             min_ece = 1
             max_acc = 0
-            for tmp_k in k_:
-                used = []
-                for ii in range(self.total_samples):
+            for _ in range(2):
+                if k==None:
+                    k_ = np.arange(1,20,2)
+                for tmp_k in k_:
+                    used = []
+                    for ii in range(self.total_samples):
 
-                    if ii in used:
-                        continue
+                        if ii in used:
+                            continue
 
-                    scales = w[ii,:].copy()
-                    idx_with_scale_1 = np.where(
-                                scales>.9999999
-                            )[0]
-                    used.extend(idx_with_scale_1)
+                        scales = w[ii,:].copy()
+                        idx_with_scale_1 = np.where(
+                                    scales>.9999999
+                                )[0]
+                        used.extend(idx_with_scale_1)
+                        
+                        _count_polytope_cardinality(scales**tmp_k)
                     
-                    _count_polytope_cardinality(scales**tmp_k)
-                
-                prob = _get_likelihoods(min_dis_id)
-                
-                #accuracy = np.mean(np.argmax(prob,axis=1)==y_val)
-                ece = get_ece(prob, y_val)
-                #print(k, ece)
-                if ece < min_ece:
-                    min_ece = ece
-                    #max_acc = accuracy
-                    k = tmp_k
-                
-                
-                    #print('taken')
-                self._reset_param()
+                    prob = _get_likelihoods(min_dis_id)
+                    
+                    #accuracy = np.mean(np.argmax(prob,axis=1)==y_val)
+                    ece = get_ece(prob, y_val)
+                    #print(k, ece)
+                    if ece < min_ece:
+                        min_ece = ece
+                        #max_acc = accuracy
+                        k = tmp_k
+                    
+                    
+                        #print('taken')
+                    self._reset_param()
             
        used = []
        for ii in range(self.total_samples):
