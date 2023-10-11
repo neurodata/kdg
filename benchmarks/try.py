@@ -24,7 +24,7 @@ import warnings
 from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import train_test_split
-
+from sklearn.ensemble import RandomForestClassifier as rf 
 #%%
 compile_kwargs = {
         "loss": "binary_crossentropy",
@@ -54,7 +54,7 @@ def getNN(input_size, num_classes, layer_size=1000):
     return network_base
 
 #%%
-dataset_id = 4134#44#11#22#11#40979#1067#1468#44#40979#1468#11#44#1050#
+dataset_id = 23517#44#11#22#11#40979#1067#1468#44#40979#1468#11#44#1050#
 dataset = openml.datasets.get_dataset(dataset_id)
 X, y, is_categorical, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute
@@ -70,6 +70,26 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1000, train_
 X_train, X_cal, y_train, y_cal = train_test_split(
                 X_train, y_train, train_size=0.9, random_state=10, stratify=y_train)
 
+#%%
+model = rf(n_estimators=500)
+model.fit(X_train, y_train)
+
+#%%
+model_kdf = kdf(rf_model=model)
+model_kdf.fit(X_train, y_train, X_cal, y_cal)#, k=int(np.ceil(.4*1000)))
+model_kdf.global_bias=-1e100
+
+#%%
+proba = model_kdf.predict_proba(X_test,distance='Geodesic')
+print('Accuracy=',np.mean(y_test==np.argmax(proba,axis=1)))
+
+print('ECE=',get_ece(proba,y_test, n_bins=15))
+
+#%%
+proba_rf = model_kdf.rf_model.predict_proba(X_test)
+print('Accuracy=',np.mean(y_test==np.argmax(proba_rf,axis=1)))
+print('ECE=',get_ece(proba_rf,y_test, n_bins=15))
+#%%
 nn = getNN(input_size=X_train.shape[1], num_classes=np.max(y_train)+1, layer_size=1000)
 history = nn.fit(X_train, keras.utils.to_categorical(y_train), **fit_kwargs)
 #%%

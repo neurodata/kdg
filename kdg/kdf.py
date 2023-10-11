@@ -5,6 +5,7 @@ from sklearn.ensemble import RandomForestClassifier as rf
 import numpy as np
 from scipy.optimize import curve_fit
 from tqdm import tqdm
+from .utils import get_ece
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -99,33 +100,129 @@ class kdf(KernelDensityGraph):
         )
         
         used = []
+        print('Fitting data!')
+
+        #k = int(np.ceil(np.sqrt(self.total_samples)))
+        polytope_filtered_id = []
         for ii in range(self.total_samples):
             if ii in used:
-               continue
-
-            scales= w[ii,:]**1.36#(1+np.floor(np.log10(self.total_samples)/3))
-            idx_with_scale_1 = list(np.where(
-                    scales>0.999999
-                )[0])
-            scales[ii] = 0 #new change
+                continue
+            
+            polytope_filtered_id.append(ii)
+            scales = w[ii,:].copy()
+            
+            #scale_indx_to_consider = np.where(scales>k)[0]
+                
+            idx_with_scale_1 = np.where(
+                    scales>.9999999
+                )[0]
             used.extend(idx_with_scale_1)
-            
-            location = np.mean(X[idx_with_scale_1], axis=0)    
-
-            X_tmp = X.copy() - location
-            covariance = np.average(X_tmp**2+epsilon/np.sum(scales), axis=0, weights=scales)
-            
-            self.polytope_cov.append(covariance)
-            self.polytope_means.append(location)
-
-            for label in self.labels:
-                idx = idx_with_label[label]      
-                self.polytope_cardinality[label].append(
-                    np.sum(scales[idx])
+                
+            location = np.mean(
+                X[idx_with_scale_1],
+                axis=0
                 )
-                self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
-
+            X_tmp = X[idx_with_scale_1].copy() - location
+            covariance = np.mean(
+                            X_tmp**2+epsilon, 
+                            axis=0
+                        )
+            self.polytope_cov.append(covariance)
+            self.polytope_means.append(location)   
+        
         self.global_bias = self.global_bias - np.log10(self.total_samples)
+        ### cross validate for k
+        def _count_polytope_cardinality(weight):
+                for label in self.labels:     
+                    self.polytope_cardinality[label].append(
+                            np.sum(weight[idx_with_label[label]])
+                        )
+                    self.total_samples_this_label[label] += self.polytope_cardinality[label][-1]
+
+        
+        def _get_likelihoods(min_id):
+                log_likelihoods = np.zeros(
+                    (np.size(X_val,0), len(self.labels)),
+                    dtype=float
+                )
+                for ii,label in enumerate(self.labels):
+                    for jj in range(X_val.shape[0]):
+                        log_likelihoods[jj, ii] = self._compute_log_likelihood(X_val[jj], label, min_id[jj])
+                        max_pow = max(log_likelihoods[jj, ii], self.global_bias)
+                        log_likelihoods[jj, ii] = np.log(
+                            (np.exp(log_likelihoods[jj, ii] - max_pow)\
+                                + np.exp(self.global_bias - max_pow))
+                                *self.prior[label]
+                        ) + max_pow
+                        
+                max_pow = np.nan_to_num(
+                    np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(self.labels)))
+                )
+                log_likelihoods -= max_pow
+                likelihoods = np.exp(log_likelihoods)
+
+                total_likelihoods = np.sum(likelihoods, axis=1)
+
+                proba = (likelihoods.T/total_likelihoods).T
+
+                return proba
+
+
+        if k == None:
+                val_id = self._get_polytope_ids(X_val)
+                distance = self._compute_geodesic(val_id, polytope_ids[polytope_filtered_id])
+                min_dis_id = np.argmin(distance,axis=1)
+                
+                #k = int(np.ceil(np.sqrt(self.total_samples))
+                min_ece = 1
+                max_acc = 0
+                for _ in range(2):
+                    if k==None:
+                        k_ = np.arange(1,20,2)
+                    else:
+                        k_ = np.arange(k,k+2,.2)
+                    for tmp_k in k_:
+                        used = []
+                        for ii in range(self.total_samples):
+
+                            if ii in used:
+                                continue
+
+                            scales = w[ii,:].copy()
+                            idx_with_scale_1 = np.where(
+                                        scales>.9999999
+                                    )[0]
+                            used.extend(idx_with_scale_1)
+                            
+                            _count_polytope_cardinality(scales**tmp_k)
+                        
+                        prob = _get_likelihoods(min_dis_id)
+                        
+                        #accuracy = np.mean(np.argmax(prob,axis=1)==y_val)
+                        ece = get_ece(prob, y_val)
+                        #print(k, ece)
+                        if ece < min_ece:
+                            min_ece = ece
+                            #max_acc = accuracy
+                            k = tmp_k
+                        
+                        
+                            #print('taken')
+                        self._reset_param()
+                
+        used = []
+        for ii in range(self.total_samples):
+                if ii in used:
+                    continue
+                
+                scales = w[ii,:].copy()
+                idx_with_scale_1 = np.where(
+                            scales>.9999999
+                        )[0]
+                used.extend(idx_with_scale_1)
+
+                _count_polytope_cardinality(scales**k)
+
         self.is_fitted = True
         
     def _compute_distance(self, X, polytope):

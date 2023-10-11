@@ -9,29 +9,47 @@ from scipy.interpolate import interp1d
 
 # %%
 res_folder_kdn = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdn_res'
-res_folder_kdn_baseline = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdn_res_baseline'
+res_folder_kdn_baseline_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdn_res_baseline_ood'
 res_folder_kdf = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdf_res'
-res_folder_kdf_baseline = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdf_res_baseline'
+res_folder_kdf_baseline_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdf_res_baseline_ood'
 res_folder_kdn_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdn_res_ood'
 res_folder_kdf_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdf_res_ood'
-files = os.listdir(res_folder_kdn)
+files = os.listdir(res_folder_kdf)
 files.remove('.DS_Store')
-# %%
-id_done_ood = [6,11,12,14,16,18,22,28,32,37,44,54,182,300,458, 554,1049,1050,1063,1067,1068, 1462, 1464, 1468, 1475, 1478, 1485, 1487, 1489, 1494, 1497, 1501, 1510, 4134, 4538, 40499, 40979, 40982, 40983, 40984, 40994, 40996]
 
 #%%
-def plot_summary_ood(files, folder, model='kdf', parent='rf', color='r', ax=None):
+def smooth_curve(data, w=5):
+    smoothed_data = []
+    buffer = []
+    for point in data:
+        if len(buffer) > w:
+            buffer.pop(0)
+        buffer.append(point)
+        smoothed_data.append(np.mean(buffer))
+
+    return smoothed_data
+
+#%%
+def plot_summary_ood(files, folder, baseline_folder, model='kdf', parent='rf', color=['r','#8E388E','k'], ax=None):
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(8, 8), sharey=True, sharex=True, constrained_layout=True)
 
     r = np.arange(0,5,.5)
     r[1:] += .5
 
+    if parent == 'dn':
+        parent_ = 'nn'
+    else:
+        parent_ = parent
+
     err_diff_ = []
+    err_diff_isotonic = []
+    err_diff_sigmoid = []  
     for file in files:
         if os.path.exists(folder+'/'+file):
             df = pd.read_csv(folder+'/'+file)
-
+            df_baseline = pd.read_csv(baseline_folder+'/'+file)
+            #print(file)
             data_id = file[:-4]
             data_id = int(data_id[8:])
 
@@ -43,11 +61,16 @@ def plot_summary_ood(files, folder, model='kdf', parent='rf', color='r', ax=None
             mean_max_ood = np.max(counts)/np.sum(counts)
             #print(mean_max_ood)
             err_kdx_med = []
+            err_isotonic_med =[]
+            err_sigmoid_med = []
             err_x_med = []
 
             for dist in r:
                 kdx = np.abs(df['conf_'+model][df['distance']==dist] - mean_max_ood)
                 x = np.abs(df['conf_'+parent][df['distance']==dist] - mean_max_ood)
+                isotonic = np.abs(df_baseline['conf_'+parent_+'_isotonic'][df_baseline['distance']==dist] - mean_max_ood)
+                #print('error here')
+                sigmoid = np.abs(df_baseline['conf_'+parent_+'_sigmoid'][df_baseline['distance']==dist] - mean_max_ood)
 
                 err_kdx_med.append(
                     np.median(kdx)
@@ -56,26 +79,45 @@ def plot_summary_ood(files, folder, model='kdf', parent='rf', color='r', ax=None
                 err_x_med.append(
                     np.median(x)
                 )
+                err_isotonic_med.append(
+                    np.median(isotonic)
+                )
+                err_sigmoid_med.append(
+                    np.median(sigmoid)
+                )
             
             err_diff_.append(
                 np.array(err_x_med) - np.array(err_kdx_med)
             )
+            err_diff_isotonic.append(
+                np.array(err_x_med) - np.array(err_isotonic_med)
+            )
+            err_diff_sigmoid.append(
+                np.array(err_x_med) - np.array(err_sigmoid_med)
+            )
 
     qunatiles = np.nanquantile(np.array(err_diff_),[.25,.75],axis=0)
-    ax.plot(r[1:], np.nanmedian(np.array(err_diff_), axis=0)[1:], linewidth=4, c=color)
-    ax.fill_between(r[1:], qunatiles[0][1:], qunatiles[1][1:], facecolor=color, alpha=.3)
+    qunatiles_isotone = np.nanquantile(np.array(err_diff_isotonic),[.25,.75],axis=0)
+    qunatiles_sigmoid = np.nanquantile(np.array(err_diff_sigmoid),[.25,.75],axis=0)
+    ax.plot(r[1:], np.nanmedian(np.array(err_diff_), axis=0)[1:], linewidth=4, c=color[0])
+    ax.fill_between(r[1:], qunatiles[0][1:], qunatiles[1][1:], facecolor=color[0], alpha=.1)
 
+    ax.plot(r[1:], np.nanmedian(np.array(err_diff_isotonic), axis=0)[1:], linewidth=3, c=color[1])
+    ax.fill_between(r[1:], qunatiles_isotone[0][1:], qunatiles_isotone[1][1:], facecolor=color[1], alpha=.1)
 
-def plot_summary_error(files, folder, baseline_folder, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyle=None, ax=None):
+    ax.plot(r[1:], np.nanmedian(np.array(err_diff_sigmoid), axis=0)[1:], linewidth=3, c=color[2])
+    ax.fill_between(r[1:], qunatiles_sigmoid[0][1:], qunatiles_sigmoid[1][1:], facecolor=color[2], alpha=.1)
+
+def plot_summary_error(files, folder, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyle=None, ax=None):
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(8, 8), sharey=True, sharex=True, constrained_layout=True)
 
     sample_combined = []
     for file in files:
-        print(file)
+        #print(file)
         df = pd.read_csv(folder+'/'+file)
         sample_combined.extend(np.unique(df['samples']))
-        print(np.unique(df['samples']))
+        #print(np.unique(df['samples']))
     sample_combined = np.unique(
             sample_combined
         )
@@ -148,20 +190,20 @@ def plot_summary_error(files, folder, baseline_folder, model='kdf', parent='rf',
     qunatiles_sigmoid = np.nanquantile(np.array(err_diff_sigmoid_),[.25,.75],axis=0)
 
     if linestyle != None:
-        ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, linestyle=linestyle, c=color[0], label=model[:3].upper()+'-Euclidean') 
-        ax.fill_between(sample_combined, qunatiles[0], qunatiles[1], facecolor=color[0], alpha=.1)   
+        ax.plot(sample_combined, smooth_curve(np.nanmedian(np.array(err_diff_), axis=0)), linewidth=4, linestyle=linestyle, c=color[0], label=model[:3].upper()+'-Euclidean') 
+        ax.fill_between(sample_combined, smooth_curve(qunatiles[0]), smooth_curve(qunatiles[1]), facecolor=color[0], alpha=.1)   
     else:
-        ax.plot(sample_combined, np.nanmedian(np.array(err_diff_isotonic_), axis=0), linewidth=3, c=color[1], label='Isotonic')    
-        ax.fill_between(sample_combined, qunatiles_isotonic[0], qunatiles_isotonic[1], facecolor=color[1], alpha=.1)
-        ax.plot(sample_combined, np.nanmedian(np.array(err_diff_sigmoid_), axis=0), linewidth=3, c=color[2], label='Sigmoid')    
-        ax.fill_between(sample_combined, qunatiles_sigmoid[0], qunatiles_sigmoid[1], facecolor=color[2], alpha=.1)
-        ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, c=color[0], label=model[:3].upper()+'-Geodesic')    
+        ax.plot(sample_combined, smooth_curve(np.nanmedian(np.array(err_diff_isotonic_), axis=0)), linewidth=3, c=color[1], label='Isotonic')    
+        ax.fill_between(sample_combined, smooth_curve(qunatiles_isotonic[0]), smooth_curve(qunatiles_isotonic[1]), facecolor=color[1], alpha=.1)
+        ax.plot(sample_combined, smooth_curve(np.nanmedian(np.array(err_diff_sigmoid_), axis=0)), linewidth=3, c=color[2], label='Sigmoid')    
+        ax.fill_between(sample_combined, smooth_curve(qunatiles_sigmoid[0]), smooth_curve(qunatiles_sigmoid[1]), facecolor=color[2], alpha=.1)
+        ax.plot(sample_combined, smooth_curve(np.nanmedian(np.array(err_diff_), axis=0)), linewidth=4, c=color[0], label=model[:3].upper()+'-Geodesic')    
 
-        ax.fill_between(sample_combined, qunatiles[0], qunatiles[1], facecolor=color[0], alpha=.2)
+        ax.fill_between(sample_combined, smooth_curve(qunatiles[0]), smooth_curve(qunatiles[1]), facecolor=color[0], alpha=.2)
 
 
 
-def plot_summary_ece(files, folder, baseline_folder, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyle=None, ax=None):
+def plot_summary_ece(files, folder, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyle=None, ax=None):
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(8, 8), sharey=True, sharex=True, constrained_layout=True)
 
@@ -178,7 +220,7 @@ def plot_summary_ece(files, folder, baseline_folder, model='kdf', parent='rf', c
     err_diff_isotonic_ = []
     err_diff_sigmoid_ = []
     for file in files:
-        print(file)
+        #print(file)
         df = pd.read_csv(folder+'/'+file)
         #df_baseline = pd.read_csv(baseline_folder+'/'+file)
         samples = np.unique(df['samples'])
@@ -242,47 +284,58 @@ def plot_summary_ece(files, folder, baseline_folder, model='kdf', parent='rf', c
     qunatiles_sigmoid = np.nanquantile(np.array(err_diff_sigmoid_),[.25,.75],axis=0)
 
     
-    ax.plot(sample_combined, np.nanmedian(np.array(err_diff_isotonic_), axis=0), linewidth=3, c=color[1])    
-    ax.fill_between(sample_combined, qunatiles_isotonic[0], qunatiles_isotonic[1], facecolor=color[1], alpha=.1)
-    ax.plot(sample_combined, np.nanmedian(np.array(err_diff_sigmoid_), axis=0), linewidth=3, c=color[2])    
-    ax.fill_between(sample_combined, qunatiles_sigmoid[0], qunatiles_sigmoid[1], facecolor=color[2], alpha=.1)
+    ax.plot(sample_combined, smooth_curve(np.nanmedian(np.array(err_diff_isotonic_), axis=0)), linewidth=3, c=color[1])    
+    ax.fill_between(sample_combined, smooth_curve(qunatiles_isotonic[0]), smooth_curve(qunatiles_isotonic[1]), facecolor=color[1], alpha=.1)
+    ax.plot(sample_combined, smooth_curve(np.nanmedian(np.array(err_diff_sigmoid_), axis=0)), linewidth=3, c=color[2])    
+    ax.fill_between(sample_combined, smooth_curve(qunatiles_sigmoid[0]), smooth_curve(qunatiles_sigmoid[1]), facecolor=color[2], alpha=.1)
 
     if linestyle != None:
-        ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, linestyle=linestyle, c=color[0])    
+        ax.plot(sample_combined, smooth_curve(np.nanmedian(np.array(err_diff_), axis=0)), linewidth=4, linestyle=linestyle, c=color[0])    
     else:
-        ax.plot(sample_combined, np.nanmedian(np.array(err_diff_), axis=0), linewidth=4, c=color[0])    
+        ax.plot(sample_combined, smooth_curve(np.nanmedian(np.array(err_diff_), axis=0)), linewidth=4, c=color[0])    
 
-    ax.fill_between(sample_combined, qunatiles[0], qunatiles[1], facecolor=color[0], alpha=.1)
+    ax.fill_between(sample_combined, smooth_curve(qunatiles[0]), smooth_curve(qunatiles[1]), facecolor=color[0], alpha=.1)
 
 #%%
 sns.set(
     color_codes=True, palette="bright", style="white", context="talk", font_scale=1.5
 )
 
-fig, ax = plt.subplots(2, 3, figsize=(21,14))
+fig, ax = plt.subplots(2, 3, figsize=(21,15))
 
-#plot_summary_error(files, res_folder_kdf, res_folder_kdf_baseline, model='kdf_geod', ax=ax[0][0])
+plot_summary_error(files, res_folder_kdf, color=['r','chocolate','purple'], model='kdf_geod', ax=ax[0][0])
 #plot_summary_error(files, res_folder_kdf, res_folder_kdf_baseline, linestyle='dashed', ax=ax[0][0])
-#plot_summary_ece(files, res_folder_kdf, res_folder_kdf_baseline, model='kdf_geod', ax=ax[0][1])
+plot_summary_ece(files, res_folder_kdf, color=['r','chocolate','purple'], model='kdf_geod', ax=ax[0][1])
 #plot_summary_ece(files, res_folder_kdf, res_folder_kdf_baseline, linestyle='dashed', ax=ax[0][1])
-plot_summary_error(files, res_folder_kdn, res_folder_kdn_baseline, color=['b','seagreen','magenta'], model='kdn_geod', parent='dn', ax=ax[1][0])
+plot_summary_error(files, res_folder_kdn, color=['b','seagreen','magenta'], model='kdn_geod', parent='dn', ax=ax[1][0])
 #plot_summary_error(files, res_folder_kdn, res_folder_kdf_baseline, color=['b','#8E388E','k'], model='kdn', parent='dn', linestyle='dashed', ax=ax[1][0])
-plot_summary_ece(files, res_folder_kdn, res_folder_kdn_baseline, color=['b','seagreen','magenta'], model='kdn_geod', parent='dn', ax=ax[1][1])
+plot_summary_ece(files, res_folder_kdn, color=['b','seagreen','magenta'], model='kdn_geod', parent='dn', ax=ax[1][1])
 #plot_summary_ece(files, res_folder_kdn, res_folder_kdn_baseline, color=['b','#8E388E','k'], model='kdn', parent='dn', linestyle='dashed', ax=ax[1][1])
-plot_summary_ood(files, res_folder_kdf_ood, color='b', ax=ax[0][2])
-plot_summary_ood(files, res_folder_kdn_ood, model='kdn', parent='dn', color='b', ax=ax[1][2])
+plot_summary_ood(files, res_folder_kdf_ood, res_folder_kdf_baseline_ood, color=['r','chocolate','purple'], ax=ax[0][2])
+plot_summary_ood(files, res_folder_kdn_ood, res_folder_kdn_baseline_ood, model='kdn', parent='dn', color=['b','seagreen','magenta'], ax=ax[1][2])
 
-ax[1][0].set_xlim([100, 50000])
-ax[1][1].set_xlim([100, 50000])
-ax[0][0].set_xlim([100, 50000])
-ax[0][1].set_xlim([100, 50000])
+
+ax[1][1].plot(0,0,c='r',linewidth=4, label='KDF')
+ax[1][1].plot(0,0,c='b',linewidth=4, label='KDN')
+ax[1][1].plot(0,0,c='chocolate',linewidth=3, label='Isotonic RF')
+ax[1][1].plot(0,0,c='seagreen',linewidth=3, label='Isotonic DN')
+ax[1][1].plot(0,0,c='purple',linewidth=3, label='Sigmoid RF')
+ax[1][1].plot(0,0,c='magenta',linewidth=3, label='Sigmoid DN')
+
+handles, labels = ax[1][1].get_legend_handles_labels()
+fig.legend(handles, labels, ncol=3, loc="lower center", bbox_to_anchor=(0.5,-.15), fontsize=30, frameon=False)
+    
+ax[1][0].set_xlim([100, 10000])
+ax[1][1].set_xlim([100, 10000])
+ax[0][0].set_xlim([100, 10000])
+ax[0][1].set_xlim([100, 10000])
 
 
 ax[0][0].set_title('Classification', fontsize=40)
 
 ax[0][0].set_xscale("log")
-ax[0][0].set_ylim([-0.3, .25])
-ax[0][0].set_yticks([-.3,0,.2])
+ax[0][0].set_ylim([-0.1, .1])
+ax[0][0].set_yticks([-.1,0,.1])
 ax[0][0].set_xticks([])
 
 ax[0][0].set_ylabel('Improvement', fontsize=35)
@@ -292,23 +345,23 @@ ax[0][0].set_ylabel('Improvement', fontsize=35)
 ax[0][1].set_title('ID Calibration', fontsize=40)
 
 ax[0][1].set_xscale("log")
-#ax[0][1].set_ylim([-2.5, 1])
-#ax[0][1].set_yticks([-2,0,1])
+ax[0][1].set_ylim([-.5, .8])
+ax[0][1].set_yticks([-.5,0,1])
 ax[0][1].set_xticks([])
 ax[0][1].set_ylabel('', fontsize=35)
 #ax[0][1].text(100, .3, 'KGF wins')
 #ax[0][1].text(100, -.05, 'RF wins')
 
 ax[1][0].set_xscale("log")
-#ax[1][0].set_ylim([-0.2, .2])
-#ax[1][0].set_yticks([-.05,0,.05])
+ax[1][0].set_ylim([-0.1, .1])
+ax[1][0].set_yticks([-.1,0,.1])
 ax[1][0].set_ylabel('Improvement', fontsize=35)
 #ax[1][0].text(100, .05, 'KGN wins')
 #ax[1][0].text(100, -.08, 'DN wins')
 
 ax[1][1].set_xscale("log")
-ax[1][1].set_ylim([-2, 1])
-ax[1][1].set_yticks([-2,0,1])
+ax[1][1].set_ylim([-.2, 1])
+ax[1][1].set_yticks([-.2,0,1])
 ax[1][1].set_ylabel('', fontsize=35)
 #ax[1][1].text(100, .05, 'KGN wins')
 #ax[1][1].text(100, -.08, 'DN wins')
@@ -340,7 +393,7 @@ ax[1][2].set_xticks([1,3,5])
 #ax[1][2].axvline(x=1, ymin=-0.2, ymax=1, color='b', linestyle='dashed',linewidth=4)
 #ax[1][2].set_xlabel('Distance')
 
-ax[0][0].legend()
+#ax[0][0].legend()
 for j in range(2):
     for i in range(2):
         ax[j][i].hlines(0, 10,1e5, colors='grey', linestyles='dashed',linewidth=4)
@@ -360,8 +413,8 @@ for i in range(2):
     top_side = ax[i][2].spines["top"]
     top_side.set_visible(False)
 
-fig.text(0.43, 0.01, "Number of Training Samples (log)", ha="center", fontsize=35)
-fig.text(0.83, 0.01, "Distance", ha="center", fontsize=35)
+fig.text(0.43, 0, "Number of Training Samples (log)", ha="center", fontsize=35)
+fig.text(0.83, 0, "Distance", ha="center", fontsize=35)
 plt.tight_layout()
-#plt.savefig('plots/openml_summary.pdf')
+plt.savefig('/Users/jayantadey/kdg/benchmarks/plots/openml_summary.pdf', bbox_inches='tight')
 # %%

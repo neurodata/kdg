@@ -11,6 +11,9 @@ from sklearn.metrics import cohen_kappa_score
 from kdg.utils import get_ece
 from sklearn.model_selection import train_test_split
 from joblib import Parallel, delayed
+from sklearn.ensemble import RandomForestClassifier as rf 
+from sklearn.calibration import CalibratedClassifierCV as calcv
+
 # %%
 root_dir = "openml_kdf_res"
 
@@ -48,12 +51,12 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
         if len(unique_val) < 10:
             return'''
         
-    total_sample = X.shape[0]
-    test_sample = total_sample//3
+    total_sample = 10000 if X.shape[0]>10000 else X.shape[0]
+    test_sample = total_sample//3 if total_sample//3 < 1000 else 1000
     train_samples = np.logspace(
             np.log10(100),
             np.log10(total_sample-test_sample),
-            num=4,
+            num=3,
             endpoint=True,
             dtype=int
         )
@@ -63,16 +66,30 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     ece = []
     ece_geod = []
     ece_rf = []
+    err_isotonic = []
+    ece_isotonic = []
+    err_sigmoid = []
+    ece_sigmoid = []
     mc_rep = []
     samples = []
 
     for train_sample in train_samples:
         for rep in range(reps):
             X_train, X_test, y_train, y_test = train_test_split(
-                     X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep, stratify=y)
+                X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep, stratify=y)
+
+            if train_sample >= 200:
+                X_train, X_cal, y_train, y_cal = train_test_split(
+                    X_train, y_train, train_size=0.9, random_state=random_state+rep, stratify=y_train)
+            else:
+                X_train, X_cal, y_train, y_cal = train_test_split(
+                    X_train, y_train, train_size=0.5, random_state=random_state+rep, stratify=y_train)
             
-            model_kdf = kdf(kwargs={'n_estimators':n_estimators})
-            model_kdf.fit(X_train, y_train, epsilon=1e-6)
+            ################
+            uncalibrated_model = rf(n_estimators=n_estimators)
+            uncalibrated_model.fit(X_train, y_train)
+            model_kdf = kdf(rf_model=uncalibrated_model)
+            model_kdf.fit(X_train, y_train, X_cal, y_cal)
             proba_kdf = model_kdf.predict_proba(X_test)
             proba_kdf_geod = model_kdf.predict_proba(X_test, distance='Geodesic')
             proba_rf = model_kdf.rf_model.predict_proba(X_test)
@@ -109,6 +126,39 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
             )
             mc_rep.append(rep)
 
+            ### train baseline ###
+            
+            calibrated_rf_isotonic = calcv(
+                uncalibrated_model, method='isotonic', ensemble=False, cv='prefit')
+            calibrated_rf_isotonic.fit(X_cal, y_cal)
+
+            calibrated_rf_sigmoid = calcv(
+                uncalibrated_model, method='sigmoid', ensemble=False, cv='prefit')
+            calibrated_rf_sigmoid.fit(X_cal, y_cal)
+
+            y_proba_isotonic = calibrated_rf_isotonic.predict_proba(X_test)
+            y_hat_isotonic = np.argmax(y_proba_isotonic, axis=1)
+
+            y_proba_sigmoid = calibrated_rf_sigmoid.predict_proba(X_test)
+            y_hat_sigmoid = np.argmax(y_proba_sigmoid, axis=1)
+
+            err_isotonic.append(
+                1 - np.mean(
+                    y_hat_isotonic == y_test
+                )
+            )
+            ece_isotonic.append(
+                get_ece(y_proba_isotonic, y_test)
+            )
+            err_sigmoid.append(
+                1 - np.mean(
+                    y_hat_sigmoid == y_test
+                )
+            )
+            ece_sigmoid.append(
+                get_ece(y_proba_sigmoid, y_test)
+            )
+
     df = pd.DataFrame() 
     df['err_kdf'] = err
     df['err_kdf_geod'] = err_geod
@@ -116,6 +166,10 @@ def experiment(dataset_id, n_estimators=500, reps=10, random_state=42):
     df['ece_kdf'] = ece
     df['ece_kdf_geod'] = ece_geod
     df['ece_rf'] = ece_rf
+    df['err_isotonic'] = err_isotonic
+    df['ece_isotonic'] = ece_isotonic
+    df['err_sigmoid'] = err_sigmoid
+    df['ece_sigmoid'] = ece_sigmoid
     df['rep'] = mc_rep
     df['samples'] = samples
 
