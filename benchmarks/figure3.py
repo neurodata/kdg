@@ -363,7 +363,7 @@ ax[0][0].set_xlim([100, 10000])
 ax[0][1].set_xlim([100, 10000])
 
 
-ax[0][0].set_title(r'$P_{iso} = (0.96, 0.04)$' '\n' r'$P_{sig} = (0.16, 0.84)$', fontsize=30)
+ax[0][0].set_title(r'$P_{iso} = (0.04, 0.96)$' '\n' r'$P_{sig} = (0.84, 0.16)$', fontsize=30)
 
 ax[0][0].set_xscale("log")
 ax[0][0].set_ylim([-0.1, .1])
@@ -375,7 +375,7 @@ ax[0][0].set_ylabel('Improvement', fontsize=35)
 #ax[0][0].text(100, -.08, 'RF wins')
 
 ###ax[0][1].set_title('ID Calibration', fontsize=40)
-ax[0][1].set_title(r'$P_{iso} = (0.30, 0.70)$' '\n' r'$P_{sig} = (0.80, 0.20)$', fontsize=30)
+ax[0][1].set_title(r'$P_{iso} = (0.70, 0.30)$' '\n' r'$P_{sig} = (0.20, 0.80)$', fontsize=30)
 
 ax[0][1].set_xscale("log")
 ax[0][1].set_ylim([-.5, .8])
@@ -384,7 +384,7 @@ ax[0][1].set_xticks([])
 ax[0][1].set_ylabel('', fontsize=35)
 #ax[0][1].text(100, .3, 'KGF wins')
 #ax[0][1].text(100, -.05, 'RF wins')
-ax[1][0].set_title(r'$P_{iso} = (1.0, 3.16e-3)$' '\n' r'$P_{sig} = (0.99, 0.01)$', fontsize=30)
+ax[1][0].set_title(r'$P_{iso} = (3.16e-3, 1.0)$' '\n' r'$P_{sig} = (0.01, 0.99)$', fontsize=30)
 
 ax[1][0].set_xscale("log")
 ax[1][0].set_ylim([-0.06, .06])
@@ -393,7 +393,7 @@ ax[1][0].set_ylabel('Improvement', fontsize=35)
 #ax[1][0].text(100, .05, 'KGN wins')
 #ax[1][0].text(100, -.08, 'DN wins')
 
-ax[1][1].set_title(r'$P_{iso} = (0.62, 0.38)$' '\n' r'$P_{sig} = (0.66, 0.34)$', fontsize=30)
+ax[1][1].set_title(r'$P_{iso} = (0.38, 0.62)$' '\n' r'$P_{sig} = (0.34, 0.66)$', fontsize=30)
 
 ax[1][1].set_xscale("log")
 ax[1][1].set_ylim([-.2, 1])
@@ -405,7 +405,7 @@ ax[1][1].set_ylabel('', fontsize=35)
 ax[0][2].set_ylim([-0.25, .25])
 ax[0][2].set_yticks([-.2,0,.2])
 ax[0][2].set_xticks([])
-ax[0][2].set_title(r'$P_{iso} = (1.0, 2.22e-11)$' '\n' r'$P_{sig} = (1.0, 7.21e-11)$', fontsize=30)
+ax[0][2].set_title(r'$P_{iso} = (2.22e-11, 1.0)$' '\n' r'$P_{sig} = (7.21e-11, 1.0)$', fontsize=30)
 #ax[2][0].set_ylabel('Difference', fontsize=35)
 #ax[0][2].text(2, .05, 'KGF wins')
 #ax[0][2].text(2, -.08, 'RF wins')
@@ -416,7 +416,7 @@ ax[0][2].set_xlim([1, 5])
 
 ###ax[0][2].set_title('OOD Calibration', fontsize=40)
 
-ax[1][2].set_title(r'$P_{iso} = (1.0, 1.93e-14)$' '\n' r'$P_{sig} = (1.0, 9.73e-12)$', fontsize=30)
+ax[1][2].set_title(r'$P_{iso} = (1.93e-14, 1.0)$' '\n' r'$P_{sig} = (9.73e-12, 1.0)$', fontsize=30)
 ax[1][2].set_ylim([-0.2, .85])
 ax[1][2].set_xlim([1, 5])
 ax[1][2].set_yticks([-.2,0,.8])
