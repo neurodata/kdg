@@ -40,7 +40,7 @@ for seed in seeds:
     model_kdn = kdn(
         network=network
     )
-    model_kdn.fit(x_train, y_train, batch=10, save_temp=True)
+    model_kdn.fit(x_train, y_train, k=1.36, batch=10, save_temp=True)
     
     dump(model_kdn, 'resnet_kdn_pretrained_50000_'+str(seed)+'.joblib')
 # %%
