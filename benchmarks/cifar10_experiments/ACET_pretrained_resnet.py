@@ -62,7 +62,7 @@ def gen_adv(x):
 
 #%%
 batchsize = 40  # orig paper trained all networks with batch_size=128
-epochs = 20
+epochs = 100
 data_augmentation = False
 num_classes = 10
 seed = 100
@@ -262,12 +262,12 @@ for channel in range(3):
 model = resnet_v1(input_shape=input_shape[1:], depth=depth)
 
 #load pretrained model
-pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_pretrained')
-
+#pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_pretrained')
+pretrained_model = keras.models.load_model('resnet20_models/cifar_model_50000_100')
 for layer_id, layer in enumerate(model.layers[:-1]):
     pretrained_weights = pretrained_model.layers[layer_id].get_weights()
     layer.set_weights(pretrained_weights)
-    layer.trainable = False
+    #layer.trainable = False
 
 model.summary()
 print(model_type)
@@ -298,5 +298,5 @@ for i in range(1,epochs+1):
     train_err = np.mean(logits.numpy().argmax(1) != y_train_.numpy().argmax(1))
     print("Epoch {:03d}: loss_main={:.3f} loss_acet={:.3f} err={:.2%}".format(i, loss_main, loss_acet, train_err))
 
-model.save('resnet20_models/cifar_ACET_pretrained_'+str(seed))
+model.save('resnet20_models/cifar_ACET_'+str(seed))
 # %%
