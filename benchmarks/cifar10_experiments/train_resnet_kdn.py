@@ -10,6 +10,7 @@ import pickle
 from tensorflow.keras.datasets import cifar10
 import timeit
 from joblib import dump, load
+from sklearn.model_selection import train_test_split
 #%%
 seeds = [100]
 # Load the CIFAR10 data.
@@ -31,16 +32,19 @@ for channel in range(3):
     x_test[:,:,:,channel] /= x_train_std
 
 #%%
+x_test, x_cal, y_test, y_cal = train_test_split(
+                x_test, y_test, train_size=0.9, random_state=10, stratify=y_test)
+#%%
 for seed in seeds:
     print("Doing seed ", seed)
 
-    nn_file = 'resnet20_models/cifar_model_pretrained_50000_'+str(seed)
+    nn_file = 'resnet20_models/cifar_model_50000_'+str(seed)
     network = keras.models.load_model(nn_file)
     
     model_kdn = kdn(
         network=network
     )
-    model_kdn.fit(x_train, y_train, k=1.36, batch=10, save_temp=True)
+    model_kdn.fit(x_train, y_train, X_val=x_cal, y_val=y_cal, batch=10, save_temp=True)
     
-    dump(model_kdn, 'resnet_kdn_pretrained_50000_'+str(seed)+'.joblib')
+    dump(model_kdn, 'resnet_kdn_50000_'+str(seed)+'.joblib')
 # %%

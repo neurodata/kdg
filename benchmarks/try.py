@@ -23,8 +23,9 @@ from scipy.stats import multivariate_normal
 import warnings
 from sklearn.covariance import MinCovDet, fast_mcd, GraphicalLassoCV, LedoitWolf, EmpiricalCovariance, OAS, EllipticEnvelope, log_likelihood
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier as rf 
+from tensorflow.keras.datasets import cifar10, cifar100
+import joblib
 #%%
 compile_kwargs = {
         "loss": "binary_crossentropy",
@@ -126,4 +127,201 @@ for id in range(100):
 print(X_train.shape)
 
 
+# %%
+def predict_proba(model, X, distance = 'Euclidean', return_likelihood=False, n_jobs=-1):
+    r"""
+    Calculate posteriors using the kernel density forest.
+    Parameters
+    ----------
+    X : ndarray
+        Input data matrix.
+    """
+    #X = check_array(X)
+    
+    total_polytope = len(model.polytope_means)
+    log_likelihoods = np.zeros(
+        (np.size(X,0), len(model.labels)),
+        dtype=float
+    )
+    
+    print('Calculating distance')
+    if distance == 'Euclidean':
+        distance = model._compute_euclidean(X)
+        polytope_idx = np.argmin(distance, axis=1)
+    elif distance == 'Geodesic':
+        total_polytope = len(model.polytope_means)
+        batch = total_polytope//1000 + 1
+        batchsize = total_polytope//batch
+        polytope_ids = model._get_polytope_ids(
+                np.array(model.polytope_means[:batchsize])
+            ) 
+
+        indx_X2 = np.inf
+        for ii in range(1,batch):
+            #print("doing batch ", ii)
+            indx_X1 = ii*batchsize
+            indx_X2 = (ii+1)*batchsize
+            polytope_ids = np.concatenate(
+                (polytope_ids,
+                model._get_polytope_ids(
+                np.array(model.polytope_means[indx_X1:indx_X2])
+                )),
+                axis=0
+            )
+        
+        if indx_X2 < len(model.polytope_means):
+            polytope_ids = np.concatenate(
+                    (polytope_ids,
+                    model._get_polytope_ids(
+                np.array(model.polytope_means[indx_X2:]))),
+                    axis=0
+                )
+
+        total_sample = X.shape[0]
+        batch = total_sample//1000 + 1
+        batchsize = total_sample//batch
+        test_ids = model._get_polytope_ids(X[:batchsize]) 
+
+        indx_X2 = np.inf
+        for ii in range(1,batch):
+            #print("doing batch ", ii)
+            indx_X1 = ii*batchsize
+            indx_X2 = (ii+1)*batchsize
+            test_ids = np.concatenate(
+                (test_ids,
+                model._get_polytope_ids(X[indx_X1:indx_X2])),
+                axis=0
+            )
+        
+        if indx_X2 < X.shape[0]:
+            test_ids = np.concatenate(
+                    (test_ids,
+                    model._get_polytope_ids(X[indx_X2:])),
+                    axis=0
+                )
+            
+        print('Polytope extracted!')
+        ####################################
+        batch = total_sample//50000 + 1
+        batchsize = total_sample//batch
+        polytope_idx = []
+        indx = [jj*batchsize for jj in range(batch+1)]
+        if indx[-1] < total_sample:
+            indx.append(total_sample)
+
+        for ii in range(len(indx)-1):    
+            polytope_idx.extend(
+                list(np.argmin(
+                    model._compute_geodesic(
+                        test_ids[indx[ii]:indx[ii+1]],
+                        polytope_ids,
+                        batch=n_jobs
+                    ), axis=1
+                ))
+            )
+    else:
+        raise ValueError("Unknown distance measure!")
+    
+    for ii,label in enumerate(model.labels):
+        for jj in range(X.shape[0]):
+            log_likelihoods[jj, ii] = model._compute_log_likelihood(X[jj], label, polytope_idx[jj])
+            max_pow = max(log_likelihoods[jj, ii], model.global_bias)
+            log_likelihoods[jj, ii] = np.log(
+                (np.exp(log_likelihoods[jj, ii] - max_pow)\
+                    + np.exp(model.global_bias - max_pow))
+                    *model.prior[label]
+            ) + max_pow
+            
+    max_pow = np.nan_to_num(
+        np.max(log_likelihoods, axis=1).reshape(-1,1)@np.ones((1,len(model.labels)))
+    )
+
+    print(log_likelihoods)
+    if return_likelihood:
+        likelihood = np.exp(log_likelihoods)
+    
+    log_likelihoods -= max_pow
+    likelihoods = np.exp(log_likelihoods)
+
+    total_likelihoods = np.sum(likelihoods, axis=1)
+
+    proba = (likelihoods.T/total_likelihoods).T
+    
+    if return_likelihood:
+        return proba, likelihood
+    else:
+        return proba, polytope_idx
+# %%
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+(_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
+x_noise = np.random.random_integers(0,high=255,size=(20,32,32,3)).astype('float')/255.0
+
+# Input image dimensions.
+input_shape = x_train.shape[1:]
+
+# Normalize data.
+x_train = x_train.astype('float32') / 255
+x_test = x_test.astype('float32') / 255
+x_cifar100 = x_cifar100.astype('float32') / 255
+
+for channel in range(3):
+    x_train_mean = np.mean(x_train[:,:,:,channel])
+    x_train_std = np.std(x_train[:,:,:,channel])
+    x_noise[:,:,:,channel] -= x_train_mean
+    x_noise[:,:,:,channel] /= x_train_std
+    x_test[:,:,:,channel] -= x_train_mean
+    x_test[:,:,:,channel] /= x_train_std 
+    x_cifar100[:,:,:,channel] -= x_train_mean
+    x_cifar100[:,:,:,channel] /= x_train_std
+# %%
+model_kdn = joblib.load('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/resnet_kdn_pretrained_50000_100.joblib')
+model_kdn.global_bias = -2e9
+# %%
+p, d = predict_proba(model_kdn, x_noise, distance='Geodesic')
+
+# %%
+p_in, d_in = predict_proba(model_kdn, x_test[:100], distance='Geodesic')
+
+# %%
+p_acet = acet.predict(x_cifar100[:40])
+np.mean(np.max(p_acet,axis=1))
+# %%
+np.mean(np.max(p,axis=1))
+# %%
+np.mean(np.max(p_in,axis=1))
+# %%
+p_cifar100, d_cifar100 = predict_proba(model_kdn, x_cifar100[:40], distance='Geodesic')
+
+# %%
+np.mean(np.max(p_cifar100,axis=1))
+# %%
+p_noise_dn = model_kdn.network.predict(x_noise)
+np.mean(np.max(p_noise_dn,axis=1))
+# %%
+import imageio as iio
+
+img = iio.imread("/Users/jayantadey/Downloads/dtd/images/perforated/perforated_0082.jpg")
+x = img.astype('float32')/255
+x = tf.image.resize(x, input_shape[:-1],
+    antialias=True)
+x = x.numpy()
+
+
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+x_train = x_train.astype('float32') / 255
+for channel in range(3):
+    x_train_mean = np.mean(x_train[:,:,:,channel])
+    x_train_std = np.std(x_train[:,:,:,channel])
+    x[:,:,channel] -= x_train_mean
+    x[:,:,channel] /= x_train_std
+
+#%%
+predict_proba(model_kdn, x.reshape(1,32,32,3), distance='Geodesic')
+# %%
+plt.imshow(x)
+# %%
+plt.imshow(model_kdn.polytope_means[2106])
+# %%
+p_svhn = model_kdn.predict_proba(x_svhn[:40], distance='Geodesic')
+np.mean(np.max(p_svhn,axis=1))
 # %%
