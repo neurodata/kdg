@@ -27,8 +27,8 @@ def fpr_at_95_tpr(conf_in, conf_out):
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
 x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float')/255.0
-x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
-y_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['y']
+x_svhn = loadmat('~/train_32x32.mat')['X']
+y_svhn = loadmat('~/train_32x32.mat')['y']
 test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
 x_svhn = x_svhn[:,:,:,test_ids].astype('float32')
 x_tmp = np.zeros((2000,32,32,3), dtype=float)
