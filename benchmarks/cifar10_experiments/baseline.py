@@ -114,8 +114,8 @@ file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/res
 with open(file_to_save, 'wb') as f:
     pickle.dump(summary, f)
 # %%
-p_in = proba_in_sig
-p_out = proba_noise_sig
+p_in = proba_in
+p_out = proba_cifar100
 from sklearn.metrics import roc_auc_score
 true_labels = np.hstack((np.ones(len(p_in), ), np.zeros(len(p_out), )))
 
@@ -131,5 +131,5 @@ np.mean(np.argmax(p_in,axis=1)==y_test.ravel())
 # %%
 get_ece(p_in, y_test.ravel(), n_bins=15)
 # %%
-np.mean(np.abs(np.max(p_out)-.1))
+np.mean(np.abs(np.max(p_out,axis=1)-.1))
 # %%

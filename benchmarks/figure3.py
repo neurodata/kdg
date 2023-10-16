@@ -450,8 +450,8 @@ for i in range(2):
     top_side = ax[i][2].spines["top"]
     top_side.set_visible(False)
 
-fig.text(0.43, 0, "Number of Training Samples (log)", ha="center", fontsize=35)
-fig.text(0.83, 0, "Distance", ha="center", fontsize=35)
+fig.text(0.43, -0.01, "Number of Training Samples (log)", ha="center", fontsize=35)
+fig.text(0.83, -0.01, "Distance", ha="center", fontsize=35)
 
 fig.text(0.22, 1, "Classification", ha="center", fontsize=50)
 fig.text(0.53, 1, "ID Calibration", ha="center", fontsize=50)
