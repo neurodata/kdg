@@ -112,7 +112,7 @@ class kdn(KernelDensityGraph):
            indx.append(
                total_test_samples
            )
-       for ii in tqdm(range(10,total_layers)):
+       for ii in tqdm(range(total_layers)):
            
            if save_temp:
                if os.path.exists('temp/temp'+str(ii)+'.pickle'):
@@ -298,7 +298,7 @@ class kdn(KernelDensityGraph):
                 if k==None:
                     k_ = np.arange(1,4,1)
                 else:
-                    k_ = np.arange(k-.5,k+.5,.1)
+                    k_ = np.arange(k-.5,k+.6,.1)
                 for tmp_k in k_:
                     used = []
                     for ii in range(self.total_samples):

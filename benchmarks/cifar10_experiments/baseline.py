@@ -80,7 +80,7 @@ for channel in range(3):
 _, x_cal, _, y_cal = train_test_split(
                 x_test, y_test, train_size=0.9, random_state=10, stratify=y_test)
 #%% Load model file
-model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_pretrained_50000_100')
+model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_50000_100')
 uncalibrated_model = KerasClassifier(model=model)
 uncalibrated_model.initialize(x_train, keras.utils.to_categorical(y_train))
 #uncalibrated_model.partial_fit(x_train, keras.utils.to_categorical(y_train))
@@ -109,13 +109,13 @@ proba_noise_iso = calibrated_nn_isotonic.predict_proba(x_noise)
 summary = (proba_in_sig, proba_cifar100_sig, proba_svhn_sig, proba_noise_sig,\
            proba_in_iso, proba_cifar100_iso, proba_svhn_iso, proba_noise_iso)
 
-file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet20_100_baseline.pickle'
+file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet20_100_baseline_without_pretrain.pickle'
 
 with open(file_to_save, 'wb') as f:
     pickle.dump(summary, f)
 # %%
-p_in = proba_in_iso
-p_out = proba_cifar100_iso
+p_in = proba_in_sig
+p_out = proba_noise_sig
 from sklearn.metrics import roc_auc_score
 true_labels = np.hstack((np.ones(len(p_in), ), np.zeros(len(p_out), )))
 
@@ -129,7 +129,7 @@ print(fpr_at_95_tpr(kdn_in_conf, kdn_out_conf))
 # %%
 np.mean(np.argmax(p_in,axis=1)==y_test.ravel())
 # %%
-get_ece(p_in, y_test.ravel())
+get_ece(p_in, y_test.ravel(), n_bins=15)
 # %%
 np.mean(np.abs(np.max(p_out)-.1))
 # %%

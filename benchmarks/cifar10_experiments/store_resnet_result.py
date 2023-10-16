@@ -67,15 +67,15 @@ for channel in range(3):
     x_noise[:,:,:,channel] -= x_train_mean
     x_noise[:,:,:,channel] /= x_train_std
 #%% Load model file
-filename = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/resnet_kdn_pretrained_50000_100.joblib'
+filename = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/resnet_kdn_50000_100.joblib'
 model_kdn = joblib.load(filename)
-acet = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_ACET_pretrained_100')
+acet = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_ACET_100')
 
-model_kdn.global_bias = -3e9
+model_kdn.global_bias = -2.5e9
 
 proba_in = model_kdn.predict_proba(x_test, distance='Geodesic')
 
-model_kdn.global_bias = -2e9
+#model_kdn.global_bias = -2e9
 proba_cifar100 = model_kdn.predict_proba(x_cifar100, distance='Geodesic')
 proba_svhn = model_kdn.predict_proba(x_svhn, distance='Geodesic')
 proba_noise = model_kdn.predict_proba(x_noise, distance='Geodesic')

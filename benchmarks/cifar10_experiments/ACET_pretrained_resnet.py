@@ -38,8 +38,8 @@ def max_conf(logits):
 
 def gen_adv(x):
     eps = 0.025
-    n_iters = 10
-    step_size = 0.02
+    n_iters = 40
+    step_size = 0.0075
 
     unif = tf.random.uniform(minval=-eps, maxval=eps, shape=tf.shape(x))
     x_adv = x + unif #tf.clip_by_value(x + unif, 0., 1.)
@@ -62,7 +62,7 @@ def gen_adv(x):
 
 #%%
 batchsize = 40  # orig paper trained all networks with batch_size=128
-epochs = 100
+epochs = 10
 data_augmentation = False
 num_classes = 10
 seed = 100
