@@ -298,7 +298,7 @@ class kdn(KernelDensityGraph):
                 if k==None:
                     k_ = np.arange(1,4,1)
                 else:
-                    k_ = np.arange(k-.5,k+.6,.1)
+                    k_ = np.arange(k-.6,k+.5,.1)
                 for tmp_k in k_:
                     used = []
                     for ii in range(self.total_samples):
@@ -316,9 +316,9 @@ class kdn(KernelDensityGraph):
                     
                     prob = _get_likelihoods(min_dis_id)
                     
-                    #accuracy = np.mean(np.argmax(prob,axis=1)==y_val)
+                    accuracy = np.mean(np.argmax(prob,axis=1)==y_val)
                     ece = get_ece(prob, y_val.ravel(), n_bins=20)
-                    print(k, ece)
+                    print(k, ece, accuracy)
                     if ece < min_ece:
                         min_ece = ece
                         #max_acc = accuracy

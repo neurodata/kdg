@@ -114,8 +114,8 @@ file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/res
 with open(file_to_save, 'wb') as f:
     pickle.dump(summary, f)
 # %%
-p_in = proba_in
-p_out = proba_cifar100
+p_in = proba_in_dn
+p_out = proba_svhn_dn
 from sklearn.metrics import roc_auc_score
 true_labels = np.hstack((np.ones(len(p_in), ), np.zeros(len(p_out), )))
 
