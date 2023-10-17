@@ -73,28 +73,28 @@ acet = keras.models.load_model('resnet20_models/cifar_ACET_100')
 
 model_kdn.global_bias = -3e9
 
-proba_in = model_kdn.predict_proba(x_test, distance='Geodesic', n_jobs=50)
+#proba_in = model_kdn.predict_proba(x_test, distance='Geodesic', n_jobs=50)
 
 model_kdn.global_bias = -2e9
 #proba_cifar100 = model_kdn.predict_proba(x_cifar100, distance='Geodesic')
-#proba_svhn = model_kdn.predict_proba(x_svhn, distance='Geodesic')
-#proba_noise = model_kdn.predict_proba(x_noise, distance='Geodesic')
+proba_svhn = model_kdn.predict_proba(x_svhn, distance='Geodesic', n_jobs=20)
+proba_noise = model_kdn.predict_proba(x_noise, distance='Geodesic', n_jobs=20)
 
-proba_in_dn = model_kdn.network.predict(x_test)
+#proba_in_dn = model_kdn.network.predict(x_test)
 #proba_cifar100_dn = model_kdn.network.predict(x_cifar100)
-#proba_svhn_dn = model_kdn.network.predict(x_svhn)
-#proba_noise_dn = model_kdn.network.predict(x_noise)
+proba_svhn_dn = model_kdn.network.predict(x_svhn)
+proba_noise_dn = model_kdn.network.predict(x_noise)
 
 
-proba_in_acet = acet.predict(x_test)
+#proba_in_acet = acet.predict(x_test)
 #proba_cifar100_acet = acet.predict(x_cifar100)
-#proba_svhn_acet = acet.predict(x_svhn)
-#proba_noise_acet = acet.predict(x_noise)
+proba_svhn_acet = acet.predict(x_svhn)
+proba_noise_acet = acet.predict(x_noise)
 
-summary = (proba_in, proba_in_dn, proba_in_acet)
+#summary = (proba_in, proba_in_dn, proba_in_acet)
 #summary = (proba_cifar100, proba_cifar100_dn, proba_cifar100_acet)
-#summary = (proba_svhn, proba_noise, proba_svhn_dn, proba_noise_dn, proba_svhn_acet, proba_noise_acet)
-file_to_save = 'resnet20_100_part1.pickle'
+summary = (proba_svhn, proba_noise, proba_svhn_dn, proba_noise_dn, proba_svhn_acet, proba_noise_acet)
+file_to_save = 'resnet20_100_part3.pickle'
 
 with open(file_to_save, 'wb') as f:
     pickle.dump(summary, f)
