@@ -73,5 +73,5 @@ with open('resnet20_0.pickle', 'rb') as f:
 
 
 label_y = np.argmax(proba_in,axis=1)
-print(label_y==y_test.ravel())
+print(np.mean(label_y==y_test.ravel()))
 print(get_ece(proba_in, y_test.ravel(), n_bins=15))
