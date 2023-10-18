@@ -67,7 +67,7 @@ for channel in range(3):
     x_noise[:,:,:,channel] -= x_train_mean
     x_noise[:,:,:,channel] /= x_train_std
 #%% Load model file
-filename = 'resnet20_models/resnet_kdn_50000_0.joblib'
+filename = 'resnet_kdn_50000_0.joblib'
 model_kdn = joblib.load(filename)
 acet = keras.models.load_model('resnet20_models/cifar_ACET_100')
 
