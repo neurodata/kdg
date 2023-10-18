@@ -95,7 +95,7 @@ class kdn(KernelDensityGraph):
               print('Temporary result dirctory already exists!!!')
 
        if batch == -1:
-           batch = multiprocessing.cpu_count()
+           batch = multiprocessing.cpu_count() if multiprocessing.cpu_count()<50 else 50
 
        total_layers = len(self.network_shape)
        total_test_samples = len(polytope_id_test)
@@ -119,7 +119,7 @@ class kdn(KernelDensityGraph):
                    with open('temp/temp'+str(ii)+'.pickle','rb') as f:
                        w_ = pickle.load(f)
                else:
-                    w_ = 1-np.array(Parallel(n_jobs=batch//2, prefer="threads")(
+                    w_ = 1-np.array(Parallel(n_jobs=batch, prefer="threads")(
                                     delayed(dist)(
                                                 polytope_id_test[indx[jj]:indx[jj+1],id_thresholds[ii]:id_thresholds[ii+1]],
                                                 polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],
@@ -134,7 +134,7 @@ class kdn(KernelDensityGraph):
                     with open('temp/temp'+str(ii)+'.pickle','wb') as f:
                             pickle.dump(w_, f)
            else:
-                w_ = 1-np.array(Parallel(n_jobs=batch//2, prefer="threads")(
+                w_ = 1-np.array(Parallel(n_jobs=batch, prefer="threads")(
                             delayed(dist)(
                                         polytope_id_test[indx[jj]:indx[jj+1],id_thresholds[ii]:id_thresholds[ii+1]],
                                         polytope_ids[:,id_thresholds[ii]:id_thresholds[ii+1]],

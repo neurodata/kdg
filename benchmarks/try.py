@@ -275,12 +275,12 @@ for channel in range(3):
     x_cifar100[:,:,:,channel] /= x_train_std
 # %%
 model_kdn = joblib.load('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/resnet_kdn_50000_100.joblib')
-model_kdn.global_bias = -2.6e9
+model_kdn.global_bias = -2.6e19
 # %%
 p, d = predict_proba(model_kdn, x_noise, distance='Geodesic')
 
 # %%
-p_in, d_in = predict_proba(model_kdn, x_test[:200], distance='Geodesic')
+p_in, d_in = predict_proba(model_kdn, x_test[:1000], distance='Geodesic')
 
 # %%
 p_acet = acet.predict(x_cifar100[:40])
