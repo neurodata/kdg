@@ -678,7 +678,7 @@ def plot_err(file, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyl
     ax.fill_between(samples, err_kdx_25, err_kdx_75, facecolor=color[0], alpha=.1)
     ax.plot(samples, err_isotonic_med, linewidth=3, c=color[1], linestyle=linestyle[1], label='Isotonic-'+parent.upper())    
     ax.fill_between(samples, err_isotonic_25, err_isotonic_75, facecolor=color[1], alpha=.1)
-    ax.plot(samples, err_sigmoid_med, linewidth=3, c=color[2], linestyle=linestyle[2], label='Sigoid'+parent.upper())    
+    ax.plot(samples, err_sigmoid_med, linewidth=3, c=color[2], linestyle=linestyle[2], label='Sigmoid'+parent.upper())    
     ax.fill_between(samples, err_sigmoid_25, err_sigmoid_75, facecolor=color[2], alpha=.1)
     ax.plot(samples, err_x_med, linewidth=3, c='k', label=parent.upper())    
     ax.fill_between(samples, err_x_25, err_x_75, facecolor='k', alpha=.1)
@@ -889,10 +889,10 @@ sns.set(
     color_codes=True, palette="bright", style="white", context="talk", font_scale=1.5
 )
 
-fig=plt.figure(figsize=(40,60))
+fig=plt.figure(figsize=(40,45))
 #fig, ax = plt.subplots(12, 6, figsize=(40,60), sharex=True)
 
-for ii, file in enumerate(files[24:36]):
+for ii, file in enumerate(files[:12]):
 
     data_id = file[:-4]
     data_id = int(data_id[8:])
@@ -919,7 +919,7 @@ for ii, file in enumerate(files[24:36]):
     plot_ood(res_folder_kdf_ood+'/'+file, res_folder_kdf_baseline_ood+'/'+file, model='kdf_geod', parent='rf', ax=ax5)
 
     ax6 = plt.subplot(12,6,ii+5*ii+6, sharex=ax6 if ii!=0 else None)
-    plot_ood(res_folder_kdn_ood+'/'+file, res_folder_kdn_baseline_ood+'/'+file, model='kdn_geod', parent='dn', ax=ax6)
+    plot_ood(res_folder_kdn_ood+'/'+file, res_folder_kdn_baseline_ood+'/'+file, model='kdn_geod', parent='dn', color=['b','seagreen','magenta'], ax=ax6)
 
 handles, labels = ax1.get_legend_handles_labels()
 fig.legend(handles, labels, ncol=4, loc="lower left", bbox_to_anchor=(0.1,-0.01), fontsize=30, frameon=False)
@@ -928,5 +928,5 @@ handles, labels = ax3.get_legend_handles_labels()
 fig.legend(handles, labels, ncol=4, loc="lower right", bbox_to_anchor=(0.95,-0.01), fontsize=30, frameon=False)
 
 plt.tight_layout()
-plt.savefig('/Users/jayantadey/kdg/benchmarks/plots/openml_detailed3.pdf', bbox_inches='tight')
+plt.savefig('/Users/jayantadey/kdg/benchmarks/plots/openml_detailed1.pdf', bbox_inches='tight')
 # %%
