@@ -601,7 +601,7 @@ print("p value for classification error greater than sigmoid ", stat_greater_sig
 
 # %% Do Appendix figure
 
-def plot_err(file, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyle=['-', '--', '-.'], ax=None):
+def plot_err(file, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyle=['-', '--', '-.'], ax=None, dataset_id=None):
     df = pd.read_csv(file)
     #df_baseline = pd.read_csv(baseline_folder+'/'+file)
     samples = np.unique(df['samples'])
@@ -674,7 +674,7 @@ def plot_err(file, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyl
             qunatiles[1]
         )
 
-    ax.plot(samples, err_kdx_med, linewidth=4, c=color[0], linestyle=linestyle[0], label=model.upper())    
+    ax.plot(samples, err_kdx_med, linewidth=4, c=color[0], linestyle=linestyle[0], label=model[:3].upper())    
     ax.fill_between(samples, err_kdx_25, err_kdx_75, facecolor=color[0], alpha=.1)
     ax.plot(samples, err_isotonic_med, linewidth=3, c=color[1], linestyle=linestyle[1], label='Isotonic-'+parent.upper())    
     ax.fill_between(samples, err_isotonic_25, err_isotonic_75, facecolor=color[1], alpha=.1)
@@ -683,7 +683,17 @@ def plot_err(file, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyl
     ax.plot(samples, err_x_med, linewidth=3, c='k', label=parent.upper())    
     ax.fill_between(samples, err_x_25, err_x_75, facecolor='k', alpha=.1)
 
+    if dataset_id != None:
+        ax.set_ylabel('Dataset ID ' + str(dataset_id)+'\n Error', fontsize=35)
+    else:
+        ax.set_ylabel('Error', fontsize=35)
+
     ax.set_xscale("log")
+    ax.tick_params(labelsize=30)
+    right_side = ax.spines["right"]
+    right_side.set_visible(False)
+    top_side = ax.spines["top"]
+    top_side.set_visible(False)
 
 
 def plot_ece(file, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyle=['-', '--', '-.'], ax=None):
@@ -768,7 +778,110 @@ def plot_ece(file, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyl
     ax.plot(samples, err_x_med, linewidth=3, c='k', label=parent.upper())    
     ax.fill_between(samples, err_x_25, err_x_75, facecolor='k', alpha=.1)
 
+    ax.set_ylabel('MCE', fontsize=35)
     ax.set_xscale("log")
+    ax.tick_params(labelsize=30)
+    right_side = ax.spines["right"]
+    right_side.set_visible(False)
+    top_side = ax.spines["top"]
+    top_side.set_visible(False)
+
+def plot_ood(file, file_baseline, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyle=['-', '--', '-.'], ax=None):
+    r = np.arange(0,5,.5)
+    r[1:] += .5
+
+    if parent == 'dn':
+        parent_ = 'nn'
+    else:
+        parent_ = parent
+
+    df = pd.read_csv(file)
+    df_baseline = pd.read_csv(file_baseline)
+
+    err_kdx_med = []
+    err_x_med = []
+    err_isotonic_med = []
+    err_sigmoid_med = []
+
+    err_kdx_25 = []
+    err_x_25 = []
+    err_isotonic_25 = []
+    err_sigmoid_25 = []
+
+    err_kdx_75 = []
+    err_x_75 = []
+    err_isotonic_75 = []
+    err_sigmoid_75 = []
+    for dist in r:
+        kdx = df['conf_'+model][df['distance']==dist]
+        x = df['conf_'+parent][df['distance']==dist]
+        isotonic = df_baseline['conf_'+parent_+'_isotonic'][df_baseline['distance']==dist]
+        sigmoid = df_baseline['conf_'+parent_+'_sigmoid'][df_baseline['distance']==dist]
+
+        err_kdx_med.append(
+            np.median(kdx)
+        )
+
+        err_x_med.append(
+            np.median(x)
+        )
+        
+        err_isotonic_med.append(
+            np.median(isotonic)
+        )
+
+        err_sigmoid_med.append(
+            np.median(sigmoid)
+        )
+
+        qunatiles = np.nanquantile(np.array(kdx),[.25,.75],axis=0)
+        err_kdx_25.append(
+            qunatiles[0]
+        )
+        err_kdx_75.append(
+            qunatiles[1]
+        )
+
+        qunatiles = np.nanquantile(np.array(x),[.25,.75],axis=0)
+        err_x_25.append(
+            qunatiles[0]
+        )
+        err_x_75.append(
+            qunatiles[1]
+        )
+
+        qunatiles = np.nanquantile(np.array(isotonic),[.25,.75],axis=0)
+        err_isotonic_25.append(
+            qunatiles[0]
+        )
+        err_isotonic_75.append(
+            qunatiles[1]
+        )
+
+        qunatiles = np.nanquantile(np.array(sigmoid),[.25,.75],axis=0)
+        err_sigmoid_25.append(
+            qunatiles[0]
+        )
+        err_sigmoid_75.append(
+            qunatiles[1]
+        )
+
+    ax.plot(r, err_kdx_med, linewidth=4, c=color[0], linestyle=linestyle[0], label=model.upper())    
+    ax.fill_between(r, err_kdx_25, err_kdx_75, facecolor=color[0], alpha=.1)
+    ax.plot(r, err_isotonic_med, linewidth=3, c=color[1], linestyle=linestyle[1], label='Isotonic-'+parent.upper())    
+    ax.fill_between(r, err_isotonic_25, err_isotonic_75, facecolor=color[1], alpha=.1)
+    ax.plot(r, err_sigmoid_med, linewidth=3, c=color[2], linestyle=linestyle[2], label='Sigoid'+parent.upper())    
+    ax.fill_between(r, err_sigmoid_25, err_sigmoid_75, facecolor=color[2], alpha=.1)
+    ax.plot(r, err_x_med, linewidth=3, c='k', label=parent.upper())    
+    ax.fill_between(r, err_x_25, err_x_75, facecolor='k', alpha=.1)
+
+    ax.set_ylabel('Mean Max Conf.', fontsize=35)
+    ax.tick_params(labelsize=30)
+    right_side = ax.spines["right"]
+    right_side.set_visible(False)
+    top_side = ax.spines["top"]
+    top_side.set_visible(False)
+
 #%%
 linestyles = ['-', '--', '-.']
 
@@ -776,13 +889,44 @@ sns.set(
     color_codes=True, palette="bright", style="white", context="talk", font_scale=1.5
 )
 
-fig, ax = plt.subplots(12, 6, figsize=(40,60), sharex=True)
+fig=plt.figure(figsize=(40,60))
+#fig, ax = plt.subplots(12, 6, figsize=(40,60), sharex=True)
 
-for ii, file in enumerate(files[12:24]):
-    plot_err(res_folder_kdf+'/'+file, model='kdf_geod',ax=ax[ii][0])
-    plot_ece(res_folder_kdf+'/'+file, model='kdf_geod',ax=ax[ii][1])
-    plot_err(res_folder_kdn+'/'+file, model='kdn_geod', parent='dn', color=['b','seagreen','magenta'],ax=ax[ii][3])
-    plot_ece(res_folder_kdn+'/'+file, model='kdn_geod', parent='dn', color=['b','seagreen','magenta'],ax=ax[ii][4])
+for ii, file in enumerate(files[24:36]):
+
+    data_id = file[:-4]
+    data_id = int(data_id[8:])
+
+    ax1 = plt.subplot(12,6,ii+5*ii+1, sharex=ax1 if ii!=0 else None)
+    plot_err(res_folder_kdf+'/'+file, model='kdf_geod',ax=ax1, dataset_id=data_id)
+    
+    ax2 = plt.subplot(12,6,ii+5*ii+2, sharex=ax2 if ii!=0 else None)
+    plot_ece(res_folder_kdf+'/'+file, model='kdf_geod',ax=ax2)
+    
+    if ii==0:
+        ax2.set_title('KDF and RF', fontsize=60)
+
+    ax3 = plt.subplot(12,6,ii+5*ii+4, sharex=ax3 if ii!=0 else None)
+    plot_err(res_folder_kdn+'/'+file, model='kdn_geod', parent='dn', color=['b','seagreen','magenta'],ax=ax3)
+    
+    ax4 = plt.subplot(12,6,ii+5*ii+5, sharex=ax4 if ii!=0 else None)
+    plot_ece(res_folder_kdn+'/'+file, model='kdn_geod', parent='dn', color=['b','seagreen','magenta'],ax=ax4)
+
+    if ii==0:
+        ax4.set_title('KDN and DN', fontsize=60)
+
+    ax5 = plt.subplot(12,6,ii+5*ii+3, sharex=ax5 if ii!=0 else None)
+    plot_ood(res_folder_kdf_ood+'/'+file, res_folder_kdf_baseline_ood+'/'+file, model='kdf_geod', parent='rf', ax=ax5)
+
+    ax6 = plt.subplot(12,6,ii+5*ii+6, sharex=ax6 if ii!=0 else None)
+    plot_ood(res_folder_kdn_ood+'/'+file, res_folder_kdn_baseline_ood+'/'+file, model='kdn_geod', parent='dn', ax=ax6)
+
+handles, labels = ax1.get_legend_handles_labels()
+fig.legend(handles, labels, ncol=4, loc="lower left", bbox_to_anchor=(0.1,-0.01), fontsize=30, frameon=False)
+
+handles, labels = ax3.get_legend_handles_labels()
+fig.legend(handles, labels, ncol=4, loc="lower right", bbox_to_anchor=(0.95,-0.01), fontsize=30, frameon=False)
 
 plt.tight_layout()
+plt.savefig('/Users/jayantadey/kdg/benchmarks/plots/openml_detailed3.pdf', bbox_inches='tight')
 # %%
