@@ -68,9 +68,15 @@ for channel in range(3):
     x_noise[:,:,:,channel] /= x_train_std
 
 #%%
-with open('resnet20_0.pickle', 'rb') as f:
-    (proba_in, proba_cifar100, proba_svhn, proba_noise, proba_in_dn, proba_cifar100_dn, proba_svhn_dn, proba_noise_dn, proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet) = pickle.load(f)
+#with open('resnet20_0.pickle', 'rb') as f:
+#    (proba_in, proba_cifar100, proba_svhn, proba_noise, proba_in_dn, proba_cifar100_dn, proba_svhn_dn, proba_noise_dn, proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet) = pickle.load(f)
 
+filename = 'resnet_kdn_50000_0.joblib'
+model_kdn = joblib.load(filename)
+
+model_kdn.global_bias = -3e19
+
+proba_in = model_kdn.predict_proba(x_test, distance='Geodesic', n_jobs=90)
 
 label_y = np.argmax(proba_in,axis=1)
 print(np.mean(label_y==y_test.ravel()))
