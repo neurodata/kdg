@@ -598,4 +598,191 @@ print("p value for classification error greater than isotonic ", stat_greater_is
 
 print("p value for classification error less than sigmoid ", stat_equal_sig.pvalue)
 print("p value for classification error greater than sigmoid ", stat_greater_sig.pvalue)
+
+# %% Do Appendix figure
+
+def plot_err(file, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyle=['-', '--', '-.'], ax=None):
+    df = pd.read_csv(file)
+    #df_baseline = pd.read_csv(baseline_folder+'/'+file)
+    samples = np.unique(df['samples'])
+    err_kdx_med = []
+    err_x_med = []
+    err_isotonic_med = []
+    err_sigmoid_med = []
+
+    err_kdx_25 = []
+    err_x_25 = []
+    err_isotonic_25 = []
+    err_sigmoid_25 = []
+
+    err_kdx_75 = []
+    err_x_75 = []
+    err_isotonic_75 = []
+    err_sigmoid_75 = []
+    
+    for sample in samples:
+        kdx = df['err_'+model][df['samples']==sample]
+        x = df['err_'+parent][df['samples']==sample]
+        isotonic = df['err_isotonic'][df['samples']==sample]
+        sigmoid = df['err_sigmoid'][df['samples']==sample]
+
+        err_kdx_med.append(
+            np.median(kdx)
+        )
+
+        err_x_med.append(
+            np.median(x)
+        )
+        
+        err_isotonic_med.append(
+            np.median(isotonic)
+        )
+
+        err_sigmoid_med.append(
+            np.median(sigmoid)
+        )
+
+        qunatiles = np.nanquantile(np.array(kdx),[.25,.75],axis=0)
+        err_kdx_25.append(
+            qunatiles[0]
+        )
+        err_kdx_75.append(
+            qunatiles[1]
+        )
+
+        qunatiles = np.nanquantile(np.array(x),[.25,.75],axis=0)
+        err_x_25.append(
+            qunatiles[0]
+        )
+        err_x_75.append(
+            qunatiles[1]
+        )
+
+        qunatiles = np.nanquantile(np.array(isotonic),[.25,.75],axis=0)
+        err_isotonic_25.append(
+            qunatiles[0]
+        )
+        err_isotonic_75.append(
+            qunatiles[1]
+        )
+
+        qunatiles = np.nanquantile(np.array(sigmoid),[.25,.75],axis=0)
+        err_sigmoid_25.append(
+            qunatiles[0]
+        )
+        err_sigmoid_75.append(
+            qunatiles[1]
+        )
+
+    ax.plot(samples, err_kdx_med, linewidth=4, c=color[0], linestyle=linestyle[0], label=model.upper())    
+    ax.fill_between(samples, err_kdx_25, err_kdx_75, facecolor=color[0], alpha=.1)
+    ax.plot(samples, err_isotonic_med, linewidth=3, c=color[1], linestyle=linestyle[1], label='Isotonic-'+parent.upper())    
+    ax.fill_between(samples, err_isotonic_25, err_isotonic_75, facecolor=color[1], alpha=.1)
+    ax.plot(samples, err_sigmoid_med, linewidth=3, c=color[2], linestyle=linestyle[2], label='Sigoid'+parent.upper())    
+    ax.fill_between(samples, err_sigmoid_25, err_sigmoid_75, facecolor=color[2], alpha=.1)
+    ax.plot(samples, err_x_med, linewidth=3, c='k', label=parent.upper())    
+    ax.fill_between(samples, err_x_25, err_x_75, facecolor='k', alpha=.1)
+
+    ax.set_xscale("log")
+
+
+def plot_ece(file, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyle=['-', '--', '-.'], ax=None):
+    df = pd.read_csv(file)
+    #df_baseline = pd.read_csv(baseline_folder+'/'+file)
+    samples = np.unique(df['samples'])
+    err_kdx_med = []
+    err_x_med = []
+    err_isotonic_med = []
+    err_sigmoid_med = []
+
+    err_kdx_25 = []
+    err_x_25 = []
+    err_isotonic_25 = []
+    err_sigmoid_25 = []
+
+    err_kdx_75 = []
+    err_x_75 = []
+    err_isotonic_75 = []
+    err_sigmoid_75 = []
+    
+    for sample in samples:
+        kdx = df['ece_'+model][df['samples']==sample]
+        x = df['ece_'+parent][df['samples']==sample]
+        isotonic = df['ece_isotonic'][df['samples']==sample]
+        sigmoid = df['ece_sigmoid'][df['samples']==sample]
+
+        err_kdx_med.append(
+            np.median(kdx)
+        )
+
+        err_x_med.append(
+            np.median(x)
+        )
+        
+        err_isotonic_med.append(
+            np.median(isotonic)
+        )
+
+        err_sigmoid_med.append(
+            np.median(sigmoid)
+        )
+
+        qunatiles = np.nanquantile(np.array(kdx),[.25,.75],axis=0)
+        err_kdx_25.append(
+            qunatiles[0]
+        )
+        err_kdx_75.append(
+            qunatiles[1]
+        )
+
+        qunatiles = np.nanquantile(np.array(x),[.25,.75],axis=0)
+        err_x_25.append(
+            qunatiles[0]
+        )
+        err_x_75.append(
+            qunatiles[1]
+        )
+
+        qunatiles = np.nanquantile(np.array(isotonic),[.25,.75],axis=0)
+        err_isotonic_25.append(
+            qunatiles[0]
+        )
+        err_isotonic_75.append(
+            qunatiles[1]
+        )
+
+        qunatiles = np.nanquantile(np.array(sigmoid),[.25,.75],axis=0)
+        err_sigmoid_25.append(
+            qunatiles[0]
+        )
+        err_sigmoid_75.append(
+            qunatiles[1]
+        )
+
+    ax.plot(samples, err_kdx_med, linewidth=4, c=color[0], linestyle=linestyle[0], label=model.upper())    
+    ax.fill_between(samples, err_kdx_25, err_kdx_75, facecolor=color[0], alpha=.1)
+    ax.plot(samples, err_isotonic_med, linewidth=3, c=color[1], linestyle=linestyle[1], label='Isotonic-'+parent.upper())    
+    ax.fill_between(samples, err_isotonic_25, err_isotonic_75, facecolor=color[1], alpha=.1)
+    ax.plot(samples, err_sigmoid_med, linewidth=3, c=color[2], linestyle=linestyle[2], label='Sigoid'+parent.upper())    
+    ax.fill_between(samples, err_sigmoid_25, err_sigmoid_75, facecolor=color[2], alpha=.1)
+    ax.plot(samples, err_x_med, linewidth=3, c='k', label=parent.upper())    
+    ax.fill_between(samples, err_x_25, err_x_75, facecolor='k', alpha=.1)
+
+    ax.set_xscale("log")
+#%%
+linestyles = ['-', '--', '-.']
+
+sns.set(
+    color_codes=True, palette="bright", style="white", context="talk", font_scale=1.5
+)
+
+fig, ax = plt.subplots(12, 6, figsize=(40,60), sharex=True)
+
+for ii, file in enumerate(files[12:24]):
+    plot_err(res_folder_kdf+'/'+file, model='kdf_geod',ax=ax[ii][0])
+    plot_ece(res_folder_kdf+'/'+file, model='kdf_geod',ax=ax[ii][1])
+    plot_err(res_folder_kdn+'/'+file, model='kdn_geod', parent='dn', color=['b','seagreen','magenta'],ax=ax[ii][3])
+    plot_ece(res_folder_kdn+'/'+file, model='kdn_geod', parent='dn', color=['b','seagreen','magenta'],ax=ax[ii][4])
+
+plt.tight_layout()
 # %%

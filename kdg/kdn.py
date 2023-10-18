@@ -316,7 +316,7 @@ class kdn(KernelDensityGraph):
                     
                     prob = _get_likelihoods(min_dis_id)
                     
-                    accuracy = np.mean(np.argmax(prob,axis=1)==y_val)
+                    accuracy = np.mean(np.argmax(prob,axis=1)==y_val.ravel())
                     ece = get_ece(prob, y_val.ravel(), n_bins=20)
                     print(k, ece, accuracy)
                     if ece < min_ece:
