@@ -889,7 +889,7 @@ sns.set(
     color_codes=True, palette="bright", style="white", context="talk", font_scale=1.5
 )
 
-fig=plt.figure(figsize=(40,45))
+fig=plt.figure(figsize=(40,60))
 #fig, ax = plt.subplots(12, 6, figsize=(40,60), sharex=True)
 
 for ii, file in enumerate(files[:12]):
@@ -922,11 +922,17 @@ for ii, file in enumerate(files[:12]):
     plot_ood(res_folder_kdn_ood+'/'+file, res_folder_kdn_baseline_ood+'/'+file, model='kdn_geod', parent='dn', color=['b','seagreen','magenta'], ax=ax6)
 
 handles, labels = ax1.get_legend_handles_labels()
-fig.legend(handles, labels, ncol=4, loc="lower left", bbox_to_anchor=(0.1,-0.01), fontsize=30, frameon=False)
+fig.legend(handles, labels, ncol=4, loc="lower left", bbox_to_anchor=(0.1,-0.04), fontsize=30, frameon=False)
 
 handles, labels = ax3.get_legend_handles_labels()
-fig.legend(handles, labels, ncol=4, loc="lower right", bbox_to_anchor=(0.95,-0.01), fontsize=30, frameon=False)
+fig.legend(handles, labels, ncol=4, loc="lower right", bbox_to_anchor=(0.95,-0.04), fontsize=30, frameon=False)
+fig.text(0.2, -0.01, "Number of Training Samples (log)", ha="center", fontsize=35)
+fig.text(0.45, -0.01, "Distance", ha="center", fontsize=35)
 
+fig.text(0.7, -0.01, "Number of Training Samples (log)", ha="center", fontsize=35)
+fig.text(0.95, -0.01, "Distance", ha="center", fontsize=35)
+
+plt.subplots_adjust(hspace=.6,wspace=.6)
 plt.tight_layout()
 plt.savefig('/Users/jayantadey/kdg/benchmarks/plots/openml_detailed1.pdf', bbox_inches='tight')
 # %%
