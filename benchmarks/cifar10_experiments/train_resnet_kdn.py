@@ -32,13 +32,13 @@ for channel in range(3):
     x_test[:,:,:,channel] /= x_train_std
 
 #%%
-x_test, x_cal, y_test, y_cal = train_test_split(
-                x_test, y_test, train_size=0.9, random_state=10, stratify=y_test)
+x_train, x_cal, y_train, y_cal = train_test_split(
+                x_train, y_train, train_size=0.9, random_state=seeds[0], stratify=y_test)
 #%%
 for seed in seeds:
     print("Doing seed ", seed)
 
-    nn_file = 'resnet20_models/cifar_model_50000_'+str(seed)
+    nn_file = 'resnet20_models/cifar_model_new_'+str(seed)
     network = keras.models.load_model(nn_file)
     
     model_kdn = kdn(
@@ -46,5 +46,5 @@ for seed in seeds:
     )
     model_kdn.fit(x_train, y_train, X_val=x_cal, y_val=y_cal, batch=10, save_temp=True)
     
-    dump(model_kdn, 'resnet_kdn_50000_'+str(seed)+'.joblib')
+    dump(model_kdn, 'resnet_kdn_50000_new_'+str(seed)+'.joblib')
 # %%

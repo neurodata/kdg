@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 
 # Training parameters
 batch_size = 32  # orig paper trained all networks with batch_size=128
-epochs = 10
+epochs = 100
 data_augmentation = False
 num_classes = 10
 
@@ -70,13 +70,13 @@ def lr_schedule(epoch):
         lr (float32): learning rate
     """
     lr = .001
-    if epoch > 8:
+    if epoch > 80:
         lr *= 0.5e-3
-    elif epoch > 6:
+    elif epoch > 60:
         lr *= 1e-3
-    elif epoch > 4:
+    elif epoch > 40:
         lr *= 1e-2
-    elif epoch > 2:
+    elif epoch > 20:
         lr *= 1e-1
     print('Learning rate: ', lr)
     return lr
@@ -326,30 +326,21 @@ print(x_train.shape[0], 'train samples')
 print(x_test.shape[0], 'test samples')
 print('y_train shape:', y_train.shape)
 
-sample_sizes = [50000]
+sample_sizes = [int(50000*0.9)]
 seeds = [0,100,200,400]
 
 for sample in sample_sizes:
     for seed in seeds:
         random.seed(seed)
         print("Doing sample ", sample, "with seed ", seed)
-        # Convert class vectors to binary class matrices.
-        '''(x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
 
-        if sample < 50000:
-            x_train, _, y_train, _ = train_test_split(
-                        x_train, y_train, test_size=10, train_size=sample, random_state=seed, stratify=y_train)
+        x_train, x_val, y_train, y_val = train_test_split(
+                        x_train, y_train, train_size=0.9, random_state=seed, stratify=y_train)
             
-        x_train = x_train.astype('float32') #/ 255
-        x_test = x_test.astype('float32') #/ 255
-        x_train_mean = np.mean(x_train, axis=0)
-        if subtract_pixel_mean:
-            x_train -= x_train_mean
-            x_test -= x_train_mean'''
 
         y_train_one_hot = keras.utils.to_categorical(y_train, num_classes)
+        y_val_one_hot = keras.utils.to_categorical(y_val, num_classes)
         y_test_one_hot = keras.utils.to_categorical(y_test, num_classes)
-        
 
         if version == 2:
             model = resnet_v2(input_shape=input_shape, depth=depth)
@@ -364,12 +355,12 @@ for sample in sample_sizes:
 
 
         #load pretrained model
-        pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_pretrained')
+        '''pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_pretrained')
 
         for layer_id, layer in enumerate(model.layers[:-1]):
             pretrained_weights = pretrained_model.layers[layer_id].get_weights()
             layer.set_weights(pretrained_weights)
-            layer.trainable = False
+            layer.trainable = False'''
 
         model.summary()
         print(model_type)
@@ -402,7 +393,7 @@ for sample in sample_sizes:
             model.fit(x_train, y_train_one_hot,
                     batch_size=batch_size,
                     epochs=epochs,
-                    validation_data=(x_test, y_test_one_hot),
+                    validation_data=(x_val, y_val_one_hot),
                     shuffle=True,
                     callbacks=callbacks)
         else:
@@ -426,4 +417,4 @@ for sample in sample_sizes:
         print('Test loss:', scores[0])
         print('Test accuracy:', scores[1])
 
-        model.save('resnet20_models/cifar_model_pretrained_'+str(sample)+'_'+str(seed))
+        model.save('resnet20_models/cifar_model_new_'+str(seed))
