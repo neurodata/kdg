@@ -33,7 +33,7 @@ for channel in range(3):
 
 #%%
 x_train, x_cal, y_train, y_cal = train_test_split(
-                x_train, y_train, train_size=0.9, random_state=seeds[0], stratify=y_test)
+                x_train, y_train, train_size=0.9, random_state=seeds[0], stratify=y_train)
 #%%
 for seed in seeds:
     print("Doing seed ", seed)
