@@ -12,7 +12,7 @@ import timeit
 from joblib import dump, load
 from sklearn.model_selection import train_test_split
 #%%
-seeds = [300]
+seeds = [400]
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
