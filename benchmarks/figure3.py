@@ -370,7 +370,7 @@ ax[0][0].set_ylim([-0.1, .1])
 ax[0][0].set_yticks([-.10,0,.10])
 ax[0][0].set_xticks([])
 
-ax[0][0].set_ylabel('Improvement \n with respect to parent', fontsize=35)
+ax[0][0].set_ylabel('Improvement over parent', fontsize=35)
 #ax[0][0].text(100, .05, 'KGF wins')
 #ax[0][0].text(100, -.08, 'RF wins')
 
@@ -389,7 +389,7 @@ ax[1][0].set_title(r'$(P_{iso}, P_{sig}) = (0.00, 0.01)$', fontsize=30)
 ax[1][0].set_xscale("log")
 ax[1][0].set_ylim([-0.06, .06])
 ax[1][0].set_yticks([-.05,0,.05])
-ax[1][0].set_ylabel('Improvement \n with respect to parent', fontsize=35)
+ax[1][0].set_ylabel('Improvement over parent', fontsize=35)
 #ax[1][0].text(100, .05, 'KGN wins')
 #ax[1][0].text(100, -.08, 'DN wins')
 
@@ -684,7 +684,7 @@ def plot_err(file, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyl
     ax.fill_between(samples, err_x_25, err_x_75, facecolor='k', alpha=.1)
 
     if dataset_id != None:
-        ax.set_ylabel('Dataset ID ' + str(dataset_id)+'\n Error', fontsize=35)
+        ax.set_ylabel('Dataset ID ' + str(dataset_id), fontsize=35)
     else:
         ax.set_ylabel('Error', fontsize=35)
 
@@ -778,7 +778,7 @@ def plot_ece(file, model='kdf', parent='rf', color=['r','#8E388E','k'], linestyl
     ax.plot(samples, err_x_med, linewidth=3, c='k', label=parent.upper())    
     ax.fill_between(samples, err_x_25, err_x_75, facecolor='k', alpha=.1)
 
-    ax.set_ylabel('MCE', fontsize=35)
+    #ax.set_ylabel('MCE', fontsize=35)
     ax.set_xscale("log")
     ax.tick_params(labelsize=30)
     right_side = ax.spines["right"]
@@ -875,7 +875,7 @@ def plot_ood(file, file_baseline, model='kdf', parent='rf', color=['r','#8E388E'
     ax.plot(r, err_x_med, linewidth=3, c='k', label=parent.upper())    
     ax.fill_between(r, err_x_25, err_x_75, facecolor='k', alpha=.1)
 
-    ax.set_ylabel('Mean Max Conf.', fontsize=35)
+    #ax.set_ylabel('Mean Max Conf.', fontsize=35)
     ax.tick_params(labelsize=30)
     right_side = ax.spines["right"]
     right_side.set_visible(False)
@@ -898,28 +898,41 @@ for ii, file in enumerate(files[:12]):
     data_id = int(data_id[8:])
 
     ax1 = plt.subplot(12,6,ii+5*ii+1, sharex=ax1 if ii!=0 else None)
+
+    if ii==0:
+        ax1.set_title('Classification Error', fontsize=40)
+
     plot_err(res_folder_kdf+'/'+file, model='kdf_geod',ax=ax1, dataset_id=data_id)
     
     ax2 = plt.subplot(12,6,ii+5*ii+2, sharex=ax2 if ii!=0 else None)
     plot_ece(res_folder_kdf+'/'+file, model='kdf_geod',ax=ax2)
     
     if ii==0:
-        ax2.set_title('KDF and RF', fontsize=60)
+        ax2.set_title('MCE', fontsize=40)
 
     ax3 = plt.subplot(12,6,ii+5*ii+4, sharex=ax3 if ii!=0 else None)
     plot_err(res_folder_kdn+'/'+file, model='kdn_geod', parent='dn', color=['b','seagreen','magenta'],ax=ax3)
+    if ii==0:
+        ax3.set_title('Classification Error', fontsize=40)
+
     
     ax4 = plt.subplot(12,6,ii+5*ii+5, sharex=ax4 if ii!=0 else None)
     plot_ece(res_folder_kdn+'/'+file, model='kdn_geod', parent='dn', color=['b','seagreen','magenta'],ax=ax4)
 
     if ii==0:
-        ax4.set_title('KDN and DN', fontsize=60)
+        ax4.set_title('MCE', fontsize=40)
 
     ax5 = plt.subplot(12,6,ii+5*ii+3, sharex=ax5 if ii!=0 else None)
     plot_ood(res_folder_kdf_ood+'/'+file, res_folder_kdf_baseline_ood+'/'+file, model='kdf_geod', parent='rf', ax=ax5)
 
+    if ii==0:
+        ax5.set_title('Mean Max Conf.', fontsize=40)
+
     ax6 = plt.subplot(12,6,ii+5*ii+6, sharex=ax6 if ii!=0 else None)
     plot_ood(res_folder_kdn_ood+'/'+file, res_folder_kdn_baseline_ood+'/'+file, model='kdn_geod', parent='dn', color=['b','seagreen','magenta'], ax=ax6)
+
+    if ii==0:
+        ax6.set_title('Mean Max Conf.', fontsize=40)
 
 handles, labels = ax1.get_legend_handles_labels()
 fig.legend(handles, labels, ncol=4, loc="lower left", bbox_to_anchor=(0.1,-0.04), fontsize=30, frameon=False)
@@ -932,6 +945,8 @@ fig.text(0.45, -0.01, "Distance", ha="center", fontsize=35)
 fig.text(0.7, -0.01, "Number of Training Samples (log)", ha="center", fontsize=35)
 fig.text(0.95, -0.01, "Distance", ha="center", fontsize=35)
 
+fig.text(0.28, 1, "KDF and RF", ha="center", fontsize=60)
+fig.text(0.78, 1, "KDN and DN", ha="center", fontsize=60)
 plt.subplots_adjust(hspace=.6,wspace=.6)
 plt.tight_layout()
 plt.savefig('/Users/jayantadey/kdg/benchmarks/plots/openml_detailed1.pdf', bbox_inches='tight')
