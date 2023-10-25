@@ -336,13 +336,14 @@ top_side.set_visible(False)
 
 
 ax[0][1].set_title('Classification Error', fontsize=labelsize+4)
-ax[0][2].set_title('Helinger Distance', fontsize=labelsize+4)
+ax[0][2].set_title('Hellinger Distance', fontsize=labelsize+4)
 ax[0][3].set_title('Mean Max Conf.', fontsize=labelsize+4)
 
 ax[0][4].set_title('Classification Error', fontsize=labelsize+4)
-ax[0][5].set_title('Helinger Distance', fontsize=labelsize+4)
+ax[0][5].set_title('Hellinger Distance', fontsize=labelsize+4)
 ax[0][6].set_title('Mean Max Conf.', fontsize=labelsize+4)
 
+ax[0][0].text(0, 0, 'Simulations', fontsize=labelsize+20)
 ax[0][2].text(.1, .35, 'KDF and RF', fontsize=labelsize+20)
 ax[0][4].text(.5, .15, 'KDN and DN', fontsize=labelsize+20)
 
