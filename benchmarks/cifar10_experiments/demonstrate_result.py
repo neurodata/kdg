@@ -76,8 +76,8 @@ model_kdn = joblib.load(filename)
 
 model_kdn.global_bias = -3e10
 
-proba_in = model_kdn.predict_proba(x_test, distance='Geodesic', n_jobs=50)
+proba_in = model_kdn.predict_proba(x_test[:1000], distance='Geodesic', n_jobs=50)
 
 label_y = np.argmax(proba_in,axis=1)
-print(np.mean(label_y==y_test.ravel()))
-print(get_ece(proba_in, y_test.ravel(), n_bins=15))
+print(np.mean(label_y==y_test[:1000].ravel()))
+print(get_ece(proba_in, y_test[:1000].ravel(), n_bins=15))
