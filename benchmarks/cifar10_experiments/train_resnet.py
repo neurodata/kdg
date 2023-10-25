@@ -327,7 +327,7 @@ print(x_test.shape[0], 'test samples')
 print('y_train shape:', y_train.shape)
 
 sample_sizes = [int(50000*0.9)]
-seeds = [0,100,200,400]
+seeds = [0,100,200,300,400]
 
 for sample in sample_sizes:
     for seed in seeds:

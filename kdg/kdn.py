@@ -296,7 +296,7 @@ class kdn(KernelDensityGraph):
             max_acc = 0
             for _ in range(2):
                 if k==None:
-                    k_ = np.arange(1,3,.1)
+                    k_ = np.arange(1,2,.1)
                 else:
                     k_ = np.arange(k-.06,k+.05,.01)
                 for tmp_k in k_:

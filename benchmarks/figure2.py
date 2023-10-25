@@ -49,7 +49,7 @@ r = r = np.arange(0,10.5,.5)
 linewidth = [6,3]
 
 #sns.set_context('talk')
-ticksize = 45
+ticksize = 50
 labelsize = 50
 fig1, ax = plt.subplots(6, 7, figsize=(65, 50))
 
@@ -88,7 +88,7 @@ for ii, model in enumerate(models):
         else:
             ax[jj][ii*3+1].set_xticks([])
 
-        ax[jj][ii*3+1].set_ylabel('Error', fontsize=labelsize)
+        #ax[jj][ii*3+1].set_ylabel('Error', fontsize=labelsize)
 
         tot_val = np.concatenate((df[model_key+'med'], df[parent_key+'med']))
         min_val = np.round(np.min(tot_val),1)
@@ -124,11 +124,11 @@ for ii, model in enumerate(models):
         ax[jj][ii*3+2].set_xscale('log')
 
         if jj==4:
-            ax[jj][ii*3+2].set_xlabel('Sample size', fontsize=labelsize)
+            ax[jj][ii*3+2].set_xlabel('Sample Size', fontsize=labelsize)
         else:
             ax[jj][ii*3+2].set_xticks([])
 
-        ax[jj][ii*3+2].set_ylabel('Hellinger Dist.', fontsize=labelsize)
+        #ax[jj][ii*3+2].set_ylabel('Hellinger Dist.', fontsize=labelsize)
 
         tot_val = np.concatenate((df[model_key+'med'], df[parent_key+'med']))
         min_val = np.round(np.min(tot_val),1)
@@ -140,8 +140,8 @@ for ii, model in enumerate(models):
         ax[jj][ii*3+2].set_yticks([min_val, max_val])
         ax[jj][ii*3+2].tick_params(labelsize=ticksize)
 
-        if jj==0:
-            ax[jj][ii*3+2].set_title(model.upper() + ' and '+parent.upper(), fontsize=labelsize+30)
+        '''if jj==0:
+            ax[jj][ii*3+2].set_title(model.upper() + ' and '+parent.upper(), fontsize=labelsize+30)'''
 
         if jj==4 and ii==0:
             leg = ax[jj][ii*3+2].legend(bbox_to_anchor=(0.4, 0.07), bbox_transform=plt.gcf().transFigure,
@@ -179,7 +179,7 @@ for ii, model in enumerate(models):
         else:
             ax[jj][ii*3+3].set_xticks([])
 
-        ax[jj][ii*3+3].set_ylabel('Mean Max Conf.', fontsize=labelsize)
+        #ax[jj][ii*3+3].set_ylabel('Mean Max Conf.', fontsize=labelsize)
         ax[jj][ii*3+3].set_yticks([.5,1])
         
         ax[jj][ii*3+3].tick_params(labelsize=ticksize)
@@ -215,7 +215,7 @@ ax[5][1].set_xscale('log')
 
 ax[5][1].tick_params(labelsize=ticksize)
 ax[5][0].text(-3.5, 0, 'Trunk', fontsize=labelsize+10, rotation=90)
-ax[5][1].set_ylabel('Error', fontsize=labelsize)
+#ax[5][1].set_ylabel('Error', fontsize=labelsize)
 ax[5][1].set_xlabel('Dimensions', fontsize=labelsize)
 
 right_side = ax[5][1].spines["right"]
@@ -237,7 +237,7 @@ ax[5][2].fill_between(dim, err_rf_25, err_rf_75, facecolor='k', alpha=.3)
 ax[5][2].set_xscale('log')
 
 ax[5][2].tick_params(labelsize=ticksize)
-ax[5][2].set_ylabel('Hellinger Dist.', fontsize=labelsize)
+#ax[5][2].set_ylabel('Hellinger Dist.', fontsize=labelsize)
 ax[5][2].set_xlabel('Dimensions', fontsize=labelsize)
 
 right_side = ax[5][2].spines["right"]
@@ -261,7 +261,7 @@ ax[5][3].fill_between(dim, err_rf_25, err_rf_75, facecolor='k', alpha=.3)
 ax[5][3].set_xscale('log')
 
 ax[5][3].tick_params(labelsize=ticksize)
-ax[5][3].set_ylabel('Mean Max Conf.', fontsize=labelsize)
+#ax[5][3].set_ylabel('Mean Max Conf.', fontsize=labelsize)
 ax[5][3].set_xlabel('Dimensions', fontsize=labelsize)
 
 right_side = ax[5][3].spines["right"]
@@ -283,7 +283,7 @@ ax[5][4].fill_between(dim, err_dn_25, err_dn_75, facecolor='k', alpha=.3)
 ax[5][4].set_xscale('log')
 
 ax[5][4].tick_params(labelsize=ticksize)
-ax[5][4].set_ylabel('Error', fontsize=labelsize)
+#ax[5][4].set_ylabel('Error', fontsize=labelsize)
 ax[5][4].set_xlabel('Dimensions', fontsize=labelsize)
 
 right_side = ax[5][4].spines["right"]
@@ -305,7 +305,7 @@ ax[5][5].fill_between(dim, err_dn_25, err_dn_75, facecolor='k', alpha=.3)
 ax[5][5].set_xscale('log')
 
 ax[5][5].tick_params(labelsize=ticksize)
-ax[5][5].set_ylabel('Hellinger Dist.', fontsize=labelsize)
+#ax[5][5].set_ylabel('Hellinger Dist.', fontsize=labelsize)
 ax[5][5].set_xlabel('Dimensions', fontsize=labelsize)
 
 right_side = ax[5][5].spines["right"]
@@ -326,7 +326,7 @@ ax[5][6].fill_between(dim, err_dn_25, err_dn_75, facecolor='k', alpha=.3)
 ax[5][6].set_xscale('log')
 
 ax[5][6].tick_params(labelsize=ticksize)
-ax[5][6].set_ylabel('Mean Max Conf.', fontsize=labelsize)
+#ax[5][6].set_ylabel('Mean Max Conf.', fontsize=labelsize)
 ax[5][6].set_xlabel('Dimensions', fontsize=labelsize)
 
 right_side = ax[5][6].spines["right"]
@@ -334,7 +334,19 @@ right_side.set_visible(False)
 top_side = ax[5][6].spines["top"]
 top_side.set_visible(False)
 
-plt.subplots_adjust(hspace=.6,wspace=.6)
+
+ax[0][1].set_title('Classification Error', fontsize=labelsize+4)
+ax[0][2].set_title('Helinger Distance', fontsize=labelsize+4)
+ax[0][3].set_title('Mean Max Conf.', fontsize=labelsize+4)
+
+ax[0][4].set_title('Classification Error', fontsize=labelsize+4)
+ax[0][5].set_title('Helinger Distance', fontsize=labelsize+4)
+ax[0][6].set_title('Mean Max Conf.', fontsize=labelsize+4)
+
+ax[0][2].text(.1, .35, 'KDF and RF', fontsize=labelsize+20)
+ax[0][4].text(.5, .15, 'KDN and DN', fontsize=labelsize+20)
+
+plt.subplots_adjust(hspace=.5,wspace=.5)
 #plt.tight_layout()
 plt.savefig('/Users/jayantadey/kdg/benchmarks/plots/simulation_res.pdf', bbox_inches='tight')
 # %%
