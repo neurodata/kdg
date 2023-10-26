@@ -71,7 +71,7 @@ for channel in range(3):
 #with open('resnet20_0.pickle', 'rb') as f:
 #    (proba_in, proba_cifar100, proba_svhn, proba_noise, proba_in_dn, proba_cifar100_dn, proba_svhn_dn, proba_noise_dn, proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet) = pickle.load(f)
 
-filename = '/cis/home/jdey4/kdg/benchmarks/cifar10_experiments/resnet_kdn_50000_new_0.joblib'
+filename = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/resnet_kdn_50000_new_100.joblib'
 model_kdn = joblib.load(filename)
 
 model_kdn.global_bias = -3e10
@@ -81,3 +81,4 @@ proba_in = model_kdn.predict_proba(x_test[:1000], distance='Geodesic', n_jobs=50
 label_y = np.argmax(proba_in,axis=1)
 print(np.mean(label_y==y_test[:1000].ravel()))
 print(get_ece(proba_in, y_test[:1000].ravel(), n_bins=15))
+# %%
