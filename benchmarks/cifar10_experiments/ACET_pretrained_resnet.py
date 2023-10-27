@@ -65,7 +65,7 @@ batchsize = 40  # orig paper trained all networks with batch_size=128
 epochs = 10
 data_augmentation = False
 num_classes = 10
-seed = 200
+seed = 400
 
 #%%
 np.random.seed(seed)
