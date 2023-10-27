@@ -33,6 +33,7 @@ def fpr_at_95_tpr(conf_in, conf_out):
     FPR = np.sum(conf_out >=  PERC)/len(conf_out)
     return FPR, PERC
 #%%
+seeds = [0,100,200,300,400]
 # Load the CIFAR10 and CIFAR100 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
@@ -62,9 +63,6 @@ for channel in range(3):
     x_train_mean = np.mean(x_train[:,:,:,channel])
     x_train_std = np.std(x_train[:,:,:,channel])
 
-    x_train[:,:,:,channel] -= x_train_mean
-    x_train[:,:,:,channel] /= x_train_std
-
     x_test[:,:,:,channel] -= x_train_mean
     x_test[:,:,:,channel] /= x_train_std
 
@@ -77,44 +75,58 @@ for channel in range(3):
     x_noise[:,:,:,channel] -= x_train_mean
     x_noise[:,:,:,channel] /= x_train_std
 
-_, x_cal, _, y_cal = train_test_split(
-                x_test, y_test, train_size=0.9, random_state=10, stratify=y_test)
-#%% Load model file
-model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_50000_100')
-uncalibrated_model = KerasClassifier(model=model)
-uncalibrated_model.initialize(x_train, keras.utils.to_categorical(y_train))
-#uncalibrated_model.partial_fit(x_train, keras.utils.to_categorical(y_train))
+for seed in seeds:
+    print('Doing seed ',seed)
+    
+    (x_train, y_train), (_, _) = cifar10.load_data()
+    x_train = x_train.astype('float32') / 255
+    
+    for channel in range(3):
+        x_train_mean = np.mean(x_train[:,:,:,channel])
+        x_train_std = np.std(x_train[:,:,:,channel])
 
-print('Training sigmoid')
-calibrated_nn_sigmoid = calcv(
-                uncalibrated_model, method='sigmoid', ensemble=False, cv='prefit')
-calibrated_nn_sigmoid.fit(x_cal, y_cal)
+        x_train[:,:,:,channel] -= x_train_mean
+        x_train[:,:,:,channel] /= x_train_std
 
-print('Training isotonic')
-calibrated_nn_isotonic = calcv(
-                uncalibrated_model, method='isotonic', ensemble=False, cv='prefit')
-calibrated_nn_isotonic.fit(x_cal, y_cal)
 
-#%%
-proba_in_sig = calibrated_nn_sigmoid.predict_proba(x_test)
-proba_cifar100_sig = calibrated_nn_sigmoid.predict_proba(x_cifar100)
-proba_svhn_sig = calibrated_nn_sigmoid.predict_proba(x_svhn)
-proba_noise_sig = calibrated_nn_sigmoid.predict_proba(x_noise)
+    x_train, x_cal, y_train, y_cal = train_test_split(
+                    x_train, y_train, train_size=0.9, random_state=seed, stratify=y_train)
 
-proba_in_iso = calibrated_nn_isotonic.predict_proba(x_test)
-proba_cifar100_iso = calibrated_nn_isotonic.predict_proba(x_cifar100)
-proba_svhn_iso = calibrated_nn_isotonic.predict_proba(x_svhn)
-proba_noise_iso = calibrated_nn_isotonic.predict_proba(x_noise)
+    model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_new_'+str(seed))
+    uncalibrated_model = KerasClassifier(model=model)
+    uncalibrated_model.initialize(x_train, keras.utils.to_categorical(y_train))
+    #uncalibrated_model.partial_fit(x_train, keras.utils.to_categorical(y_train))
 
-summary = (proba_in_sig, proba_cifar100_sig, proba_svhn_sig, proba_noise_sig,\
-           proba_in_iso, proba_cifar100_iso, proba_svhn_iso, proba_noise_iso)
+    print('Training sigmoid')
+    calibrated_nn_sigmoid = calcv(
+                    uncalibrated_model, method='sigmoid', ensemble=False, cv='prefit')
+    calibrated_nn_sigmoid.fit(x_cal, y_cal)
 
-file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet20_100_baseline_without_pretrain.pickle'
+    print('Training isotonic')
+    calibrated_nn_isotonic = calcv(
+                    uncalibrated_model, method='isotonic', ensemble=False, cv='prefit')
+    calibrated_nn_isotonic.fit(x_cal, y_cal)
 
-with open(file_to_save, 'wb') as f:
-    pickle.dump(summary, f)
+
+    proba_in_sig = calibrated_nn_sigmoid.predict_proba(x_test)
+    proba_cifar100_sig = calibrated_nn_sigmoid.predict_proba(x_cifar100)
+    proba_svhn_sig = calibrated_nn_sigmoid.predict_proba(x_svhn)
+    proba_noise_sig = calibrated_nn_sigmoid.predict_proba(x_noise)
+
+    proba_in_iso = calibrated_nn_isotonic.predict_proba(x_test)
+    proba_cifar100_iso = calibrated_nn_isotonic.predict_proba(x_cifar100)
+    proba_svhn_iso = calibrated_nn_isotonic.predict_proba(x_svhn)
+    proba_noise_iso = calibrated_nn_isotonic.predict_proba(x_noise)
+
+    summary = (proba_in_sig, proba_cifar100_sig, proba_svhn_sig, proba_noise_sig,\
+            proba_in_iso, proba_cifar100_iso, proba_svhn_iso, proba_noise_iso)
+
+    file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet20_baseline_new_'+str(seed)+'.pickle'
+
+    with open(file_to_save, 'wb') as f:
+        pickle.dump(summary, f)
 # %%
-p_in = proba_in_dn
+'''p_in = proba_in_dn
 p_out = proba_svhn_dn
 from sklearn.metrics import roc_auc_score
 true_labels = np.hstack((np.ones(len(p_in), ), np.zeros(len(p_out), )))
@@ -131,5 +143,5 @@ np.mean(np.argmax(p_in,axis=1)==y_test.ravel())
 # %%
 get_ece(p_in, y_test.ravel(), n_bins=15)
 # %%
-np.mean(np.abs(np.max(p_out,axis=1)-.1))
+np.mean(np.abs(np.max(p_out,axis=1)-.1))'''
 # %%
