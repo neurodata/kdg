@@ -5,7 +5,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
 import pickle
 from keras.models import Model
-from kdg import kdcnn, kdf, kdn, get_ece
+from kdg import kdf, kdn, get_ece
 import pickle
 from tensorflow.keras.datasets import cifar10, cifar100
 import timeit
@@ -15,6 +15,7 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import signal
+from sklearn.metrics import roc_auc_score
 #%%
 def fpr_at_95_tpr(conf_in, conf_out):
     TPR = 95
@@ -67,18 +68,370 @@ for channel in range(3):
     x_noise[:,:,:,channel] -= x_train_mean
     x_noise[:,:,:,channel] /= x_train_std
 
-#%%
-#with open('resnet20_0.pickle', 'rb') as f:
-#    (proba_in, proba_cifar100, proba_svhn, proba_noise, proba_in_dn, proba_cifar100_dn, proba_svhn_dn, proba_noise_dn, proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet) = pickle.load(f)
+# %%
+seeds = [0,200,300,400]
+accuracy_kdn = []
+accuracy_dn = []
+accuracy_acet = []
+mce_kdn = []
+mce_dn = []
+mce_acet = []
 
-filename = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/resnet_kdn_50000_new_300.joblib'
-model_kdn = joblib.load(filename)
+accuracy_iso = []
+accuracy_sig = []
+mce_iso = []
+mce_sig = []
 
-model_kdn.global_bias = -5e9
+auroc_kdn_cifar100 = []
+auroc_dn_cifar100 = []
+auroc_acet_cifar100 = []
+auroc_iso_cifar100 = []
+auroc_sig_cifar100 = []
+fpr_kdn_cifar100 = []
+fpr_dn_cifar100 = []
+fpr_acet_cifar100 = []
+fpr_iso_cifar100 = []
+fpr_sig_cifar100 = []
+oce_kdn_cifar100 = []
+oce_dn_cifar100 = []
+oce_acet_cifar100 = []
+oce_iso_cifar100 = []
+oce_sig_cifar100 = []
 
-proba_in = model_kdn.predict_proba(x_test[:1000], distance='Geodesic', n_jobs=50)
+auroc_kdn_svhn = []
+auroc_dn_svhn = []
+auroc_acet_svhn = []
+auroc_iso_svhn = []
+auroc_sig_svhn = []
+fpr_kdn_svhn = []
+fpr_dn_svhn = []
+fpr_acet_svhn = []
+fpr_iso_svhn = []
+fpr_sig_svhn = []
+oce_kdn_svhn = []
+oce_dn_svhn = []
+oce_acet_svhn = []
+oce_iso_svhn = []
+oce_sig_svhn = []
 
-label_y = np.argmax(proba_in,axis=1)
-print(np.mean(label_y==y_test[:1000].ravel()))
-print(get_ece(proba_in, y_test[:1000].ravel(), n_bins=15))
+auroc_kdn_noise = []
+auroc_dn_noise = []
+auroc_acet_noise = []
+auroc_iso_noise = []
+auroc_sig_noise = []
+fpr_kdn_noise = []
+fpr_dn_noise = []
+fpr_acet_noise = []
+fpr_iso_noise = []
+fpr_sig_noise = []
+oce_kdn_noise = []
+oce_dn_noise = []
+oce_acet_noise = []
+oce_iso_noise = []
+oce_sig_noise = []
+
+for seed in seeds:
+    with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet20_new_'+str(seed)+'.pickle','rb') as f:
+        (proba_in, proba_cifar100, proba_svhn, proba_noise, proba_in_dn, proba_cifar100_dn, proba_svhn_dn, proba_noise_dn, proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet) = pickle.load(f)
+
+    with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet20_baseline_new_'+str(seed)+'.pickle', 'rb') as f:
+        (proba_in_sig, proba_cifar100_sig, proba_svhn_sig, proba_noise_sig,\
+            proba_in_iso, proba_cifar100_iso, proba_svhn_iso, proba_noise_iso) = pickle.load(f)
+        
+    accuracy_kdn.append(
+        np.mean(np.argmax(proba_in,axis=1)==y_test.ravel())
+    )
+    accuracy_dn.append(
+        np.mean(np.argmax(proba_in_dn,axis=1)==y_test.ravel())
+    )
+    accuracy_acet.append(
+        np.mean(np.argmax(proba_in_acet,axis=1)==y_test.ravel())
+    )
+    accuracy_iso.append(
+        np.mean(np.argmax(proba_in_iso,axis=1)==y_test.ravel())
+    )
+    accuracy_sig.append(
+        np.mean(np.argmax(proba_in_sig,axis=1)==y_test.ravel())
+    )
+
+    mce_dn.append(
+        get_ece(proba_in_dn, y_test.ravel())
+    )
+    mce_kdn.append(
+        get_ece(proba_in, y_test.ravel())
+    )
+    mce_acet.append(
+        get_ece(proba_in_acet, y_test.ravel())
+    )
+    mce_iso.append(
+        get_ece(proba_in_iso, y_test.ravel())
+    )
+    mce_sig.append(
+        get_ece(proba_in_sig, y_test.ravel())
+    )
+
+
+    kdn_in_conf = np.max(proba_in, axis=1)
+    kdn_out_conf = np.max(proba_cifar100, axis=1)
+    kdn_conf_cifar100 = np.hstack((kdn_in_conf, kdn_out_conf))
+    dn_in_conf = np.max(proba_in_dn, axis=1)
+    dn_out_conf = np.max(proba_cifar100_dn, axis=1)
+    dn_conf_cifar100 = np.hstack((dn_in_conf, dn_out_conf))
+    acet_in_conf = np.max(proba_in_acet, axis=1)
+    acet_out_conf = np.max(proba_cifar100_acet, axis=1)
+    acet_conf_cifar100 = np.hstack((acet_in_conf, acet_out_conf))
+    iso_in_conf = np.max(proba_in_iso, axis=1)
+    iso_out_conf = np.max(proba_cifar100_iso, axis=1)
+    iso_conf_cifar100 = np.hstack((iso_in_conf, iso_out_conf))
+    sig_in_conf = np.max(proba_in_sig, axis=1)
+    sig_out_conf = np.max(proba_cifar100_sig, axis=1)
+    sig_conf_cifar100 = np.hstack((sig_in_conf, sig_out_conf))
+
+    true_labels = np.hstack((np.ones(len(proba_in), ), np.zeros(len(proba_cifar100), )))
+
+    auroc_kdn_cifar100.append(
+        roc_auc_score(true_labels, kdn_conf_cifar100)
+    )
+    auroc_dn_cifar100.append(
+        roc_auc_score(true_labels, dn_conf_cifar100)
+    )
+    auroc_acet_cifar100.append(
+        roc_auc_score(true_labels, acet_conf_cifar100)
+    )
+    auroc_iso_cifar100.append(
+        roc_auc_score(true_labels, iso_conf_cifar100)
+    )
+    auroc_sig_cifar100.append(
+        roc_auc_score(true_labels, sig_conf_cifar100)
+    )
+    fpr_kdn_cifar100.append(
+        fpr_at_95_tpr(kdn_in_conf, kdn_out_conf)
+    )
+    fpr_dn_cifar100.append(
+        fpr_at_95_tpr(dn_in_conf, dn_out_conf)
+    )
+    fpr_acet_cifar100.append(
+        fpr_at_95_tpr(acet_in_conf, acet_out_conf)
+    )
+    fpr_iso_cifar100.append(
+        fpr_at_95_tpr(iso_in_conf, iso_out_conf)
+    )
+    fpr_sig_cifar100.append(
+        fpr_at_95_tpr(sig_in_conf, sig_out_conf)
+    )
+    oce_kdn_cifar100.append(
+        np.mean(np.abs(kdn_out_conf - 0.1))
+    )
+    oce_dn_cifar100.append(
+        np.mean(np.abs(dn_out_conf - 0.1))
+    )
+    oce_acet_cifar100.append(
+        np.mean(np.abs(acet_out_conf - 0.1))
+    ) 
+    oce_iso_cifar100.append(
+        np.mean(np.abs(iso_out_conf - 0.1))
+    ) 
+    oce_sig_cifar100.append(
+        np.mean(np.abs(sig_out_conf - 0.1))
+    )        
+
+
+    kdn_in_conf = np.max(proba_in, axis=1)
+    kdn_out_conf = np.max(proba_svhn, axis=1)
+    kdn_conf_svhn= np.hstack((kdn_in_conf, kdn_out_conf))
+    dn_in_conf = np.max(proba_in_dn, axis=1)
+    dn_out_conf = np.max(proba_svhn_dn, axis=1)
+    dn_conf_svhn = np.hstack((dn_in_conf, dn_out_conf))
+    acet_in_conf = np.max(proba_in_acet, axis=1)
+    acet_out_conf = np.max(proba_svhn_acet, axis=1)
+    acet_conf_svhn = np.hstack((acet_in_conf, acet_out_conf))
+    iso_in_conf = np.max(proba_in_iso, axis=1)
+    iso_out_conf = np.max(proba_svhn_iso, axis=1)
+    iso_conf_svhn = np.hstack((iso_in_conf, iso_out_conf))
+    sig_in_conf = np.max(proba_in_sig, axis=1)
+    sig_out_conf = np.max(proba_svhn_sig, axis=1)
+    sig_conf_svhn = np.hstack((sig_in_conf, sig_out_conf))
+
+    true_labels = np.hstack((np.ones(len(proba_in), ), np.zeros(len(proba_svhn), )))
+
+    auroc_kdn_svhn.append(
+        roc_auc_score(true_labels, kdn_conf_svhn)
+    )
+    auroc_dn_svhn.append(
+        roc_auc_score(true_labels, dn_conf_svhn)
+    )
+    auroc_acet_svhn.append(
+        roc_auc_score(true_labels, acet_conf_svhn)
+    )
+    auroc_iso_svhn.append(
+        roc_auc_score(true_labels, iso_conf_svhn)
+    )
+    auroc_sig_svhn.append(
+        roc_auc_score(true_labels, sig_conf_svhn)
+    )
+    fpr_kdn_svhn.append(
+        fpr_at_95_tpr(kdn_in_conf, kdn_out_conf)
+    )
+    fpr_dn_svhn.append(
+        fpr_at_95_tpr(dn_in_conf, dn_out_conf)
+    )
+    fpr_acet_svhn.append(
+        fpr_at_95_tpr(acet_in_conf, acet_out_conf)
+    )
+    fpr_iso_svhn.append(
+        fpr_at_95_tpr(iso_in_conf, iso_out_conf)
+    )
+    fpr_sig_svhn.append(
+        fpr_at_95_tpr(sig_in_conf, sig_out_conf)
+    )
+    oce_kdn_svhn.append(
+        np.mean(np.abs(kdn_out_conf - 0.1))
+    )
+    oce_dn_svhn.append(
+        np.mean(np.abs(dn_out_conf - 0.1))
+    )
+    oce_acet_svhn.append(
+        np.mean(np.abs(acet_out_conf - 0.1))
+    )  
+    oce_iso_svhn.append(
+        np.mean(np.abs(iso_out_conf - 0.1))
+    ) 
+    oce_sig_svhn.append(
+        np.mean(np.abs(sig_out_conf - 0.1))
+    ) 
+
+
+    kdn_in_conf = np.max(proba_in, axis=1)
+    kdn_out_conf = np.max(proba_noise, axis=1)
+    kdn_conf_noise = np.hstack((kdn_in_conf, kdn_out_conf))
+    dn_in_conf = np.max(proba_in_dn, axis=1)
+    dn_out_conf = np.max(proba_noise_dn, axis=1)
+    dn_conf_noise = np.hstack((dn_in_conf, dn_out_conf))
+    acet_in_conf = np.max(proba_in_acet, axis=1)
+    acet_out_conf = np.max(proba_noise_acet, axis=1)
+    acet_conf_noise = np.hstack((acet_in_conf, acet_out_conf))
+    iso_in_conf = np.max(proba_in_iso, axis=1)
+    iso_out_conf = np.max(proba_noise_iso, axis=1)
+    iso_conf_noise = np.hstack((iso_in_conf, iso_out_conf))
+    sig_in_conf = np.max(proba_in_sig, axis=1)
+    sig_out_conf = np.max(proba_noise_sig, axis=1)
+    sig_conf_noise = np.hstack((sig_in_conf, sig_out_conf))
+
+    true_labels = np.hstack((np.ones(len(proba_in), ), np.zeros(len(proba_noise), )))
+
+    auroc_kdn_noise.append(
+        roc_auc_score(true_labels, kdn_conf_noise)
+    )
+    auroc_dn_noise.append(
+        roc_auc_score(true_labels, dn_conf_noise)
+    )
+    auroc_acet_noise.append(
+        roc_auc_score(true_labels, acet_conf_noise)
+    )
+    auroc_iso_noise.append(
+        roc_auc_score(true_labels, iso_conf_noise)
+    )
+    auroc_sig_noise.append(
+        roc_auc_score(true_labels, sig_conf_noise)
+    )
+    fpr_kdn_noise.append(
+        fpr_at_95_tpr(kdn_in_conf, kdn_out_conf)
+    )
+    fpr_dn_noise.append(
+        fpr_at_95_tpr(dn_in_conf, dn_out_conf)
+    )
+    fpr_acet_noise.append(
+        fpr_at_95_tpr(acet_in_conf, acet_out_conf)
+    )
+    fpr_iso_noise.append(
+        fpr_at_95_tpr(iso_in_conf, iso_out_conf)
+    )
+    fpr_sig_noise.append(
+        fpr_at_95_tpr(sig_in_conf, sig_out_conf)
+    )
+    oce_kdn_noise.append(
+        np.mean(np.abs(kdn_out_conf - 0.1))
+    )
+    oce_dn_noise.append(
+        np.mean(np.abs(dn_out_conf - 0.1))
+    )
+    oce_acet_noise.append(
+        np.mean(np.abs(acet_out_conf - 0.1))
+    )
+    oce_iso_noise.append(
+        np.mean(np.abs(iso_out_conf - 0.1))
+    )
+    oce_sig_noise.append(
+        np.mean(np.abs(sig_out_conf - 0.1))
+    )
+
+print('DN accuracy ', np.mean(accuracy_dn), '(+-',np.std(accuracy_dn),')')
+print('KDN accuracy ', np.mean(accuracy_kdn), '(+-',np.std(accuracy_kdn),')')
+print('ACET accuracy ', np.mean(accuracy_acet), '(+-',np.std(accuracy_acet),')')
+print('Isotonic accuracy ', np.mean(accuracy_iso), '(+-',np.std(accuracy_iso),')')
+print('Sigmoid accuracy ', np.mean(accuracy_sig), '(+-',np.std(accuracy_sig),')')
+
+print('DN MCE ', np.mean(mce_dn), '(+-',np.std(mce_dn),')')
+print('KDN MCE ', np.mean(mce_kdn), '(+-',np.std(mce_kdn),')')
+print('ACET MCE ', np.mean(mce_acet), '(+-',np.std(mce_acet),')')
+print('Isotonic MCE ', np.mean(mce_iso), '(+-',np.std(mce_iso),')')
+print('Sigmoid MCE ', np.mean(mce_sig), '(+-',np.std(mce_sig),')\n')
+
+print('DN AUROC cifar100', np.mean(auroc_dn_cifar100), '(+-',np.std(auroc_dn_cifar100),')')
+print('KDN AUROC cifar100', np.mean(auroc_kdn_cifar100), '(+-',np.std(auroc_kdn_cifar100),')')
+print('ACET AUROC cifar100', np.mean(auroc_acet_cifar100), '(+-',np.std(auroc_acet_cifar100),')')
+print('Isotonic AUROC cifar100', np.mean(auroc_iso_cifar100), '(+-',np.std(auroc_iso_cifar100),')')
+print('Sigmoid AUROC cifar100', np.mean(auroc_sig_cifar100), '(+-',np.std(auroc_sig_cifar100),')\n')
+
+print('DN FPR@95 cifar100', np.mean(fpr_dn_cifar100), '(+-',np.std(fpr_dn_cifar100),')')
+print('KDN FPR@95 cifar100', np.mean(fpr_kdn_cifar100), '(+-',np.std(fpr_kdn_cifar100),')')
+print('ACET FPR@95 cifar100', np.mean(fpr_acet_cifar100), '(+-',np.std(fpr_acet_cifar100),')')
+print('Isotonic FPR@95 cifar100', np.mean(fpr_iso_cifar100), '(+-',np.std(fpr_iso_cifar100),')')
+print('Sigmoid FPR@95 cifar100', np.mean(fpr_sig_cifar100), '(+-',np.std(fpr_sig_cifar100),')\n')
+
+
+print('DN OCE cifar100', np.mean(oce_dn_cifar100), '(+-',np.std(oce_dn_cifar100),')')
+print('KDN OCE cifar100', np.mean(oce_kdn_cifar100), '(+-',np.std(oce_kdn_cifar100),')')
+print('ACET OCE cifar100', np.mean(oce_acet_cifar100), '(+-',np.std(oce_acet_cifar100),')')
+print('Isotonic OCE cifar100', np.mean(oce_iso_cifar100), '(+-',np.std(oce_iso_cifar100),')')
+print('Sigmoid OCE cifar100', np.mean(oce_sig_cifar100), '(+-',np.std(oce_sig_cifar100),')\n')
+
+
+print('DN AUROC svhn', np.mean(auroc_dn_svhn), '(+-',np.std(auroc_dn_svhn),')')
+print('KDN AUROC svhn', np.mean(auroc_kdn_svhn), '(+-',np.std(auroc_kdn_svhn),')')
+print('ACET AUROC svhn', np.mean(auroc_acet_svhn), '(+-',np.std(auroc_acet_svhn),')')
+print('Isotonic AUROC svhn', np.mean(auroc_iso_svhn), '(+-',np.std(auroc_iso_svhn),')')
+print('Sigmoid AUROC svhn', np.mean(auroc_sig_svhn), '(+-',np.std(auroc_sig_svhn),')\n')
+
+print('DN FPR@95 svhn', np.mean(fpr_dn_svhn), '(+-',np.std(fpr_dn_svhn),')')
+print('KDN FPR@95 svhn', np.mean(fpr_kdn_svhn), '(+-',np.std(fpr_kdn_svhn),')')
+print('ACET FPR@95 svhn', np.mean(fpr_acet_svhn), '(+-',np.std(fpr_acet_svhn),')')
+print('Isotonic FPR@95 svhn', np.mean(fpr_iso_svhn), '(+-',np.std(fpr_iso_svhn),')')
+print('Sigmoid FPR@95 svhn', np.mean(fpr_sig_svhn), '(+-',np.std(fpr_sig_svhn),')\n')
+
+
+print('DN OCE svhn', np.mean(oce_dn_svhn), '(+-',np.std(oce_dn_svhn),')')
+print('KDN OCE svhn', np.mean(oce_kdn_svhn), '(+-',np.std(oce_kdn_svhn),')')
+print('ACET OCE svhn', np.mean(oce_acet_svhn), '(+-',np.std(oce_acet_svhn),')')
+print('Isotonic OCE svhn', np.mean(oce_iso_svhn), '(+-',np.std(oce_iso_svhn),')')
+print('Sigmoid OCE svhn', np.mean(oce_sig_svhn), '(+-',np.std(oce_sig_svhn),')\n')
+
+
+print('DN AUROC noise', np.mean(auroc_dn_noise), '(+-',np.std(auroc_dn_noise),')')
+print('KDN AUROC noise', np.mean(auroc_kdn_noise), '(+-',np.std(auroc_kdn_noise),')')
+print('ACET AUROC noise', np.mean(auroc_acet_noise), '(+-',np.std(auroc_acet_noise),')')
+print('Isotonic AUROC noise', np.mean(auroc_iso_noise), '(+-',np.std(auroc_iso_noise),')')
+print('Sigmoid AUROC noise', np.mean(auroc_sig_noise), '(+-',np.std(auroc_sig_noise),')\n')
+
+print('DN FPR@95 noise', np.mean(fpr_dn_noise), '(+-',np.std(fpr_dn_noise),')')
+print('KDN FPR@95 noise', np.mean(fpr_kdn_noise), '(+-',np.std(fpr_kdn_noise),')')
+print('ACET FPR@95 noise', np.mean(fpr_acet_noise), '(+-',np.std(fpr_acet_noise),')')
+print('Isotonic FPR@95 noise', np.mean(fpr_iso_noise), '(+-',np.std(fpr_iso_noise),')')
+print('Sigmoid FPR@95 noise', np.mean(fpr_sig_noise), '(+-',np.std(fpr_sig_noise),')\n')
+
+print('DN OCE noise', np.mean(oce_dn_noise), '(+-',np.std(oce_dn_noise),')')
+print('KDN OCE noise', np.mean(oce_kdn_noise), '(+-',np.std(oce_kdn_noise),')')
+print('ACET OCE noise', np.mean(oce_acet_noise), '(+-',np.std(oce_acet_noise),')')
+print('Isotonic OCE noise', np.mean(oce_iso_noise), '(+-',np.std(oce_iso_noise),')')
+print('Sigmoid OCE noise', np.mean(oce_sig_noise), '(+-',np.std(oce_sig_noise),')\n')
 # %%

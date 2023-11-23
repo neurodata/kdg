@@ -1,12 +1,11 @@
 # %%
+import pickle
 import numpy as np
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
-import pickle
 from keras.models import Model
-from kdg import kdcnn, kdf, kdn
-import pickle
+from kdg import kdf, kdn
 from tensorflow.keras.datasets import cifar10, cifar100
 import timeit
 from scipy.io import loadmat
