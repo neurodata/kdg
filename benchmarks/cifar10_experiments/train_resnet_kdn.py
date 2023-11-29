@@ -7,14 +7,14 @@ import pickle
 from keras.models import Model
 from kdg import kdcnn, kdf, kdn
 import pickle
-from tensorflow.keras.datasets import cifar10
+from tensorflow.keras.datasets import cifar100
 import timeit
 from joblib import dump, load
 from sklearn.model_selection import train_test_split
 #%%
-seeds = [400]
+seeds = [100]
 # Load the CIFAR10 data.
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+(x_train, y_train), (x_test, y_test) = cifar100.load_data()
 
 # Input image dimensions.
 input_shape = x_train.shape[1:]
@@ -38,7 +38,7 @@ x_train, x_cal, y_train, y_cal = train_test_split(
 for seed in seeds:
     print("Doing seed ", seed)
 
-    nn_file = 'resnet20_models/cifar_model_new_'+str(seed)
+    nn_file = 'resnet20_models/cifar100_model_new_'+str(seed)
     network = keras.models.load_model(nn_file)
     
     model_kdn = kdn(
@@ -46,5 +46,5 @@ for seed in seeds:
     )
     model_kdn.fit(x_train, y_train, X_val=x_cal, y_val=y_cal, batch=10, save_temp=True)
     
-    dump(model_kdn, 'resnet_kdn_50000_new_'+str(seed)+'.joblib')
+    dump(model_kdn, 'resnet_kdn_50000_cifar100_'+str(seed)+'.joblib')
 # %%

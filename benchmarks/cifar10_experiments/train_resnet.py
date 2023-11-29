@@ -10,7 +10,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
-from tensorflow.keras.datasets import cifar10
+from tensorflow.keras.datasets import cifar100, cifar10
 import numpy as np
 import os
 import random
@@ -21,10 +21,10 @@ from sklearn.model_selection import train_test_split
 #ssl._create_default_https_context = ssl._create_unverified_context
 
 # Training parameters
-batch_size = 32  # orig paper trained all networks with batch_size=128
+batch_size = 16  # orig paper trained all networks with batch_size=128
 epochs = 100
 data_augmentation = False
-num_classes = 10
+num_classes = 100
 
 
 # Model parameter
@@ -127,7 +127,7 @@ def resnet_layer(inputs,
     return x
 
 
-def resnet_v1(input_shape, depth, num_classes=10):
+def resnet_v1(input_shape, depth, num_classes=100):
     """ResNet Version 1 Model builder [a]
 
     Stacks of 2 x (3 x 3) Conv2D-BN-ReLU
@@ -201,7 +201,7 @@ def resnet_v1(input_shape, depth, num_classes=10):
     return model
 
 
-def resnet_v2(input_shape, depth, num_classes=10):
+def resnet_v2(input_shape, depth, num_classes=100):
     """ResNet Version 2 Model builder [b]
 
     Stacks of (1 x 1)-(3 x 3)-(1 x 1) BN-ReLU-Conv2D or also known as
@@ -308,7 +308,7 @@ seeds = [100,200,300,400]
 for sample in sample_sizes:
     for seed in seeds:
         # Load the CIFAR10 data.
-        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+        (x_train, y_train), (x_test, y_test) = cifar100.load_data()
 
         # Input image dimensions.
         input_shape = x_train.shape[1:]
@@ -362,12 +362,12 @@ for sample in sample_sizes:
             layer.set_weights(pretrained_weights)
             layer.trainable = False'''
 
-        model.summary()
+        #model.summary()
         print(model_type)
 
         # Prepare model model saving directory.
         save_dir = os.path.join(os.getcwd(), 'saved_models')
-        model_name = 'cifar10_%s_model.{epoch:03d}.h5' % model_type
+        model_name = 'cifar100_%s_model.{epoch:03d}.h5' % model_type
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
         filepath = os.path.join(save_dir, model_name)
@@ -417,4 +417,4 @@ for sample in sample_sizes:
         print('Test loss:', scores[0])
         print('Test accuracy:', scores[1])
 
-        model.save('resnet20_models/cifar_model_new_'+str(seed))
+        model.save('resnet20_models/cifar100_model_new_'+str(seed))
