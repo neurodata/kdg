@@ -12,7 +12,7 @@ import timeit
 from joblib import dump, load
 from sklearn.model_selection import train_test_split
 #%%
-seeds = [400]
+seeds = [200]
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar100.load_data()
 
@@ -44,7 +44,7 @@ for seed in seeds:
     model_kdn = kdn(
         network=network
     )
-    model_kdn.fit(x_train, y_train, X_val=x_cal, y_val=y_cal, batch=10, save_temp=True)
+    model_kdn.fit(x_train, y_train, X_val=x_cal, y_val=y_cal, batch=10, save_temp=False)
     
     dump(model_kdn, 'resnet_kdn_50000_cifar100_'+str(seed)+'.joblib')
 # %%
