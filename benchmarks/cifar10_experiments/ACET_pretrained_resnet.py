@@ -283,7 +283,7 @@ for i in range(1,epochs+1):
 
     for j in tqdm(range(iteration)):
         x_train_ = x_train[perm[j]]
-        y_train_ = tf.one_hot(y_train[perm[j]], depth=10)
+        y_train_ = tf.one_hot(y_train[perm[j]], depth=num_classes)
         X_noise = tf.random.uniform([2*x_train_.shape[0], x_train_.shape[1], x_train_.shape[2], x_train_.shape[3]],minval=-1,maxval=1)
         X_noise = gen_adv(X_noise)
         with tf.GradientTape() as tape:
