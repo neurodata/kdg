@@ -32,7 +32,7 @@ def cross_ent(logits, y):
 
 def max_conf(logits):
     y = tf.argmax(logits, 1)
-    y = tf.one_hot(y, 10)
+    y = tf.one_hot(y, 100)
     losses = -tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y)
     return tf.reduce_mean(losses)
 
