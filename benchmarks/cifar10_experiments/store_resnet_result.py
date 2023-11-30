@@ -23,8 +23,8 @@ def fpr_at_95_tpr(conf_in, conf_out):
     return FPR, PERC
 #%%
 # Load the CIFAR10 and CIFAR100 data.
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
-(_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
+(x_train, y_train), (x_test, y_test) = cifar100.load_data()
+(_, _), (x_cifar10, y_cifar10) = cifar10.load_data()
 x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float')/255.0
 x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
 y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y']
@@ -43,7 +43,7 @@ input_shape = x_train.shape[1:]
 # Normalize data.
 x_train = x_train.astype('float32') / 255
 x_test = x_test.astype('float32') / 255
-x_cifar100 = x_cifar100.astype('float32') / 255
+x_cifar100 = x_cifar10.astype('float32') / 255
 x_svhn = x_svhn.astype('float32') / 255
 
 
@@ -66,11 +66,11 @@ for channel in range(3):
     x_noise[:,:,:,channel] -= x_train_mean
     x_noise[:,:,:,channel] /= x_train_std
 #%% Load model file
-seeds = [400]
+seeds = [200]
 
 for seed in seeds: 
     print('doing seed ',seed)
-    filename = 'resnet_kdn_50000_new_'+str(seed)+'.joblib'
+    filename = 'resnet_kdn_50000_cifar100_'+str(seed)+'.joblib'
     model_kdn = joblib.load(filename)
     acet = keras.models.load_model('resnet20_models/cifar_ACET_new_'+str(seed))
 
@@ -97,7 +97,7 @@ for seed in seeds:
     #summary = (proba_in, proba_in_dn, proba_in_acet)
     #summary = (proba_cifar100, proba_cifar100_dn, proba_cifar100_acet)
     summary = (proba_in, proba_cifar100, proba_svhn, proba_noise, proba_in_dn, proba_cifar100_dn, proba_svhn_dn, proba_noise_dn, proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet)
-    file_to_save = 'resnet20_new_'+str(seed)+'.pickle'
+    file_to_save = 'resnet20_cifar100_'+str(seed)+'.pickle'
 
     with open(file_to_save, 'wb') as f:
         pickle.dump(summary, f)
