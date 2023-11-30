@@ -64,8 +64,8 @@ def gen_adv(x):
 batchsize = 40  # orig paper trained all networks with batch_size=128
 epochs = 10
 data_augmentation = False
-num_classes = 300
-seed = 100
+num_classes = 100
+seed = 300
 
 #%%
 np.random.seed(seed)
