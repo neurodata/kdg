@@ -1,4 +1,19 @@
-#%%
+# %%
+import pickle
+import numpy as np
+from tensorflow import keras
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
+from keras.models import Model
+from kdg import kdf, kdn
+from tensorflow.keras.datasets import cifar10, cifar100
+import timeit
+from scipy.io import loadmat
+import random
+import joblib
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import signal
 import tensorflow as tf
 import pickle
 import matplotlib
@@ -21,20 +36,22 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
-from tensorflow.keras.datasets import cifar10, cifar100
+from tensorflow.keras.datasets import cifar10
 from tqdm import tqdm
 import torch
-
-#%% load OOD data
-ood_set = np.load('/Users/jayantadey/kdg/benchmarks/300K_random_images.npy')
-
 #%%
+def predict_proba(model, x, T):
+    logits = model(x)/T
+    proba = tf.nn.softmax(logits,axis=1).numpy()
+
+    return proba
+
 def fpr_at_95_tpr(conf_in, conf_out):
     TPR = 95
     PERC = np.percentile(conf_in, 100-TPR)
     #FP = np.sum(conf_out >=  PERC)
     FPR = np.sum(conf_out >=  PERC)/len(conf_out)
-    return FPR
+    return FPR, PERC
 
 def cross_ent(logits, y):
     logits = tf.nn.softmax(logits, axis=1)
@@ -63,14 +80,15 @@ def gen_adv(x, eps, T):
     x_tilde = x - eps*grad
 
     return x_tilde
-
-
 #%%
 batchsize = 128 # orig paper trained all networks with batch_size=128
 num_classes = 100
-seed = 100
+seeds = [100, 200, 300, 400]
+'''T = 5.0 #cifar10 params
+eps = 0.028'''
+T = 5.0
+eps = 0.026
 #%%
-np.random.seed(seed)
 
 # Model parameter
 # ----------------------------------------------------------------------------
@@ -214,66 +232,79 @@ def resnet_v1(input_shape, depth, num_classes):
     return model
 
 #%%
-# Load the CIFAR10 data.
+# Load the CIFAR10 and CIFAR100 data.
 (x_train, y_train), (x_test, y_test) = cifar100.load_data()
-y_train = y_train.ravel()
-y_test = y_test.ravel()
+(_, _), (x_cifar10, y_cifar10) = cifar10.load_data()
+x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float32')/255.0
+x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/train_32x32.mat')['X']
+y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/train_32x32.mat')['y']
+test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
+x_svhn = x_svhn[:,:,:,test_ids].astype('float32')
+x_tmp = np.zeros((2000,32,32,3), dtype=float)
+
+for ii in range(2000):
+    x_tmp[ii,:,:,:] = x_svhn[:,:,:,ii]
+
+x_svhn = x_tmp
+del x_tmp
 # Input image dimensions.
-input_shape = x_train.shape
+input_shape = x_train.shape[1:]
 
 # Normalize data.
 x_train = x_train.astype('float32') / 255
 x_test = x_test.astype('float32') / 255
-ood_set = ood_set.astype('float32')/255
+x_cifar10 = x_cifar10.astype('float32') / 255
+x_svhn = x_svhn.astype('float32') / 255
+
 
 for channel in range(3):
     x_train_mean = np.mean(x_train[:,:,:,channel])
     x_train_std = np.std(x_train[:,:,:,channel])
+
     x_train[:,:,:,channel] -= x_train_mean
     x_train[:,:,:,channel] /= x_train_std
+
     x_test[:,:,:,channel] -= x_train_mean
     x_test[:,:,:,channel] /= x_train_std
 
-    ood_set[:,:,:,channel] -= x_train_mean
-    ood_set[:,:,:,channel] /= x_train_std
+    x_cifar10[:,:,:,channel] -= x_train_mean
+    x_cifar10[:,:,:,channel] /= x_train_std
 
+    x_svhn[:,:,:,channel] -= x_train_mean #+ 1
+    x_svhn[:,:,:,channel] /= x_train_std
+
+    x_noise[:,:,:,channel] -= x_train_mean
+    x_noise[:,:,:,channel] /= x_train_std
 #%%
-model = resnet_v1(input_shape=input_shape[1:], depth=depth, num_classes=num_classes)
+x_train = gen_adv(x_train, eps, T)
+x_test = gen_adv(x_test, eps, T)
+x_cifar10 = gen_adv(x_cifar10, eps, T)
+x_svhn = gen_adv(x_svhn, eps, T)
+x_noise = gen_adv(x_noise, eps, T)
+#%% Load model file
+input_shape = x_train.shape
 
-#load pretrained model
-pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar100_model_new_'+str(seed))
-#pretrained_model = keras.models.load_model('resnet20_models/cifar_model_new_'+str(seed))
-for layer_id, layer in enumerate(model.layers):
-    pretrained_weights = pretrained_model.layers[layer_id].get_weights()
-    layer.set_weights(pretrained_weights)
-    layer.trainable = False
+for seed in seeds: 
+    print('doing seed ',seed)
+    model = resnet_v1(input_shape=input_shape[1:], depth=depth, num_classes=num_classes)
 
-model.summary()
-print(model_type)
-perm = np.arange(50000)
-np.random.shuffle(perm)
-idx = perm[:1000]
-#%%
-fpr = 1
-eps_to_try = np.linspace(0,.04,21)
-chosen_eps = eps_to_try[0]
-T_ = [1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0]
-chosen_T = T_[0]
+    #load pretrained model
+    #pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar100_model_new_'+str(seed))
+    pretrained_model = keras.models.load_model('resnet20_models/cifar_model_new_'+str(seed))
+    for layer_id, layer in enumerate(model.layers):
+        pretrained_weights = pretrained_model.layers[layer_id].get_weights()
+        layer.set_weights(pretrained_weights)
+        layer.trainable = False
+    
+    proba_in = predict_proba(model, x_test, T) 
+    proba_cifar10 = predict_proba(model, x_cifar10, T)
+    proba_svhn = predict_proba(model, x_svhn, T)
+    proba_noise = predict_proba(model, x_noise, T)
 
-for T in T_:
-    for eps in eps_to_try:
-        print('Doing ', eps)
-        conf_in = np.max(tf.nn.softmax(model(gen_adv(x_test,eps,T))/T), axis=1)
-        #print(conf_in)
-        conf_out = np.max(tf.nn.softmax(model(ood_set[idx])/T), axis=1)
-        f = fpr_at_95_tpr(conf_in, conf_out)
-        print(f)
-        if fpr > f:
-            fpr=f
-            chosen_eps = eps
-            chosen_T = T
+    summary = (proba_in, proba_cifar10, proba_svhn, proba_noise)
+    file_to_save = 'resnet20_cifar100_ODIN_'+str(seed)+'.pickle'
 
-print('Chosen eps ', chosen_eps, 'Chosen T ', chosen_T)
-
+    with open(file_to_save, 'wb') as f:
+        pickle.dump(summary, f)
 
 # %%
