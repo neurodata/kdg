@@ -147,3 +147,4 @@ benchmarks/cifar10_experiments/kdn_models
 temp*.pickle
 resnet_kdn*.pickle
 resnet_kdn*.joblib
+*.npy

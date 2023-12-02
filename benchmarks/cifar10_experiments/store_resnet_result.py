@@ -66,13 +66,13 @@ for channel in range(3):
     x_noise[:,:,:,channel] -= x_train_mean
     x_noise[:,:,:,channel] /= x_train_std
 #%% Load model file
-seeds = [200]
+seeds = [100]
 
 for seed in seeds: 
     print('doing seed ',seed)
     filename = 'resnet_kdn_50000_cifar100_'+str(seed)+'.joblib'
     model_kdn = joblib.load(filename)
-    acet = keras.models.load_model('resnet20_models/cifar_ACET_new_'+str(seed))
+    acet = keras.models.load_model('resnet20_models/cifar100_ACET_'+str(seed))
 
     model_kdn.global_bias = -5e9
 
