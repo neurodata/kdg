@@ -67,7 +67,7 @@ def gen_adv(x, eps, T):
 
 #%%
 batchsize = 128 # orig paper trained all networks with batch_size=128
-num_classes = 100
+num_classes = 10
 seed = 100
 #%%
 np.random.seed(seed)
@@ -215,7 +215,7 @@ def resnet_v1(input_shape, depth, num_classes):
 
 #%%
 # Load the CIFAR10 data.
-(x_train, y_train), (x_test, y_test) = cifar100.load_data()
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
 y_train = y_train.ravel()
 y_test = y_test.ravel()
 # Input image dimensions.
@@ -241,8 +241,8 @@ for channel in range(3):
 model = resnet_v1(input_shape=input_shape[1:], depth=depth, num_classes=num_classes)
 
 #load pretrained model
-pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar100_model_new_'+str(seed))
-#pretrained_model = keras.models.load_model('resnet20_models/cifar_model_new_'+str(seed))
+#pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar100_model_new_'+str(seed))
+pretrained_model = keras.models.load_model('resnet20_models/cifar_model_new_'+str(seed))
 for layer_id, layer in enumerate(model.layers):
     pretrained_weights = pretrained_model.layers[layer_id].get_weights()
     layer.set_weights(pretrained_weights)

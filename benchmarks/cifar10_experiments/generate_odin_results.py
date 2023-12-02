@@ -82,12 +82,12 @@ def gen_adv(x, eps, T):
     return x_tilde
 #%%
 batchsize = 128 # orig paper trained all networks with batch_size=128
-num_classes = 100
+num_classes = 10
 seeds = [100, 200, 300, 400]
-'''T = 5.0 #cifar10 params
-eps = 0.028'''
-T = 5.0
-eps = 0.026
+T = 5.0 #cifar10 params
+eps = 0.028
+'''T = 5.0 #cifar100 params
+eps = 0.026'''
 #%%
 
 # Model parameter
@@ -233,8 +233,8 @@ def resnet_v1(input_shape, depth, num_classes):
 
 #%%
 # Load the CIFAR10 and CIFAR100 data.
-(x_train, y_train), (x_test, y_test) = cifar100.load_data()
-(_, _), (x_cifar10, y_cifar10) = cifar10.load_data()
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+(_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
 x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float32')/255.0
 x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/train_32x32.mat')['X']
 y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/train_32x32.mat')['y']
@@ -253,7 +253,7 @@ input_shape = x_train.shape[1:]
 # Normalize data.
 x_train = x_train.astype('float32') / 255
 x_test = x_test.astype('float32') / 255
-x_cifar10 = x_cifar10.astype('float32') / 255
+x_cifar100 = x_cifar100.astype('float32') / 255
 x_svhn = x_svhn.astype('float32') / 255
 
 
@@ -267,8 +267,8 @@ for channel in range(3):
     x_test[:,:,:,channel] -= x_train_mean
     x_test[:,:,:,channel] /= x_train_std
 
-    x_cifar10[:,:,:,channel] -= x_train_mean
-    x_cifar10[:,:,:,channel] /= x_train_std
+    x_cifar100[:,:,:,channel] -= x_train_mean
+    x_cifar100[:,:,:,channel] /= x_train_std
 
     x_svhn[:,:,:,channel] -= x_train_mean #+ 1
     x_svhn[:,:,:,channel] /= x_train_std
@@ -278,7 +278,7 @@ for channel in range(3):
 #%%
 x_train = gen_adv(x_train, eps, T)
 x_test = gen_adv(x_test, eps, T)
-x_cifar10 = gen_adv(x_cifar10, eps, T)
+x_cifar100 = gen_adv(x_cifar100, eps, T)
 x_svhn = gen_adv(x_svhn, eps, T)
 x_noise = gen_adv(x_noise, eps, T)
 #%% Load model file
@@ -297,12 +297,12 @@ for seed in seeds:
         layer.trainable = False
     
     proba_in = predict_proba(model, x_test, T) 
-    proba_cifar10 = predict_proba(model, x_cifar10, T)
+    proba_cifar100 = predict_proba(model, x_cifar100, T)
     proba_svhn = predict_proba(model, x_svhn, T)
     proba_noise = predict_proba(model, x_noise, T)
 
-    summary = (proba_in, proba_cifar10, proba_svhn, proba_noise)
-    file_to_save = 'resnet20_cifar100_ODIN_'+str(seed)+'.pickle'
+    summary = (proba_in, proba_cifar100, proba_svhn, proba_noise)
+    file_to_save = 'resnet20_cifar10_ODIN_'+str(seed)+'.pickle'
 
     with open(file_to_save, 'wb') as f:
         pickle.dump(summary, f)
