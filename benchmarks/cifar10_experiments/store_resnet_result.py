@@ -66,7 +66,7 @@ for channel in range(3):
     x_noise[:,:,:,channel] -= x_train_mean
     x_noise[:,:,:,channel] /= x_train_std
 #%% Load model file
-seeds = [100]
+seeds = [200]
 
 for seed in seeds: 
     print('doing seed ',seed)
