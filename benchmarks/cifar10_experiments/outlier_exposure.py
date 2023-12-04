@@ -21,7 +21,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
-from tensorflow.keras.datasets import cifar100
+from tensorflow.keras.datasets import cifar100, cifar10
 from tqdm import tqdm
 
 #%% load OOD data
@@ -44,8 +44,8 @@ def max_conf(logits):
 batchsize = 128 # orig paper trained all networks with batch_size=128
 epochs = 30
 data_augmentation = False
-num_classes = 100
-seed = 400
+num_classes = 10
+seed = 0
 
 #%%
 np.random.seed(seed)
@@ -193,7 +193,7 @@ def resnet_v1(input_shape, depth, num_classes):
 
 #%%
 # Load the CIFAR10 data.
-(x_train, y_train), (x_test, y_test) = cifar100.load_data()
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
 y_train = y_train.ravel()
 y_test = y_test.ravel()
 # Input image dimensions.
@@ -219,8 +219,8 @@ for channel in range(3):
 model = resnet_v1(input_shape=input_shape[1:], depth=depth, num_classes=num_classes)
 
 #load pretrained model
-pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar100_model_new_'+str(seed))
-#pretrained_model = keras.models.load_model('resnet20_models/cifar_model_new_'+str(seed))
+#pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar100_model_new_'+str(seed))
+pretrained_model = keras.models.load_model('resnet20_models/cifar_model_new_'+str(seed))
 for layer_id, layer in enumerate(model.layers[:-1]):
     pretrained_weights = pretrained_model.layers[layer_id].get_weights()
     layer.set_weights(pretrained_weights)
@@ -282,5 +282,5 @@ for i in range(1,epochs+1):
 
     print("Epoch {:03d}: loss_main={:.3f} loss_ood={:.3f} train err={:.2%} test err={:.2%}".format(i, loss_main, loss_ood, train_err, test_err))
 
-model.save('resnet20_models/cifar100_OE_'+str(seed))
+model.save('resnet20_models/cifar10_OE_'+str(seed))
 # %%

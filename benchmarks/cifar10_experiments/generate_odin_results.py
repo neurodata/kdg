@@ -83,7 +83,7 @@ def gen_adv(x, eps, T):
 #%%
 batchsize = 128 # orig paper trained all networks with batch_size=128
 num_classes = 10
-seeds = [100, 200, 300, 400]
+seeds = [0, 100, 200, 300, 400]
 T = 5.0 #cifar10 params
 eps = 0.028
 '''T = 5.0 #cifar100 params
