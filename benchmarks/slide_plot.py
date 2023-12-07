@@ -18,6 +18,7 @@ from tensorflow.keras import backend as bknd
 import timeit
 # %%
 X, y = generate_gaussian_parity(3000, cluster_std=.3)
+X_ood  = sample_unifrom_circle(1000, r=5)
 plot_2dsim(X, y)
 plt.xlim(-2,2)
 plt.ylim(-2,2)
@@ -55,6 +56,7 @@ history = nn.fit(X, keras.utils.to_categorical(y), **fit_kwargs)
 # %%
 X_test, y_test = generate_gaussian_parity(10000, cluster_std=.3)
 conf_nn = nn.predict(X_test)
+conf_ood_nn = nn.predict(X_ood)
 # %%
 plt.hist(np.amax(conf_nn, axis=1), density=True)
 # %%
@@ -62,31 +64,52 @@ rf_model = rf(n_estimators=10)
 rf_model.fit(X, y)
 # %%
 conf_rf = rf_model.predict_proba(X_test)
+conf_ood_rf = rf_model.predict_proba(X_ood)
 # %%
 plt.hist(np.amax(conf_rf, axis=1), density=True)
 #%%
 sns.set_context('talk')
-fig, ax = plt.subplots(1,3, figsize=(24,8))
-plot_2dsim(X,y,ax=ax[0])
-ax[0].set_xlim(-2,2)
-ax[0].set_ylim(-2,2)
-ax[0].set_xticks([-2,-1,0,1,2])
-ax[0].set_yticks([-2,-1,0,1,2])
-ax[0].tick_params(labelsize=24)
-ax[0].set_title('Simulation', fontsize=32)
+fig, ax = plt.subplots(2,3, figsize=(24,16))
+plot_2dsim(X,y,ax=ax[0][0])
+ax[0][0].set_xlim(-2,2)
+ax[0][0].set_ylim(-2,2)
+ax[0][0].set_xticks([-2,-1,0,1,2])
+ax[0][0].set_yticks([-2,-1,0,1,2])
+ax[0][0].tick_params(labelsize=24)
+ax[0][0].set_title('Simulation', fontsize=32)
 
-ax[1].hist(np.amax(conf_rf, axis=1), density=True)
-ax[1].tick_params(labelsize=24)
-ax[1].set_ylabel('Frequency', fontsize=24)
-ax[1].set_xlabel('Confidence', fontsize=24)
-ax[1].set_title('Random Forest', fontsize=32)
+ax[0][1].hist(np.amax(conf_rf, axis=1), density=True)
+ax[0][1].tick_params(labelsize=24)
+ax[0][1].set_ylabel('Frequency', fontsize=24)
+ax[0][1].set_xlabel('ID Confidence', fontsize=24)
+ax[0][1].set_title('Random Forest', fontsize=32)
 
 
-ax[2].hist(np.amax(conf_nn, axis=1), density=True)
-ax[2].tick_params(labelsize=24)
-ax[2].set_ylabel('Frequency', fontsize=24)
-ax[2].set_xlabel('Confidence', fontsize=24)
-ax[2].set_title('Deep-net', fontsize=32)
+ax[0][2].hist(np.amax(conf_nn, axis=1), density=True)
+ax[0][2].tick_params(labelsize=24)
+ax[0][2].set_ylabel('Frequency', fontsize=24)
+ax[0][2].set_xlabel('ID Confidence', fontsize=24)
+ax[0][2].set_title('Deep-net', fontsize=32)
 
-plt.savefig('../plots/overconfident.png')
+
+ax[1][1].hist(np.amax(conf_ood_rf, axis=1), density=True)
+ax[1][1].tick_params(labelsize=24)
+ax[1][1].set_ylabel('Frequency', fontsize=24)
+ax[1][1].set_xlabel('OOD Confidence', fontsize=24)
+#ax[1][1].set_title('Random Forest', fontsize=32)
+
+
+ax[1][2].hist(np.amax(conf_ood_nn, axis=1), density=True)
+ax[1][2].tick_params(labelsize=24)
+ax[1][2].set_ylabel('Frequency', fontsize=24)
+ax[1][2].set_xlabel('OOD Confidence', fontsize=24)
+#ax[1][2].set_title('Deep-net', fontsize=32)
+
+for i in range(2):
+    for j in range(1,3):
+        right_side = ax[i][j].spines["right"]
+        right_side.set_visible(False)
+        top_side = ax[i][j].spines["top"]
+        top_side.set_visible(False)
+plt.savefig('../plots/overconfident.pdf')
 # %%

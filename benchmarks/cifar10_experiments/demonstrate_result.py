@@ -25,7 +25,7 @@ def fpr_at_95_tpr(conf_in, conf_out):
     return FPR, PERC
 #%%
 # Load the CIFAR10 and CIFAR100 data.
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+(x_train, y_train), (x_test, y_test) = cifar100.load_data()
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
 x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float')/255.0
 #x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
@@ -69,7 +69,7 @@ for channel in range(3):
     x_noise[:,:,:,channel] /= x_train_std
 
 # %%
-seeds = [0,200,300,400]
+seeds = [100,200,300,400]
 accuracy_kdn = []
 accuracy_dn = []
 accuracy_acet = []
@@ -153,14 +153,15 @@ oce_odin_noise = []
 oce_oe_noise = []
 
 for seed in seeds:
-    with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet20_new_'+str(seed)+'.pickle','rb') as f:
+    #with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet20_new_'+str(seed)+'.pickle','rb') as f:
+    with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_cifar100_'+str(seed)+'.pickle','rb') as f:
         (proba_in, proba_cifar100, proba_svhn, proba_noise, proba_in_dn, proba_cifar100_dn, proba_svhn_dn, proba_noise_dn, proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet) = pickle.load(f)
 
     with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet20_baseline_new_'+str(seed)+'.pickle', 'rb') as f:
         (proba_in_sig, proba_cifar100_sig, proba_svhn_sig, proba_noise_sig,\
             proba_in_iso, proba_cifar100_iso, proba_svhn_iso, proba_noise_iso) = pickle.load(f)
 
-    with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_cifar10_ODIN_'+str(seed)+'.pickle', 'rb') as f:
+    with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_cifar100_ODIN_'+str(seed)+'.pickle', 'rb') as f:
         (proba_in_odin, proba_cifar100_odin, proba_svhn_odin, proba_noise_odin) = pickle.load(f)
 
     with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_cifar10_OE_'+str(seed)+'.pickle', 'rb') as f:
