@@ -188,7 +188,7 @@ for ii, model in enumerate(models):
         top_side = ax[jj][ii*3+3].spines["top"]
         top_side.set_visible(False)
 
-df_trunk = unpickle('/Users/jayantadey/kdg/benchmarks/high_dim_exp/trunk2.pickle')
+df_trunk = unpickle('/Users/jayantadey/kdg/benchmarks/high_dim_exp/trunk_new.pickle')
 dim = np.unique(df_trunk['dimension'])
 
 
