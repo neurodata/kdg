@@ -191,6 +191,9 @@ def resnet_v1(input_shape, depth, num_classes=10):
     # v1 does not use BN after last shortcut connection-ReLU
     x = AveragePooling2D(pool_size=8)(x)
     y = Flatten()(x)
+    y = Activation('relu')(y)
+    y = Dense(100)(y)
+    y = Activation('relu')(y)
     outputs = Dense(num_classes,
                     activation='softmax',
                     kernel_initializer='he_normal')(y)
@@ -287,6 +290,9 @@ def resnet_v2(input_shape, depth, num_classes=10):
     x = Activation('relu')(x)
     x = AveragePooling2D(pool_size=8)(x)
     y = Flatten()(x)
+    y = Activation('relu')(y)
+    y = Dense(100)(y)
+    y = Activation('relu')(y)
     outputs = Dense(num_classes,
                     activation='softmax',
                     kernel_initializer='he_normal')(y)
@@ -294,9 +300,6 @@ def resnet_v2(input_shape, depth, num_classes=10):
     # Instantiate model.
     model = Model(inputs=inputs, outputs=outputs)
     return model
-
-
-
 
 
 # Load data.
@@ -427,4 +430,4 @@ scores = model.evaluate(x_test, y_test_one_hot, verbose=1)
 print('Test loss:', scores[0])
 print('Test accuracy:', scores[1])
 
-model.save('resnet20_models/cifar_model_pretrained')
+model.save('resnet20_models/cifar10_pretrained')

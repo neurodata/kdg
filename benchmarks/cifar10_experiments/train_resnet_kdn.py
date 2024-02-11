@@ -39,12 +39,12 @@ x_train, x_cal, y_train, y_cal = train_test_split(
 for seed in seeds:
     print("Doing seed ", seed)
 
-    nn_file = 'resnet20_models/cifar100_model_new_'+str(seed)
+    nn_file = 'resnet20_models/cifar_model_50000_'+str(seed)
     network = keras.models.load_model(nn_file)
     
     model_kdn = kdcnn(
         network=network,
-        output_layer='flatten'
+        output_layer='flatten_1'
     )
     model_kdn.fit(x_train, y_train, k=1.2, batch=10)
     
