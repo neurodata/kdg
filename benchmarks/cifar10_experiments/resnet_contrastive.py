@@ -379,8 +379,8 @@ if subtract_pixel_mean:
     x_test -= x_train_mean'''
 
 print(num_classes, np.unique(y_train))
-'''y_train_one_hot = keras.utils.to_categorical(y_train, num_classes)
-y_test_one_hot = keras.utils.to_categorical(y_test, num_classes)'''
+y_train_one_hot = keras.utils.to_categorical(y_train, num_classes)
+y_test_one_hot = keras.utils.to_categorical(y_test, num_classes)
 
 
 if version == 2:
@@ -416,16 +416,16 @@ lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
 callbacks = [checkpoint, lr_reducer, lr_scheduler]
 
 # Run training, with or without data augmentation.
-model.fit(x_train, y_train,
+model.fit(x_train, y_train_one_hot,
         batch_size=batch_size,
         epochs=epochs,
-        validation_data=(x_test, y_test),
+        validation_data=(x_test, y_test_one_hot),
         shuffle=True,
         callbacks=callbacks)
 
 
 # Score trained model.
-scores = model.evaluate(x_test, y_test, verbose=1)
+scores = model.evaluate(x_test, y_test_one_hot, verbose=1)
 print('Test loss:', scores[0])
 print('Test accuracy:', scores[1])
 
