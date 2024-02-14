@@ -42,8 +42,8 @@ class SupervisedContrastiveLoss(keras.losses.Loss):
 #ssl._create_default_https_context = ssl._create_unverified_context
 
 # Training parameters
-batch_size = 32  # orig paper trained all networks with batch_size=128
-epochs = 5
+batch_size = 1024  # orig paper trained all networks with batch_size=128
+epochs = 250
 data_augmentation = False
 #num_classes = 10
 
@@ -425,8 +425,8 @@ model.fit(x_train, y_train,
 
 
 # Score trained model.
-scores = model.evaluate(x_test, y_test, verbose=1)
-print('Test loss:', scores[0])
-print('Test accuracy:', scores[1])
+#scores = model.evaluate(x_test, y_test, verbose=1)
+#print('Test loss:', scores[0])
+#print('Test accuracy:', scores[1])
 
 model.save('resnet20_models/cifar10_pretrained')
