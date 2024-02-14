@@ -40,7 +40,8 @@ for seed in seeds:
     print("Doing seed ", seed)
 
     nn_file = 'resnet20_models/cifar10_'+str(seed)
-    network = keras.models.load_model(nn_file)
+    #network = keras.models.load_model(nn_file)
+    network = keras.models.load_model('resnet20_models/cifar10_pretrained',custom_objects={'Custom':'contrastLoss'},compile=False)
     
     model_kdn = kdcnn(
         network=network,
