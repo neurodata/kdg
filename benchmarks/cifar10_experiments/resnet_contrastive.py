@@ -21,7 +21,7 @@ from sklearn.model_selection import train_test_split
 from scipy.io import loadmat
 
 #%%
-@keras.saving.register_keras_serializable(package="contrastLoss")
+@keras.saving.register_keras_serializable(package="contrast", name='loss')
 class SupervisedContrastiveLoss(keras.losses.Loss):
     def __init__(self, temperature=0.05, name=None):
         super().__init__(name=name)
