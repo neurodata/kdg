@@ -22,7 +22,7 @@ from scipy.io import loadmat
 
 #%%
 class SupervisedContrastiveLoss(keras.losses.Loss):
-    def __init__(self, temperature=1, name=None):
+    def __init__(self, temperature=0.05, name=None):
         super().__init__(name=name)
         self.temperature = temperature
 
@@ -42,7 +42,7 @@ class SupervisedContrastiveLoss(keras.losses.Loss):
 #ssl._create_default_https_context = ssl._create_unverified_context
 
 # Training parameters
-batch_size = 1024  # orig paper trained all networks with batch_size=128
+batch_size = 265  # orig paper trained all networks with batch_size=128
 epochs = 600
 data_augmentation = False
 #num_classes = 10
