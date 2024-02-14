@@ -192,8 +192,8 @@ def resnet_v1(input_shape, depth, num_classes=10):
     # v1 does not use BN after last shortcut connection-ReLU
     x = AveragePooling2D(pool_size=8)(x)
     y = Flatten()(x)
-    #y = Activation('relu')(y)
-    #y = Dense(100)(y)
+    y = Activation('relu')(y)
+    y = Dense(100)(y)
     y = Activation('relu')(y)
     outputs = Dense(num_classes,
                     activation='softmax',
@@ -290,8 +290,8 @@ def resnet_v2(input_shape, depth, num_classes=10):
     x = Activation('relu')(x)
     x = AveragePooling2D(pool_size=8)(x)
     y = Flatten()(x)
-    #y = Activation('relu')(y)
-    #y = Dense(100)(y)
+    y = Activation('relu')(y)
+    y = Dense(100)(y)
     y = Activation('relu')(y)
     outputs = Dense(num_classes,
                     activation='softmax',
@@ -359,7 +359,8 @@ for sample in sample_sizes:
 
 
         #load pretrained model
-        pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar10_pretrained')
+        #pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar10_pretrained')
+        pretrained_model = keras.models.load_model('resnet20_models/cifar10_pretrained',custom_objects={'Custom':'contrastLoss'},compile=False)
 
         for layer_id, layer in enumerate(pretrained_model.layers[:-1]):
             pretrained_weights = pretrained_model.layers[layer_id].get_weights()
