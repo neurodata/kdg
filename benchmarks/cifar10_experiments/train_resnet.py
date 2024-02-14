@@ -21,10 +21,10 @@ from sklearn.model_selection import train_test_split
 #ssl._create_default_https_context = ssl._create_unverified_context
 
 # Training parameters
-batch_size = 16  # orig paper trained all networks with batch_size=128
-epochs = 100
+batch_size = 32  # orig paper trained all networks with batch_size=128
+epochs = 10
 data_augmentation = False
-num_classes = 100
+num_classes = 10
 
 
 # Model parameter
@@ -70,13 +70,13 @@ def lr_schedule(epoch):
         lr (float32): learning rate
     """
     lr = .001
-    if epoch > 80:
+    if epoch > 16:
         lr *= 0.5e-3
-    elif epoch > 60:
+    elif epoch > 12:
         lr *= 1e-3
-    elif epoch > 40:
+    elif epoch > 8:
         lr *= 1e-2
-    elif epoch > 20:
+    elif epoch > 4:
         lr *= 1e-1
     print('Learning rate: ', lr)
     return lr
@@ -127,7 +127,7 @@ def resnet_layer(inputs,
     return x
 
 
-def resnet_v1(input_shape, depth, num_classes=100):
+def resnet_v1(input_shape, depth, num_classes=10):
     """ResNet Version 1 Model builder [a]
 
     Stacks of 2 x (3 x 3) Conv2D-BN-ReLU
@@ -192,16 +192,18 @@ def resnet_v1(input_shape, depth, num_classes=100):
     # v1 does not use BN after last shortcut connection-ReLU
     x = AveragePooling2D(pool_size=8)(x)
     y = Flatten()(x)
+    #y = Activation('relu')(y)
+    #y = Dense(100)(y)
+    y = Activation('relu')(y)
     outputs = Dense(num_classes,
                     activation='softmax',
                     kernel_initializer='he_normal')(y)
-
     # Instantiate model.
     model = Model(inputs=inputs, outputs=outputs)
     return model
 
 
-def resnet_v2(input_shape, depth, num_classes=100):
+def resnet_v2(input_shape, depth, num_classes=10):
     """ResNet Version 2 Model builder [b]
 
     Stacks of (1 x 1)-(3 x 3)-(1 x 1) BN-ReLU-Conv2D or also known as
@@ -288,7 +290,9 @@ def resnet_v2(input_shape, depth, num_classes=100):
     x = Activation('relu')(x)
     x = AveragePooling2D(pool_size=8)(x)
     y = Flatten()(x)
-    
+    #y = Activation('relu')(y)
+    #y = Dense(100)(y)
+    y = Activation('relu')(y)
     outputs = Dense(num_classes,
                     activation='softmax',
                     kernel_initializer='he_normal')(y)
@@ -308,7 +312,7 @@ seeds = [100,200,300,400]
 for sample in sample_sizes:
     for seed in seeds:
         # Load the CIFAR10 data.
-        (x_train, y_train), (x_test, y_test) = cifar100.load_data()
+        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
         # Input image dimensions.
         input_shape = x_train.shape[1:]
@@ -350,24 +354,24 @@ for sample in sample_sizes:
         model.compile(loss='categorical_crossentropy',
                     optimizer=Adam(lr=lr_schedule(0)),
                     metrics=['accuracy'])
-        model.summary()
-        print(model_type)
+        #model.summary()
+        #print(model_type)
 
 
         #load pretrained model
-        '''pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_pretrained')
+        pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar10_pretrained')
 
-        for layer_id, layer in enumerate(model.layers[:-1]):
+        for layer_id, layer in enumerate(pretrained_model.layers[:-1]):
             pretrained_weights = pretrained_model.layers[layer_id].get_weights()
-            layer.set_weights(pretrained_weights)
-            layer.trainable = False'''
+            model.layers[layer_id].set_weights(pretrained_weights)
+            model.layers[layer_id].trainable = False
 
-        #model.summary()
+        model.summary()
         print(model_type)
 
         # Prepare model model saving directory.
         save_dir = os.path.join(os.getcwd(), 'saved_models')
-        model_name = 'cifar100_%s_model.{epoch:03d}.h5' % model_type
+        model_name = 'cifar10_%s_model.{epoch:03d}.h5' % model_type
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
         filepath = os.path.join(save_dir, model_name)
@@ -417,4 +421,4 @@ for sample in sample_sizes:
         print('Test loss:', scores[0])
         print('Test accuracy:', scores[1])
 
-        model.save('resnet20_models/cifar100_model_new_'+str(seed))
+        model.save('resnet20_models/cifar10_'+str(seed))
