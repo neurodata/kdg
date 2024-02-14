@@ -13,7 +13,7 @@ from tensorflow.keras.regularizers import l2
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.datasets import cifar10, cifar100
-from keras import ops
+#from keras import ops
 import numpy as np
 import os
 import random
