@@ -43,7 +43,7 @@ class SupervisedContrastiveLoss(keras.losses.Loss):
 
 # Training parameters
 batch_size = 1024  # orig paper trained all networks with batch_size=128
-epochs = 250
+epochs = 600
 data_augmentation = False
 #num_classes = 10
 
