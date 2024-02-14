@@ -21,6 +21,7 @@ from sklearn.model_selection import train_test_split
 from scipy.io import loadmat
 
 #%%
+@keras.saving.register_keras_serializable(package="contrastLoss")
 class SupervisedContrastiveLoss(keras.losses.Loss):
     def __init__(self, temperature=0.05, name=None):
         super().__init__(name=name)
@@ -43,7 +44,7 @@ class SupervisedContrastiveLoss(keras.losses.Loss):
 
 # Training parameters
 batch_size = 2048  # orig paper trained all networks with batch_size=128
-epochs = 600
+epochs = 10
 data_augmentation = False
 #num_classes = 10
 
