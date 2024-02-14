@@ -44,7 +44,7 @@ class SupervisedContrastiveLoss(keras.losses.Loss):
 
 # Training parameters
 batch_size = 265  # orig paper trained all networks with batch_size=128
-epochs = 1
+epochs = 500
 data_augmentation = False
 weights = []
 #num_classes = 10
@@ -92,7 +92,7 @@ def lr_schedule(epoch):
     # Returns
         lr (float32): learning rate
     """
-    lr = 1e-2
+    lr = 1e-3
     if epoch > 360:
         lr *= 0.5e-3
     elif epoch > 320:
