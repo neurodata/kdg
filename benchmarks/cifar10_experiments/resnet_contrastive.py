@@ -19,7 +19,7 @@ import os
 import random
 from sklearn.model_selection import train_test_split
 from scipy.io import loadmat
-
+import pickle
 #%%
 @keras.saving.register_keras_serializable(package="contrast", name='loss')
 class SupervisedContrastiveLoss(keras.losses.Loss):
@@ -43,9 +43,10 @@ class SupervisedContrastiveLoss(keras.losses.Loss):
 #ssl._create_default_https_context = ssl._create_unverified_context
 
 # Training parameters
-batch_size = 2048  # orig paper trained all networks with batch_size=128
-epochs = 100
+batch_size = 265  # orig paper trained all networks with batch_size=128
+epochs = 1
 data_augmentation = False
+weights = []
 #num_classes = 10
 
 
@@ -429,5 +430,13 @@ model.fit(x_train, y_train,
 #scores = model.evaluate(x_test, y_test, verbose=1)
 #print('Test loss:', scores[0])
 #print('Test accuracy:', scores[1])
+for layer_id, layer in enumerate(model.layers):
+    pretrained_weights = model.layers[layer_id].get_weights()
+    weights.append(
+        pretrained_weights
+    )
+
+with open('pretrained_weight.pickle', 'wb') as f:
+    pickle.dump(weights, f)
 
 model.save('resnet20_models/cifar10_pretrained')

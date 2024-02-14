@@ -16,6 +16,7 @@ import os
 import random
 from sklearn.model_selection import train_test_split
 from scipy.io import loadmat
+import pickle
 #%%
 #import ssl
 #ssl._create_default_https_context = ssl._create_unverified_context
@@ -24,6 +25,7 @@ from scipy.io import loadmat
 batch_size = 32  # orig paper trained all networks with batch_size=128
 epochs = 5
 data_augmentation = False
+weights = []
 #num_classes = 10
 
 
@@ -424,5 +426,6 @@ else:
 scores = model.evaluate(x_test, y_test_one_hot, verbose=1)
 print('Test loss:', scores[0])
 print('Test accuracy:', scores[1])
+
 
 model.save('resnet20_models/cifar10_pretrained')
