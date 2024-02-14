@@ -388,7 +388,7 @@ if version == 2:
 else:
     model = resnet_v1(input_shape=input_shape, depth=depth, num_classes=num_classes)
 
-model.compile(loss=SupervisedContrastiveLoss,
+model.compile(loss=SupervisedContrastiveLoss(),
             optimizer=Adam(lr=lr_schedule(0)))
 model.summary()
 print(model_type)
