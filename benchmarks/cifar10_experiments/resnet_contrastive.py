@@ -42,7 +42,7 @@ class SupervisedContrastiveLoss(keras.losses.Loss):
 #ssl._create_default_https_context = ssl._create_unverified_context
 
 # Training parameters
-batch_size = 265  # orig paper trained all networks with batch_size=128
+batch_size = 2048  # orig paper trained all networks with batch_size=128
 epochs = 600
 data_augmentation = False
 #num_classes = 10
@@ -90,14 +90,14 @@ def lr_schedule(epoch):
     # Returns
         lr (float32): learning rate
     """
-    lr = 1e-3
-    if epoch > 90:
+    lr = 1e-2
+    if epoch > 360:
         lr *= 0.5e-3
-    elif epoch > 80:
+    elif epoch > 320:
         lr *= 1e-3
-    elif epoch > 40:
+    elif epoch > 240:
         lr *= 1e-2
-    elif epoch > 20:
+    elif epoch > 120:
         lr *= 1e-1
     print('Learning rate: ', lr)
     return lr
