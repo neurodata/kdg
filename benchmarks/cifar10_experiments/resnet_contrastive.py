@@ -2,7 +2,7 @@
 from __future__ import print_function
 from tensorflow import keras
 import tensorflow as tf 
-import tensorflow_addons as tfa 
+#import tensorflow_addons as tfa 
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation
 from tensorflow.keras.layers import AveragePooling2D, Input, Flatten
 from tensorflow.keras.optimizers import Adam
@@ -21,7 +21,7 @@ from sklearn.model_selection import train_test_split
 from scipy.io import loadmat
 import pickle
 #%%
-@keras.saving.register_keras_serializable(package="contrast", name='loss')
+'''@keras.saving.register_keras_serializable(package="contrast", name='loss')
 class SupervisedContrastiveLoss(keras.losses.Loss):
     def __init__(self, temperature=0.05, name=None):
         super().__init__(name=name)
@@ -37,14 +37,23 @@ class SupervisedContrastiveLoss(keras.losses.Loss):
             ),
             self.temperature,
         )
-        return tfa.losses.npairs_loss(tf.squeeze(labels), logits)
+        return tfa.losses.npairs_loss(tf.squeeze(labels), logits)'''
+
+def contrast_loss(y, y_preds, margin=1):
+    y = tf.cast(y, y_preds.dtype)
+    y_converted = tf.cast(y==y[0], y_preds.dtype)
+    squaredPreds = K.square(y_preds - y_preds[0])
+    squaredMargin = K.square(K.maximum(margin - squaredPreds, 0))
+    loss = K.mean(y_converted * squaredPreds + (1 - y_converted) * squaredMargin)
+
+    return loss
 #%%
 #import ssl
 #ssl._create_default_https_context = ssl._create_unverified_context
 
 # Training parameters
 batch_size = 265  # orig paper trained all networks with batch_size=128
-epochs = 500
+epochs = 10
 data_augmentation = False
 weights = []
 #num_classes = 10
@@ -214,10 +223,10 @@ def resnet_v1(input_shape, depth, num_classes=10):
     # Add classifier on top.
     # v1 does not use BN after last shortcut connection-ReLU
     x = AveragePooling2D(pool_size=8)(x)
-    y = Flatten()(x)
-    outputs = Dense(num_classes,
+    outputs = Flatten()(x)
+    '''outputs = Dense(num_classes,
                     activation='softmax',
-                    kernel_initializer='he_normal')(y)
+                    kernel_initializer='he_normal')(y)'''
 
     # Instantiate model.
     model = Model(inputs=inputs, outputs=outputs)
@@ -310,10 +319,10 @@ def resnet_v2(input_shape, depth, num_classes=10):
     x = BatchNormalization()(x)
     x = Activation('relu')(x)
     x = AveragePooling2D(pool_size=8)(x)
-    y = Flatten()(x)
-    outputs = Dense(num_classes,
+    outputs = Flatten()(x)
+    '''outputs = Dense(num_classes,
                     activation='softmax',
-                    kernel_initializer='he_normal')(y)
+                    kernel_initializer='he_normal')(y)'''
 
     # Instantiate model.
     model = Model(inputs=inputs, outputs=outputs)
@@ -324,8 +333,8 @@ def resnet_v2(input_shape, depth, num_classes=10):
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 (x_cifar100, y_cifar100), (_,_) = cifar100.load_data()
 y_cifar100 += 10
-x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
-y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y'] + 109
+x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
+y_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['y'] + 109
 
 x_svhn = x_svhn.astype('float32')
 x_tmp = np.zeros((x_svhn.shape[3],32,32,3), dtype=float)
@@ -390,7 +399,7 @@ if version == 2:
 else:
     model = resnet_v1(input_shape=input_shape, depth=depth, num_classes=num_classes)
 
-model.compile(loss=SupervisedContrastiveLoss(),
+model.compile(loss=contrast_loss,
             optimizer=Adam(lr=lr_schedule(0)))
 model.summary()
 print(model_type)

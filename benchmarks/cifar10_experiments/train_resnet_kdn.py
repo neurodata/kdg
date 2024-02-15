@@ -45,7 +45,7 @@ for seed in seeds:
 
     model_kdn = kdcnn(
         network=network,
-        output_layer='flatten'
+        output_layer='activation_19'
     )
     model_kdn.fit(x_train, y_train, k=1.2, batch=10)
     

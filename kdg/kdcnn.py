@@ -77,7 +77,7 @@ class kdcnn(KernelDensityGraph):
        array_shape.extend(
                 list(self.network.get_layer(
                         self.output_layer
-                    ).input.shape[1:]
+                    ).output.shape[1:]
                 )
        )
        X = X.reshape(array_shape)

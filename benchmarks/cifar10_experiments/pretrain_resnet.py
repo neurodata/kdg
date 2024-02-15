@@ -23,7 +23,7 @@ import pickle
 
 # Training parameters
 batch_size = 32  # orig paper trained all networks with batch_size=128
-epochs = 5
+epochs = 250
 data_augmentation = False
 weights = []
 #num_classes = 10
@@ -427,5 +427,10 @@ scores = model.evaluate(x_test, y_test_one_hot, verbose=1)
 print('Test loss:', scores[0])
 print('Test accuracy:', scores[1])
 
+for layer_id, layer in enumerate(model.layers):
+    pretrained_weights = model.layers[layer_id].get_weights()
+    weights.append(
+        pretrained_weights
+    )
 
 model.save('resnet20_models/cifar10_pretrained')
