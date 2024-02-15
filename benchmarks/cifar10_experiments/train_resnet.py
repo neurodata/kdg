@@ -358,7 +358,7 @@ for sample in sample_sizes:
         pretrained_model = keras.models.load_model('resnet20_models/cifar10_pretrained')
         #pretrained_model = keras.models.load_model('resnet20_models/cifar10_pretrained',custom_objects={'Custom':'contrastLoss'},compile=False)
 
-        for layer_id, layer in enumerate(pretrained_model.layers):
+        for layer_id, layer in enumerate(pretrained_model.layers[:-1]):
             pretrained_weights = pretrained_model.layers[layer_id].get_weights()
             model.layers[layer_id].set_weights(pretrained_weights)
             model.layers[layer_id].trainable = False
