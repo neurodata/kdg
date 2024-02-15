@@ -23,7 +23,7 @@ import pickle
 
 # Training parameters
 batch_size = 32  # orig paper trained all networks with batch_size=128
-epochs = 10
+epochs = 50
 data_augmentation = False
 weights = []
 #num_classes = 10
@@ -71,14 +71,14 @@ def lr_schedule(epoch):
     # Returns
         lr (float32): learning rate
     """
-    lr = 1e-3
-    if epoch > 90:
+    lr = 1e-2
+    if epoch > 45:
         lr *= 0.5e-3
-    elif epoch > 80:
-        lr *= 1e-3
     elif epoch > 40:
-        lr *= 1e-2
+        lr *= 1e-3
     elif epoch > 20:
+        lr *= 1e-2
+    elif epoch > 10:
         lr *= 1e-1
     print('Learning rate: ', lr)
     return lr
@@ -432,4 +432,4 @@ for layer_id, layer in enumerate(model.layers):
         pretrained_weights
     )
 
-model.save('resnet20_models/cifar10_pretrained')
+model.save('resnet20_models/cifar10_pretrained2')
