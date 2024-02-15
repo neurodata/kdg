@@ -23,7 +23,7 @@ import pickle
 
 # Training parameters
 batch_size = 32  # orig paper trained all networks with batch_size=128
-epochs = 250
+epochs = 10
 data_augmentation = False
 weights = []
 #num_classes = 10
@@ -290,9 +290,8 @@ def resnet_v2(input_shape, depth, num_classes=10):
     x = Activation('relu')(x)
     x = AveragePooling2D(pool_size=8)(x)
     y = Flatten()(x)
-    outputs = Dense(num_classes,
-                    activation='softmax',
-                    kernel_initializer='he_normal')(y)
+    y = Dense(num_classes)(y)
+    outputs = Activation('softmax')(y)
 
     # Instantiate model.
     model = Model(inputs=inputs, outputs=outputs)
@@ -303,8 +302,8 @@ def resnet_v2(input_shape, depth, num_classes=10):
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 (x_cifar100, y_cifar100), (_,_) = cifar100.load_data()
 y_cifar100 += 10
-x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
-y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y'] + 109
+x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
+y_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['y'] + 109
 
 x_svhn = x_svhn.astype('float32')
 x_tmp = np.zeros((x_svhn.shape[3],32,32,3), dtype=float)
