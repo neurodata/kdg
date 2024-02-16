@@ -355,10 +355,10 @@ for sample in sample_sizes:
             model = resnet_v1(input_shape=input_shape, depth=depth)
 
         #load pretrained model
-        pretrained_model = keras.models.load_model('resnet20_models/cifar10_pretrained')
+        pretrained_model = keras.models.load_model('resnet20_models/cifar10_pretrained2')
         #pretrained_model = keras.models.load_model('resnet20_models/cifar10_pretrained',custom_objects={'Custom':'contrastLoss'},compile=False)
 
-        for layer_id, layer in enumerate(pretrained_model.layers[:-1]):
+        for layer_id, layer in enumerate(pretrained_model.layers):
             pretrained_weights = pretrained_model.layers[layer_id].get_weights()
             model.layers[layer_id].set_weights(pretrained_weights)
             model.layers[layer_id].trainable = False
