@@ -25,7 +25,7 @@ import pickle
 weights = []
 num_classes = 120
 learning_rate = 0.001
-batch_size = 265
+batch_size = 2048
 projection_units = 256
 num_epochs = 500
 temperature = 0.05
