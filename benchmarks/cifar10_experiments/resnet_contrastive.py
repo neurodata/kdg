@@ -55,8 +55,8 @@ base_model = ResNet50(
     )
 
 model.add(base_model)
-model.add(Flatten())
 model.add(GlobalAveragePooling2D())
+model.add(Flatten())
 model.add(Dense(projection_units))
 
 model.compile(
