@@ -26,8 +26,7 @@ weights = []
 num_classes = 120
 learning_rate = 0.001
 batch_size = 2048
-projection_units = 256
-num_epochs = 500
+num_epochs = 200
 temperature = 0.05
 #%%
 class SupervisedContrastiveLoss(keras.losses.Loss):
@@ -55,9 +54,7 @@ base_model = ResNet50(
     )
 
 model.add(base_model)
-model.add(GlobalAveragePooling2D())
 model.add(Flatten())
-model.add(Dense(projection_units))
 
 model.compile(
     optimizer=keras.optimizers.Adam(learning_rate),
@@ -91,7 +88,8 @@ x_train = x_train.astype('float32') / 255
 x_test = x_test.astype('float32') / 255
 x_cifar100 = x_cifar100.astype('float32') / 255
 x_svhn = x_svhn.astype('float32') / 255
-
+x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float')/255.0
+y_noise = 120*np.ones((1000,1), dtype=int)
 
 for channel in range(3):
     x_train_mean = np.mean(x_train[:,:,:,channel])
@@ -108,6 +106,9 @@ for channel in range(3):
 
     x_svhn[:,:,:,channel] -= x_train_mean
     x_svhn[:,:,:,channel] /= x_train_std
+
+    x_noise[:,:,:,channel] -= x_train_mean
+    x_noise[:,:,:,channel] /= x_train_std
 
 x_train = np.concatenate((x_train, x_cifar100, x_svhn))
 y_train = np.concatenate((y_train, y_cifar100, y_svhn))
