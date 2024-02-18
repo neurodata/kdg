@@ -25,7 +25,7 @@ weights = []
 num_classes = 10
 learning_rate = 0.001
 batch_size = 32
-projection_units = 256
+projection_units = 1000
 num_epochs = 5
 seed = 0
 #%% load pretrained model weights
@@ -66,11 +66,10 @@ base_model = ResNet50(
     )
 
 model.add(base_model)
-model.add(GlobalAveragePooling2D())
 model.add(Flatten())
 model.add(Dense(projection_units))
 model.add(Activation('relu'))
-model.add(Dense(100))
+model.add(Dense(256))
 model.add(Activation('relu'))
 model.add(
             Dense(

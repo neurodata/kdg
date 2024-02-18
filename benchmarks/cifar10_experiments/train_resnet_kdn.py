@@ -45,9 +45,9 @@ for seed in seeds:
 
     model_kdn = kdcnn(
         network=network,
-        output_layer='dense_7'
+        output_layer='flatten'
     )
-    model_kdn.fit(x_train, y_train, X_val=x_cal, y_val=y_cal, batch=10)
+    model_kdn.fit(x_train, y_train, k=1, batch=10)
     
     dump(model_kdn, 'resnet_kdn_cifar10_'+str(seed)+'.joblib')
 # %%

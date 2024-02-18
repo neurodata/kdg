@@ -88,8 +88,8 @@ x_train = x_train.astype('float32') / 255
 x_test = x_test.astype('float32') / 255
 x_cifar100 = x_cifar100.astype('float32') / 255
 x_svhn = x_svhn.astype('float32') / 255
-x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float')/255.0
-y_noise = 120*np.ones((1000,1), dtype=int)
+x_noise = np.random.random_integers(0,high=255,size=(10000,32,32,3)).astype('float')/255.0
+y_noise = 120*np.ones((10000,1), dtype=int)
 
 for channel in range(3):
     x_train_mean = np.mean(x_train[:,:,:,channel])
