@@ -26,7 +26,7 @@ weights = []
 num_classes = 120
 learning_rate = 0.001
 batch_size = 2048
-num_epochs = 200
+num_epochs = 20
 temperature = 0.05
 #%%
 class SupervisedContrastiveLoss(keras.losses.Loss):
