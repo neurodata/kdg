@@ -14,7 +14,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.datasets import cifar10, cifar100
 from tensorflow.keras.applications.resnet50 import ResNet50 
-from tf.keras.applications.resnet50 import preprocess_input
+from tensorflow.keras.applications.resnet50 import preprocess_input
 #from keras import ops
 import numpy as np
 import os
