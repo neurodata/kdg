@@ -49,7 +49,7 @@ encoder = create_encoder()
 encoder.summary()
 
 learning_rate = 0.001
-batch_size = 265
+batch_size = 1024
 hidden_units = 512
 projection_units = 128
 num_epochs = 500
@@ -100,7 +100,7 @@ history = encoder_with_projection_head.fit(
 #%%
 for layer_id, layer in enumerate(encoder_with_projection_head.layers):
     pretrained_weights = encoder_with_projection_head.layers[layer_id].get_weights()
-    encoder_with_projection_head.append(
+    weights.append(
         pretrained_weights
     )
 
