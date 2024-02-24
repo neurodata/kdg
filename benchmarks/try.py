@@ -4,12 +4,19 @@ import tensorflow_addons as tfa
 import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers
+import pickle
 # %%
+weights = []
 num_classes = 10
 input_shape = (32, 32, 3)
 
 # Load the train and test data splits
 (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+x_ood = np.load('/Users/jayantadey/kdg/benchmarks/300K_random_images.npy').astype('float32')
+y_ood = np.array(range(len(x_ood))).reshape(-1,1)+11
+
+x_noise = np.random.random_integers(0,high=255,size=(10000,32,32,3)).astype('float')
+y_noise = 10*np.ones((10000,1), dtype='float32')
 
 # Display shapes of train and test datasets
 print(f"x_train shape: {x_train.shape} - y_train shape: {y_train.shape}")
@@ -45,7 +52,7 @@ learning_rate = 0.001
 batch_size = 265
 hidden_units = 512
 projection_units = 128
-num_epochs = 50
+num_epochs = 500
 dropout_rate = 0.5
 temperature = 0.05
 # %%
@@ -89,6 +96,16 @@ encoder_with_projection_head.summary()
 history = encoder_with_projection_head.fit(
     x=x_train, y=y_train, batch_size=batch_size, epochs=num_epochs
 )
+
+#%%
+for layer_id, layer in enumerate(encoder_with_projection_head.layers):
+    pretrained_weights = encoder_with_projection_head.layers[layer_id].get_weights()
+    encoder_with_projection_head.append(
+        pretrained_weights
+    )
+
+with open('pretrained_weight_contrast.pickle', 'wb') as f:
+    pickle.dump(weights, f)
 # %%
 sig_in = encoder_with_projection_head.predict(x_train[:20])
 print(np.sqrt(np.sum((sig_in-sig_in[1])**2,axis=1)))
