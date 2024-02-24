@@ -24,8 +24,8 @@ from scipy.io import loadmat
 import pickle
 #%%
 weights = []
-projection_unit = 1000
-batch_size = 1024
+projection_unit = 100
+batch_size = 32
 num_epochs = 100
 temperature = 0.05
 #%%
@@ -83,9 +83,9 @@ base_model = ResNet50(
 
 #model.add(UpSampling2D((7,7), input_shape=(32,32,3)))
 model.add(base_model)
-#model.add(GlobalAveragePooling2D(name='avg_pool'))
+model.add(GlobalAveragePooling2D(name='avg_pool'))
 model.add(Flatten())
-#model.add(Dense(projection_unit))
+model.add(Dense(projection_unit))
 
 #model.layers[1].trainable = False
 #%%
@@ -106,14 +106,15 @@ model.compile(
 #%%
 # Load data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+#y_train = tf.one_hot(y_train.reshape(-1), depth=projection_unit)
 #x_ood = np.load('/Users/jayantadey/kdg/benchmarks/300K_random_images.npy').astype('float32')[:10000]
 (x_cifar100, y_cifar100), (_,_) = cifar100.load_data()
 y_cifar100 += 10
-#x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
-#y_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['y'] + 109
+x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
+y_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['y'] + 109
 
-x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
-y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y'] + 109
+#x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
+#y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y'] + 109
 
 x_svhn = x_svhn.astype('float32')
 x_tmp = np.zeros((x_svhn.shape[3],32,32,3), dtype=float)
@@ -139,24 +140,24 @@ y_noise = 120*np.ones((10000,1), dtype='float32')
 #x_noise = preprocess_input(x_noise)
 #x_cifar100 = preprocess_input(x_cifar100)
 #x_svhn = preprocess_input(x_svhn)
-for channel in range(3):
-    x_train_mean = np.mean(x_train[:,:,:,channel])
-    x_train_std = np.std(x_train[:,:,:,channel])
+#for channel in range(3):
+#    x_train_mean = np.mean(x_train[:,:,:,channel])
+#    x_train_std = np.std(x_train[:,:,:,channel])
 
-    x_train[:,:,:,channel] -= x_train_mean
-    x_train[:,:,:,channel] /= x_train_std
+ #   x_train[:,:,:,channel] -= x_train_mean
+#    x_train[:,:,:,channel] /= x_train_std
 
-    x_test[:,:,:,channel] -= x_train_mean
-    x_test[:,:,:,channel] /= x_train_std
+#    x_test[:,:,:,channel] -= x_train_mean
+#    x_test[:,:,:,channel] /= x_train_std
 
-    x_cifar100[:,:,:,channel] -= x_train_mean
-    x_cifar100[:,:,:,channel] /= x_train_std
+#    x_cifar100[:,:,:,channel] -= x_train_mean
+ #   x_cifar100[:,:,:,channel] /= x_train_std
 
-    x_svhn[:,:,:,channel] -= x_train_mean
-    x_svhn[:,:,:,channel] /= x_train_std
+ #   x_svhn[:,:,:,channel] -= x_train_mean
+  #  x_svhn[:,:,:,channel] /= x_train_std
 
-    x_noise[:,:,:,channel] -= x_train_mean
-    x_noise[:,:,:,channel] /= x_train_std
+   # x_noise[:,:,:,channel] -= x_train_mean
+    #x_noise[:,:,:,channel] /= x_train_std
 
     #x_ood[:,:,:,channel] -= x_train_mean
     #x_ood[:,:,:,channel] /= x_train_std
@@ -172,7 +173,7 @@ for channel in range(3):
 
 
 #%%
-history = model.fit(x=x_train, y=y_train, batch_size=batch_size, epochs=num_epochs, shuffle=True, callbacks=callbacks)
+history = model.fit(x=x_train[:10], y=y_train[:10], batch_size=batch_size, epochs=num_epochs, shuffle=True, callbacks=callbacks)
 #%%
 for layer_id, layer in enumerate(model.layers):
     pretrained_weights = model.layers[layer_id].get_weights()
