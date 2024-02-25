@@ -5,6 +5,7 @@ import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers
 import pickle
+from tensorflow.keras.callbacks import LearningRateScheduler
 # %%
 weights = []
 num_classes = 10
@@ -29,12 +30,43 @@ data_augmentation = keras.Sequential(
     [
         layers.Normalization(),
         layers.RandomFlip("horizontal"),
-        layers.RandomRotation(0.02),
+        layers.RandomRotation(-0.2, 0.2),
+        layers.RandomTranslation((-.2,.3),(-.2,.3)),
+        layers.RandomContrast(.2),
+        layers.RandomBrightness(factor=0.2)
     ]
 )
 
 # Setting the state of the normalization layer.
 data_augmentation.layers[0].adapt(x_train)
+
+#%%
+def lr_schedule(epoch):
+    """Learning Rate Schedule
+
+    Learning rate is scheduled to be reduced after 80, 120, 160, 180 epochs.
+    Called automatically every epoch as part of callbacks during training.
+
+    # Arguments
+        epoch (int): The number of epochs
+
+    # Returns
+        lr (float32): learning rate
+    """
+    lr = 1e-3
+    if epoch > 900:
+        lr *= 0.5e-3
+    elif epoch > 700:
+        lr *= 1e-3
+    elif epoch > 500:
+        lr *= 1e-2
+    elif epoch > 300:
+        lr *= 1e-1
+    print('Learning rate: ', lr)
+    return lr
+
+lr_scheduler = LearningRateScheduler(lr_schedule)
+callbacks = [lr_scheduler]
 #%%
 def create_encoder():
     resnet = keras.applications.ResNet50V2(
@@ -52,10 +84,10 @@ encoder = create_encoder()
 encoder.summary()
 
 learning_rate = 0.001
-batch_size = 1024
+batch_size = 2048
 hidden_units = 512
 projection_units = 128
-num_epochs = 500
+num_epochs = 1000
 dropout_rate = 0.5
 temperature = 0.05
 # %%
@@ -97,7 +129,9 @@ encoder_with_projection_head.compile(
 encoder_with_projection_head.summary()
 
 history = encoder_with_projection_head.fit(
-    x=x_train, y=y_train, batch_size=batch_size, epochs=num_epochs
+    x=x_train, y=y_train, batch_size=batch_size, 
+    epochs=num_epochs,
+    callbacks=callbacks
 )
 
 #%%
