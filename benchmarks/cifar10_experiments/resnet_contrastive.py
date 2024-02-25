@@ -29,9 +29,8 @@ print(f"x_test shape: {x_test.shape} - y_test shape: {y_test.shape}")
 data_augmentation = keras.Sequential(
     [
         layers.Normalization(),
+        layers.RandomFlip("horizontal"),
         layers.RandomRotation(0.02),
-        layers.RandomContrast(.02),
-        layers.RandomBrightness(factor=0.02)
     ]
 )
 
