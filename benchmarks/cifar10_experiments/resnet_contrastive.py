@@ -18,6 +18,9 @@ y_ood = np.array(range(len(x_ood))).reshape(-1,1)+11
 x_noise = np.random.random_integers(0,high=255,size=(10000,32,32,3)).astype('float')
 y_noise = 10*np.ones((10000,1), dtype='float32')
 
+x_train = np.concatenate((x_train, x_ood, x_noise))
+y_train = np.concatenate((y_train, y_ood, y_noise))
+
 # Display shapes of train and test datasets
 print(f"x_train shape: {x_train.shape} - y_train shape: {y_train.shape}")
 print(f"x_test shape: {x_test.shape} - y_test shape: {y_test.shape}")
@@ -49,7 +52,7 @@ encoder = create_encoder()
 encoder.summary()
 
 learning_rate = 0.001
-batch_size = 265
+batch_size = 1024
 hidden_units = 512
 projection_units = 128
 num_epochs = 500
@@ -104,7 +107,7 @@ for layer_id, layer in enumerate(encoder_with_projection_head.layers):
         pretrained_weights
     )
 
-with open('pretrained_weight_contrast265.pickle', 'wb') as f:
+with open('pretrained_weight_contrast.pickle', 'wb') as f:
     pickle.dump(weights, f)
 # %%
 sig_in = encoder_with_projection_head.predict(x_train[:20])

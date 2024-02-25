@@ -14,6 +14,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.datasets import cifar10, cifar100
 from tensorflow.keras.applications.resnet50 import ResNet50 
 from tensorflow.keras.applications.resnet50 import preprocess_input
+from tensorflow.keras import layers
 #from keras import ops
 import numpy as np
 import os
@@ -31,12 +32,16 @@ num_epochs = 5
 seed = 0
 #%% load pretrained model weights
 print('loading weights')
-with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/pretrained_weight_contrast_finetune.pickle', 'rb') as f:
+with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/pretrained_weight_contrast.pickle', 'rb') as f:
     weights = pickle.load(f)
 
 #%%
 num_classes = 10
 input_shape = (32, 32, 3)
+
+#%%
+# Load data.
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
 #%%
 def lr_schedule(epoch):
     """Learning Rate Schedule
@@ -62,19 +67,30 @@ def lr_schedule(epoch):
     print('Learning rate: ', lr)
     return lr
 #%%
+data_augmentation = keras.Sequential(
+    [
+        layers.Normalization()
+    ]
+)
+
+# Setting the state of the normalization layer.
+data_augmentation.layers[0].adapt(x_train)
+
+#%%
 model = keras.Sequential()
 base_model = keras.applications.ResNet50V2(
         include_top=False, weights=None, input_shape=input_shape, pooling="avg"
     )
 
+inputs = keras.Input(shape=input_shape)
+model.add(inputs)
+model.add(data_augmentation)
 model.add(base_model)
-model.add(GlobalAveragePooling2D(name='avg_pool'))
-model.add(Flatten())
-model.add(Dense(1000))
+model.add(Dense(128))
 model.add(Activation('relu'))
-model.add(Dense(projection_units))
+model.add(Dense(100))
 model.add(Activation('relu'))
-model.add(Dense(256))
+model.add(Dense(100))
 model.add(Activation('relu'))
 model.add(
             Dense(
@@ -85,11 +101,19 @@ model.add(
 
 model.build()
 #%%
-for layer_id, weight in enumerate(weights):
-    print(model.layers[layer_id].name)
-    model.layers[layer_id].set_weights(weight)
-    model.layers[layer_id].trainable = False
+'''for layer_id, weight in enumerate(weights[1:]):
+    print(model.layers[layer_id+1].name)
+    model.layers[layer_id+1].set_weights(weight)
+    model.layers[layer_id+1].trainable = False'''
 
+model.layers[0].set_weights(weights[1][:3])
+model.layers[0].trainable = False
+
+model.layers[1].set_weights(weights[1][3:])
+model.layers[1].trainable = False
+
+model.layers[2].set_weights(weights[2])
+model.layers[2].trainable = False
 #model.layers[4].set_weights(np.array([weights[-1][0], weights[-1][1]]))
 #model.layers[4].trainable = False
 #%%
@@ -114,8 +138,6 @@ lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
 
 callbacks = [checkpoint, lr_reducer, lr_scheduler]
 #%%
-# Load data.
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
 #(x_cifar100, y_cifar100), (_,_) = cifar100.load_data()
 #x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
 #y_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['y'] + 109
@@ -123,8 +145,8 @@ callbacks = [checkpoint, lr_reducer, lr_scheduler]
 #x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
 #y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y'] + 109
 
-x_train = preprocess_input(x_train)
-x_test = preprocess_input(x_test)
+#x_train = preprocess_input(x_train)
+#x_test = preprocess_input(x_test)
 '''x_svhn = x_svhn.astype('float32')
 x_tmp = np.zeros((x_svhn.shape[3],32,32,3), dtype=float)
 
