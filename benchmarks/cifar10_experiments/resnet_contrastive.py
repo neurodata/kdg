@@ -30,8 +30,8 @@ data_augmentation = keras.Sequential(
     [
         layers.Normalization(),
         layers.RandomFlip("horizontal"),
-        layers.RandomRotation(0.4),
-        layers.RandomTranslation((-.2,.3),(-.2,.3)),
+        layers.RandomRotation(0.02),
+        layers.RandomTranslation((-.02,.03),(-.02,.03)),
         layers.RandomContrast(.2),
         layers.RandomBrightness(factor=0.2)
     ]
@@ -84,7 +84,7 @@ encoder = create_encoder()
 encoder.summary()
 
 learning_rate = 0.001
-batch_size = 2048
+batch_size = 1024
 hidden_units = 512
 projection_units = 128
 num_epochs = 1000
