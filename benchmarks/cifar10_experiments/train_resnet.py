@@ -35,6 +35,9 @@ with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/pretrained_weigh
     weights = pickle.load(f)
 
 #%%
+num_classes = 10
+input_shape = (32, 32, 3)
+#%%
 def lr_schedule(epoch):
     """Learning Rate Schedule
 
@@ -60,13 +63,10 @@ def lr_schedule(epoch):
     return lr
 #%%
 model = keras.Sequential()
-base_model = ResNet50(
-    weights="imagenet", 
-    include_top=False,
-    input_shape=(224,224,3)
+base_model = keras.applications.ResNet50V2(
+        include_top=False, weights=None, input_shape=input_shape, pooling="avg"
     )
 
-model.add(UpSampling2D((7,7), input_shape=(32,32,3)))
 model.add(base_model)
 model.add(GlobalAveragePooling2D(name='avg_pool'))
 model.add(Flatten())

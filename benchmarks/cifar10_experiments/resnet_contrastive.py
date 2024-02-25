@@ -49,7 +49,7 @@ encoder = create_encoder()
 encoder.summary()
 
 learning_rate = 0.001
-batch_size = 1024
+batch_size = 265
 hidden_units = 512
 projection_units = 128
 num_epochs = 500
@@ -104,7 +104,7 @@ for layer_id, layer in enumerate(encoder_with_projection_head.layers):
         pretrained_weights
     )
 
-with open('pretrained_weight_contrast.pickle', 'wb') as f:
+with open('pretrained_weight_contrast265.pickle', 'wb') as f:
     pickle.dump(weights, f)
 # %%
 sig_in = encoder_with_projection_head.predict(x_train[:20])
