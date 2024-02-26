@@ -16,11 +16,11 @@ input_shape = (32, 32, 3)
 #x_ood = np.load('/cis/home/jdey4/300K_random_images.npy').astype('float32')
 #y_ood = np.array(range(len(x_ood))).reshape(-1,1)+11
 
-x_noise = np.random.random_integers(0,high=255,size=(20000,32,32,3)).astype('float')
-y_noise = 11*np.ones((20000,1), dtype='float32')
+#x_noise = np.random.random_integers(0,high=255,size=(20000,32,32,3)).astype('float')
+#y_noise = 11*np.ones((20000,1), dtype='float32')
 
-x_train = np.concatenate((x_train, x_noise))
-y_train = np.concatenate((y_train, y_noise))
+#x_train = np.concatenate((x_train, x_noise))
+#y_train = np.concatenate((y_train, y_noise))
 
 # Display shapes of train and test datasets
 print(f"x_train shape: {x_train.shape} - y_train shape: {y_train.shape}")
