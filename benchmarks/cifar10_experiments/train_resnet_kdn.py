@@ -17,8 +17,8 @@ from tensorflow.keras.applications.resnet50 import preprocess_input
 seeds = [0]
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-x_train = preprocess_input(x_train)
-x_test = preprocess_input(x_test)
+#x_train = preprocess_input(x_train)
+#x_test = preprocess_input(x_test)
 # Input image dimensions.
 '''input_shape = x_train.shape[1:]
 
@@ -47,9 +47,9 @@ for seed in seeds:
 
     model_kdn = kdcnn(
         network=network,
-        output_layer='dense_36'
+        output_layer='dense_53'
     )
     model_kdn.fit(x_train, y_train, k=1, batch=10)
-    model_kdn.global_bias = -1e10
+    model_kdn.global_bias = -1e7
     dump(model_kdn, 'resnet_kdn_cifar_finetune10_'+str(seed)+'.joblib')
 # %%

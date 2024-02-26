@@ -74,7 +74,7 @@ data_augmentation = keras.Sequential(
 )
 
 # Setting the state of the normalization layer.
-data_augmentation.layers[0].adapt(x_train)
+#data_augmentation.layers[0].adapt(x_train)
 
 #%%
 model = keras.Sequential()
@@ -86,7 +86,7 @@ inputs = keras.Input(shape=input_shape)
 model.add(inputs)
 model.add(data_augmentation)
 model.add(base_model)
-model.add(Dense(128))
+model.add(Dense(256))
 model.add(Activation('relu'))
 model.add(Dense(100))
 model.add(Activation('relu'))
