@@ -6,6 +6,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import pickle
 from tensorflow.keras.callbacks import LearningRateScheduler
+from scipy.io import loadmat
 # %%
 weights = []
 num_classes = 10
@@ -13,14 +14,22 @@ input_shape = (32, 32, 3)
 
 # Load the train and test data splits
 (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+(x_cifar100, y_cifar100), (_,_) = keras.datasets.cifar100.load_data()
+y_cifar100 += 10
+#x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
+#y_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['y'] + 109
+
+x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
+y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y'] + 109
+
 #x_ood = np.load('/cis/home/jdey4/300K_random_images.npy').astype('float32')
 #y_ood = np.array(range(len(x_ood))).reshape(-1,1)+11
 
-#x_noise = np.random.random_integers(0,high=255,size=(20000,32,32,3)).astype('float')
-#y_noise = 11*np.ones((20000,1), dtype='float32')
+x_noise = np.random.random_integers(0,high=255,size=(10000,32,32,3)).astype('float')
+y_noise = 120*np.ones((10000,1), dtype='float32')
 
-#x_train = np.concatenate((x_train, x_noise))
-#y_train = np.concatenate((y_train, y_noise))
+x_train = np.concatenate((x_train, x_cifar100, x_svhn, x_noise))
+y_train = np.concatenate((y_train, y_cifar100, y_svhn, y_noise))
 
 # Display shapes of train and test datasets
 print(f"x_train shape: {x_train.shape} - y_train shape: {y_train.shape}")
