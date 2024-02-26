@@ -22,6 +22,15 @@ y_cifar100 += 10
 x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
 y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y'] + 109
 
+x_svhn = x_svhn.astype('float32')
+x_tmp = np.zeros((x_svhn.shape[3],32,32,3), dtype=float)
+
+for ii in range(x_svhn.shape[3]):
+    x_tmp[ii,:,:,:] = x_svhn[:,:,:,ii]
+
+x_svhn = x_tmp
+del x_tmp
+
 #x_ood = np.load('/cis/home/jdey4/300K_random_images.npy').astype('float32')
 #y_ood = np.array(range(len(x_ood))).reshape(-1,1)+11
 
