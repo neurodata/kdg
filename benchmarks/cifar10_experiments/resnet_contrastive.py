@@ -31,6 +31,7 @@ data_augmentation = keras.Sequential(
         layers.Normalization(),
         layers.RandomFlip("horizontal"),
         layers.RandomRotation(0.02),
+        layers.RandomTranslation((-.01,.01),(-.01,.01))
     ]
 )
 
