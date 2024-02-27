@@ -162,7 +162,7 @@ for layer_id, layer in enumerate(encoder_with_projection_head.layers):
         pretrained_weights
     )
 
-with open('pretrained_weight_contrast.pickle', 'wb') as f:
+with open('pretrained_weight_contrast2.pickle', 'wb') as f:
     pickle.dump(weights, f)
 # %%
 sig_in = encoder_with_projection_head.predict(x_train[:20])
