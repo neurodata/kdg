@@ -55,7 +55,7 @@ data_augmentation = keras.Sequential(
         layers.Normalization(),
         layers.RandomFlip("horizontal"),
         layers.RandomRotation(0.02),
-        layers.RandomTranslation((-.01,.01),(-.01,.01))
+        #layers.RandomTranslation((-.01,.01),(-.01,.01))
     ]
 )
 
@@ -76,13 +76,13 @@ def lr_schedule(epoch):
         lr (float32): learning rate
     """
     lr = 1e-3
-    if epoch > 900:
+    if epoch > 450:
         lr *= 0.5e-3
-    elif epoch > 700:
+    elif epoch > 350:
         lr *= 1e-3
-    elif epoch > 500:
+    elif epoch > 250:
         lr *= 1e-2
-    elif epoch > 300:
+    elif epoch > 150:
         lr *= 1e-1
     print('Learning rate: ', lr)
     return lr
@@ -108,7 +108,7 @@ encoder.summary()
 learning_rate = 0.001
 batch_size = 2048
 projection_units = 256
-num_epochs = 1000
+num_epochs = 500
 dropout_rate = 0.5
 temperature = 0.05
 # %%
