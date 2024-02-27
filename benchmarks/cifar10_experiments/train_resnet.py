@@ -32,7 +32,7 @@ num_epochs = 5
 seed = 0
 #%% load pretrained model weights
 print('loading weights')
-with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/pretrained_weight_contrast.pickle', 'rb') as f:
+with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/pretrained_weight_contrast2.pickle', 'rb') as f:
     weights = pickle.load(f)
 
 #%%
