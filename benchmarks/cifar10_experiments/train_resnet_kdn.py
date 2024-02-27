@@ -47,7 +47,7 @@ for seed in seeds:
 
     model_kdn = kdcnn(
         network=network,
-        output_layer='dense_69'
+        output_layer='dense_73'
     )
     model_kdn.fit(x_train, y_train, k=1, batch=10)
     model_kdn.global_bias = -5e7
