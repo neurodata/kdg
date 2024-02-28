@@ -47,7 +47,7 @@ y_noise = 120*np.ones((10000,1), dtype='float32')
 x_imagenet = []
 y_imagenet = []
 for ii in range(10):
-    img = np.load('/cis/home/jdey4/Imagenet32_train_npz/train_data_batch_'+str(ii+1)+'.npz')
+    img = np.load('/cis/home/jdey4/Imagenet32_train_npz/Imagenet32_train_npz/train_data_batch_'+str(ii+1)+'.npz')
     x_imagenet.append(img['data'])
     y_imagenet.append(img['labels'])
 
