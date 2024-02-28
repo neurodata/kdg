@@ -291,60 +291,73 @@ class kdcnn(KernelDensityGraph):
             return proba
 
 
-       if k == None:
+       if k is None or isinstance(k, list):
+            X_val = self._get_layer_output(
+                X_val,
+                self.output_layer
+            )
             val_id = self._get_polytope_ids(X_val)
             distance = self._compute_geodesic(val_id, polytope_ids[polytope_filtered_id])
             min_dis_id = np.argmin(distance,axis=1)
             
             #k = int(np.ceil(np.sqrt(self.total_samples))
             min_ece = 1
-            max_acc = 0
-            for _ in range(2):
-                if k==None:
-                    k_ = np.arange(1,2,.1)
-                else:
-                    k_ = np.arange(k-.06,k+.05,.01)
-                for tmp_k in k_:
-                    used = []
-                    for ii in range(self.total_samples):
 
-                        if ii in used:
+            if k is None:
+                sweep = 1/np.array(
+                    [1,2,3,4]
+                )
+                sweep_k = np.ceil(
+                    self.total_samples**sweep
+                ).astype('int')
+            else:
+                sweep_k = k
+
+            k = self.total_samples
+            for chosen_k in sweep_k:
+                used = set()
+                for ii in range(self.total_samples):
+                    if ii in used:
                             continue
+                    
+                    scales = w[ii,:].copy()
+                    idx_with_k = np.argsort(scales)[::-1][chosen_k:]
+                    scales[idx_with_k] = 0
+                    idx_with_scale_1 = np.where(
+                                scales>.9999999
+                            )[0]
+                    
+                    for idx_1 in idx_with_scale_1:
+                        used.add(idx_1)
 
-                        scales = w[ii,:].copy()
-                        idx_with_scale_1 = np.where(
-                                    scales>.9999999
-                                )[0]
-                        used.extend(idx_with_scale_1)
-                        
-                        _count_polytope_cardinality(scales**tmp_k)
-                    
-                    prob = _get_likelihoods(min_dis_id)
-                    
-                    accuracy = np.mean(np.argmax(prob,axis=1)==y_val.ravel())
-                    ece = get_ece(prob, y_val.ravel(), n_bins=20)
-                    print(k, ece, accuracy)
-                    if ece < min_ece:
-                        min_ece = ece
-                        #max_acc = accuracy
-                        k = tmp_k
-                    
-                    
-                        #print('taken')
-                    self._reset_param()
-            
-       used = []
+                    _count_polytope_cardinality(scales)
+
+                prob = _get_likelihoods(min_dis_id)
+                ece = get_ece(prob, y_val.ravel(), n_bins=20)
+
+                print(k, ece)
+                if ece < min_ece:
+                    min_ece = ece
+                    #max_acc = accuracy
+                    k = chosen_k
+
+                self._reset_param()
+
+       used = set()
        for ii in range(self.total_samples):
             if ii in used:
                 continue
             
             scales = w[ii,:].copy()
+            idx_with_k = np.argsort(scales)[::-1][k:]
+            scales[idx_with_k] = 0
             idx_with_scale_1 = np.where(
                         scales>.9999999
                     )[0]
-            used.extend(idx_with_scale_1)
+            for idx_1 in idx_with_scale_1:
+                used.add(idx_1)
 
-            _count_polytope_cardinality(scales**k)
+            _count_polytope_cardinality(scales)
 
              
        self.is_fitted = True      
