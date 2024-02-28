@@ -32,6 +32,7 @@ for ii in range(x_svhn.shape[3]):
 x_svhn = x_tmp
 del x_tmp
 
+
 '''x_svhn, _, y_svhn, _ = train_test_split(
                     x_svhn, y_svhn, train_size=0.1,random_state=0, stratify=y_svhn)
 x_cifar100, _, y_cifar100, _ = train_test_split(
@@ -43,8 +44,18 @@ x_cifar100, _, y_cifar100, _ = train_test_split(
 x_noise = np.random.random_integers(0,high=255,size=(10000,32,32,3)).astype('float')
 y_noise = 120*np.ones((10000,1), dtype='float32')
 
-x_train = np.concatenate((x_train, x_cifar100, x_svhn, x_noise))
-y_train = np.concatenate((y_train, y_cifar100, y_svhn, y_noise))
+x_imagenet = []
+y_imagenet = []
+for ii in range(10):
+    img = np.load('/cis/home/jdey4/Imagenet32_train_npz/train_data_batch_'+str(ii+1)+'.npz')
+    x_imagenet.append(img['data'])
+    y_imagenet.append(img['labels'])
+
+x_imagenet = np.concatenate(x_imagenet)
+y_imagenet = np.concatenate(y_imagenet) + 121
+
+x_train = np.concatenate((x_train, x_cifar100, x_svhn, x_noise, x_imagenet))
+y_train = np.concatenate((y_train, y_cifar100, y_svhn, y_noise, y_imagenet))
 
 # Display shapes of train and test datasets
 print(f"x_train shape: {x_train.shape} - y_train shape: {y_train.shape}")
