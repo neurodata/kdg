@@ -51,7 +51,7 @@ for ii in range(10):
     data = img['data']
     img_size2 = 32 * 32
     x = np.dstack((data[:, :img_size2], data[:, img_size2:2*img_size2], data[:, 2*img_size2:]))
-    x_imagenet.append(x)
+    x_imagenet.append(x.reshape(-1,32,32,3))
     y_imagenet.append(img['labels'])
 
 x_imagenet = np.concatenate(x_imagenet)
