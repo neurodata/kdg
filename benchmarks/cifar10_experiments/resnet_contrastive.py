@@ -58,8 +58,8 @@ for ii in range(10):
 x_imagenet = np.concatenate(x_imagenet)
 y_imagenet = np.concatenate(y_imagenet).reshape(-1,1) + 120
 
-x_train = np.concatenate((x_train, x_cifar100, x_svhn, x_noise, x_imagenet))
-y_train = np.concatenate((y_train, y_cifar100, y_svhn, y_noise, y_imagenet))
+x_train = x_imagenet #np.concatenate((x_train, x_cifar100, x_svhn, x_noise, x_imagenet))
+y_train = y_imagenet -120 #np.concatenate((y_train, y_cifar100, y_svhn, y_noise, y_imagenet))
 
 # Display shapes of train and test datasets
 #print(f"x_train shape: {x_train.shape} - y_train shape: {y_train.shape}")
@@ -122,7 +122,7 @@ encoder.summary()
 
 learning_rate = 0.001
 batch_size = 4056
-projection_units = 512
+projection_units = 128
 num_epochs = 500
 dropout_rate = 0.5
 temperature = 0.05
