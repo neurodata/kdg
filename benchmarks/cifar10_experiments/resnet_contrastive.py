@@ -32,10 +32,10 @@ for ii in range(x_svhn.shape[3]):
 x_svhn = x_tmp
 del x_tmp
 
-x_svhn, _, y_svhn, _ = train_test_split(
+'''x_svhn, _, y_svhn, _ = train_test_split(
                     x_svhn, y_svhn, train_size=0.1,random_state=0, stratify=y_svhn)
 x_cifar100, _, y_cifar100, _ = train_test_split(
-                    x_cifar100, y_cifar100, train_size=0.1,random_state=0, stratify=y_cifar100)
+                    x_cifar100, y_cifar100, train_size=0.1,random_state=0, stratify=y_cifar100)'''
 
 #x_ood = np.load('/cis/home/jdey4/300K_random_images.npy').astype('float32')
 #y_ood = np.array(range(len(x_ood))).reshape(-1,1)+11
