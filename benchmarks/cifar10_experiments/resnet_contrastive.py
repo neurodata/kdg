@@ -55,7 +55,7 @@ for ii in range(10):
     y_imagenet.append(img['labels'])
 
 x_imagenet = np.concatenate(x_imagenet)
-y_imagenet = np.concatenate(y_imagenet) + 120
+y_imagenet = np.concatenate(y_imagenet).reshape(-1,1) + 120
 
 x_train = np.concatenate((x_train, x_cifar100, x_svhn, x_noise, x_imagenet))
 y_train = np.concatenate((y_train, y_cifar100, y_svhn, y_noise, y_imagenet))
