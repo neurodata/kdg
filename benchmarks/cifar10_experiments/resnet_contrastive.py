@@ -48,11 +48,14 @@ x_imagenet = []
 y_imagenet = []
 for ii in range(10):
     img = np.load('/cis/home/jdey4/Imagenet32_train_npz/Imagenet32_train_npz/train_data_batch_'+str(ii+1)+'.npz')
-    x_imagenet.append(img['data'])
+    data = img['data']
+    img_size2 = 32 * 32
+    x = np.dstack((data[:, :img_size2], data[:, img_size2:2*img_size2], data[:, 2*img_size2:]))
+    x_imagenet.append(x)
     y_imagenet.append(img['labels'])
 
 x_imagenet = np.concatenate(x_imagenet)
-y_imagenet = np.concatenate(y_imagenet) + 121
+y_imagenet = np.concatenate(y_imagenet) + 120
 
 x_train = np.concatenate((x_train, x_cifar100, x_svhn, x_noise, x_imagenet))
 y_train = np.concatenate((y_train, y_cifar100, y_svhn, y_noise, y_imagenet))
