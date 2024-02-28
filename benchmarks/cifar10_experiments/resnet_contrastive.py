@@ -91,8 +91,8 @@ def lr_schedule(epoch):
         lr (float32): learning rate
     """
     lr = 1e-1
-    if epoch > 1:
-        lr *= 1e-1
+    if epoch > 10:
+        lr *= 10**(-epoch//10)
 
     print('Learning rate: ', lr)
     return lr
@@ -118,7 +118,7 @@ encoder.summary()
 learning_rate = 0.001
 batch_size = 4056
 projection_units = 512
-num_epochs = 10
+num_epochs = 500
 dropout_rate = 0.5
 temperature = 0.05
 # %%
