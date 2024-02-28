@@ -47,6 +47,7 @@ y_noise = 120*np.ones((10000,1), dtype='float32')
 x_imagenet = []
 y_imagenet = []
 for ii in range(10):
+    #img = np.load('/Users/jayantadey/Downloads/Imagenet32_train_npz/train_data_batch_'+str(ii+1)+'.npz')
     img = np.load('/cis/home/jdey4/Imagenet32_train_npz/Imagenet32_train_npz/train_data_batch_'+str(ii+1)+'.npz')
     data = img['data']
     img_size2 = 32 * 32
@@ -61,8 +62,8 @@ x_train = np.concatenate((x_train, x_cifar100, x_svhn, x_noise, x_imagenet))
 y_train = np.concatenate((y_train, y_cifar100, y_svhn, y_noise, y_imagenet))
 
 # Display shapes of train and test datasets
-print(f"x_train shape: {x_train.shape} - y_train shape: {y_train.shape}")
-print(f"x_test shape: {x_test.shape} - y_test shape: {y_test.shape}")
+#print(f"x_train shape: {x_train.shape} - y_train shape: {y_train.shape}")
+#print(f"x_test shape: {x_test.shape} - y_test shape: {y_test.shape}")
 # %%
 data_augmentation = keras.Sequential(
     [
