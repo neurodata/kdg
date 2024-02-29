@@ -123,7 +123,7 @@ encoder.summary()
 learning_rate = 0.001
 batch_size = 4096
 projection_units = 128
-num_epochs = 200
+num_epochs = 300
 dropout_rate = 0.5
 temperature = 0.05
 # %%
