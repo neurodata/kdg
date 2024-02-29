@@ -32,7 +32,7 @@ num_epochs = 5
 seed = 0
 #%% load pretrained model weights
 print('loading weights')
-with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/pretrained_weight_contrast_imagenet.pickle', 'rb') as f:
+with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/pretrained_weight_contrast.pickle', 'rb') as f:
     weights = pickle.load(f)
 
 #%%
@@ -86,7 +86,7 @@ inputs = keras.Input(shape=input_shape)
 model.add(inputs)
 model.add(data_augmentation)
 model.add(base_model)
-model.add(Dense(512))
+model.add(Dense(256))
 model.add(Activation('relu'))
 model.add(Dense(200))
 model.add(Activation('relu'))
