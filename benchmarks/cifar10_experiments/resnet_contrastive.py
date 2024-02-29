@@ -121,7 +121,7 @@ encoder = create_encoder()
 encoder.summary()
 
 learning_rate = 0.001
-batch_size = 2048
+batch_size = 1024
 projection_units = 128
 num_epochs = 200
 dropout_rate = 0.5
