@@ -28,8 +28,8 @@ num_classes = 10
 learning_rate = 0.001
 batch_size = 32
 projection_units = 512
-num_epochs = 5
-seed = 0
+num_epochs = 20
+seed = 400
 #%% load pretrained model weights
 print('loading weights')
 with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/pretrained_weight_contrast.pickle', 'rb') as f:
