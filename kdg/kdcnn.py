@@ -46,7 +46,7 @@ class kdcnn(KernelDensityGraph):
            ii += 1
        self.output_layer_id = ii
 
-       for layer in network.layers[ii:]:
+       for layer in network.layers[ii+1:]:
            layer_name = layer.name
            #print(self.network_shape)
            if 'activation' in layer_name:
@@ -75,17 +75,17 @@ class kdcnn(KernelDensityGraph):
        total_samples = X.shape[0]
        array_shape = [-1]
        array_shape.extend(
-                list(self.network.\
-                     layers[self.output_layer_id+1]\
-                        .input.shape[1:]
+                list(self.network.get_layer(
+                        self.output_layer
+                    ).output.shape[1:]
                 )
        )
        X = X.reshape(array_shape)
        outputs = []
        
        inp = self.network.layers[self.output_layer_id].output
-
-       for layer in self.network.layers[self.output_layer_id:]:
+       activation = []
+       for layer in self.network.layers[self.output_layer_id+1:]:
            if 'activation' in layer.name:
                outputs.append(layer.output)
 
@@ -94,8 +94,7 @@ class kdcnn(KernelDensityGraph):
 
        functor = bknd.function(inp, outputs)
        layer_outs = functor(X)
- 
-       activation = []
+       
        for layer_out in layer_outs[:-1]:
            activation.append(
                (layer_out>0).astype('bool').reshape(total_samples, -1)
@@ -305,9 +304,9 @@ class kdcnn(KernelDensityGraph):
             max_acc = 0
             for _ in range(2):
                 if k==None:
-                    k_ = np.arange(2,11,1)
+                    k_ = np.arange(1,6,1)
                 else:
-                    k_ = np.arange(k-.5,k+.5,.1)
+                    k_ = np.arange(k,k+1,.1)
                 for tmp_k in k_:
                     used = []
                     for ii in range(self.total_samples):

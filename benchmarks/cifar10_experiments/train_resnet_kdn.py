@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras import backend as bknd
 from tensorflow.keras.applications.resnet50 import preprocess_input
 #%%
-seeds = [400]
+seeds = [300]
 # Load the CIFAR10 data.
 (x_train_, y_train_), (x_test, y_test) = cifar10.load_data()
 #x_train = preprocess_input(x_train)
@@ -46,9 +46,9 @@ for seed in seeds:
 
     model_kdn = kdcnn(
         network=network,
-        output_layer='activation_44'
+        output_layer='activation_42'
     )
     model_kdn.fit(x_train, y_train, X_val=x_cal, y_val=y_cal, batch=10)
-    model_kdn.global_bias = -1e6
+    model_kdn.global_bias = -2e6
     dump(model_kdn, 'resnet_kdn_cifar_finetune10_'+str(seed)+'.joblib')
 # %%
