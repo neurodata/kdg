@@ -91,8 +91,8 @@ input_shape = (32, 32, 3)
 batchsize = 128 # orig paper trained all networks with batch_size=128
 num_classes = 10
 seeds = [0, 100, 200, 300, 400]
-T = [1.0, 1.0] #cifar10 params
-eps = [0.032, 0.028]
+T = [1.0, 1.0, 1.0, 1.0, 1.0] #cifar10 params
+eps = [0.032, 0.028, 0.038, 0.0, 0.026000000000000002]
 '''T = 5.0 #cifar100 params
 eps = 0.026'''
 
@@ -126,11 +126,11 @@ model.add(
 model.build()
 #%%
 # Load the CIFAR10 and CIFAR100 data.
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+(_, _), (x_test, y_test) = cifar10.load_data()
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
-x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float32')/255.0
-x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/train_32x32.mat')['X']
-y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/train_32x32.mat')['y']
+x_noise_ = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float32')/255.0
+x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['X']
+y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['y']
 #test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
 x_svhn = x_svhn.astype('float32')
 x_tmp = np.zeros((x_svhn.shape[0],32,32,3), dtype=float)
@@ -141,26 +141,23 @@ for ii in range(x_svhn.shape[0]):
 x_svhn = x_tmp
 del x_tmp
 # Input image dimensions.
-input_shape = x_train.shape[1:]
+input_shape = x_test.shape[1:]
 
-# Normalize data.
-x_train = x_train.astype('float32') 
-x_test = x_test.astype('float32')
-x_cifar100 = x_cifar100.astype('float32') 
-x_svhn = x_svhn.astype('float32')
+x_test_ = x_test.astype('float32')
+x_cifar100_ = x_cifar100.astype('float32') 
+x_svhn_ = x_svhn.astype('float32')
 
-#%%
-x_train = gen_adv(x_train, eps, T)
-x_test = gen_adv(x_test, eps, T)
-x_cifar100 = gen_adv(x_cifar100, eps, T)
-x_svhn = gen_adv(x_svhn, eps, T)
-x_noise = gen_adv(x_noise, eps, T)
+
 #%% Load model file
-input_shape = x_train.shape
+input_shape = x_test.shape
 
-for seed in seeds: 
+for ii, seed in enumerate(seeds): 
     print('doing seed ',seed)
 
+    x_test = gen_adv(x_test_, eps[ii], T[ii])
+    x_cifar100 = gen_adv(x_cifar100_, eps[ii], T[ii])
+    x_svhn = gen_adv(x_svhn_, eps[ii], T[ii])
+    x_noise = gen_adv(x_noise_, eps[ii], T[ii])
     #load pretrained model
     #pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar100_model_new_'+str(seed))
     pretrained_model = keras.models.load_model('resnet20_models/cifar_finetune10_'+str(seed))
@@ -169,13 +166,13 @@ for seed in seeds:
         layer.set_weights(pretrained_weights)
         layer.trainable = False
     
-    proba_in = predict_proba(model, x_test, T) 
-    proba_cifar100 = predict_proba(model, x_cifar100, T)
-    proba_svhn = predict_proba(model, x_svhn, T)
-    proba_noise = predict_proba(model, x_noise, T)
+    proba_in = predict_proba(model, x_test, T[ii]) 
+    proba_cifar100 = predict_proba(model, x_cifar100, T[ii])
+    proba_svhn = predict_proba(model, x_svhn, T[ii])
+    proba_noise = predict_proba(model, x_noise, T[ii])
 
     summary = (proba_in, proba_cifar100, proba_svhn, proba_noise)
-    file_to_save = 'resnet20_cifar10_ODIN_'+str(seed)+'.pickle'
+    file_to_save = 'resnet50_cifar10_ODIN_'+str(seed)+'.pickle'
 
     with open(file_to_save, 'wb') as f:
         pickle.dump(summary, f)

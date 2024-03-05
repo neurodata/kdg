@@ -74,7 +74,7 @@ def gen_adv(x, eps, T):
 #%%
 batchsize = 128 # orig paper trained all networks with batch_size=128
 num_classes = 10
-seed = 200
+seed = 400
 input_shape = (32, 32, 3)
 #%% load pretrained model weights
 print('loading weights')
