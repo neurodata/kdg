@@ -35,64 +35,33 @@ def fpr_at_95_tpr(conf_in, conf_out):
 #%%
 seeds = [0,100,200,300,400]
 # Load the CIFAR10 and CIFAR100 data.
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+(x_train_, y_train_), (x_test, y_test) = cifar10.load_data()
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
-x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float32')/255.0
+
+x_train_, x_test, x_cifar100 = x_train_.astype('float'), x_test.astype('float'), x_cifar100.astype('float')
+x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float')
 x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
 y_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['y']
-test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
-x_svhn = x_svhn[:,:,:,test_ids].astype('float32')
-x_tmp = np.zeros((2000,32,32,3), dtype=float)
 
-for ii in range(2000):
+x_svhn = x_svhn.astype('float32')
+x_tmp = np.zeros((len(x_svhn),32,32,3), dtype=float)
+
+for ii in range(len(x_svhn)):
     x_tmp[ii,:,:,:] = x_svhn[:,:,:,ii]
 
 x_svhn = x_tmp
 del x_tmp
+
 # Input image dimensions.
-input_shape = x_train.shape[1:]
-
-# Normalize data.
-x_train = x_train.astype('float32') / 255
-x_test = x_test.astype('float32') / 255
-x_cifar100 = x_cifar100.astype('float32') / 255
-x_svhn = x_svhn.astype('float32') / 255
-
-
-for channel in range(3):
-    x_train_mean = np.mean(x_train[:,:,:,channel])
-    x_train_std = np.std(x_train[:,:,:,channel])
-
-    x_test[:,:,:,channel] -= x_train_mean
-    x_test[:,:,:,channel] /= x_train_std
-
-    x_cifar100[:,:,:,channel] -= x_train_mean
-    x_cifar100[:,:,:,channel] /= x_train_std
-
-    x_svhn[:,:,:,channel] -= x_train_mean #+ 1
-    x_svhn[:,:,:,channel] /= x_train_std
-
-    x_noise[:,:,:,channel] -= x_train_mean
-    x_noise[:,:,:,channel] /= x_train_std
+input_shape = x_train_.shape[1:]
 
 for seed in seeds:
     print('Doing seed ',seed)
     
-    (x_train, y_train), (_, _) = cifar10.load_data()
-    x_train = x_train.astype('float32') / 255
-    
-    for channel in range(3):
-        x_train_mean = np.mean(x_train[:,:,:,channel])
-        x_train_std = np.std(x_train[:,:,:,channel])
-
-        x_train[:,:,:,channel] -= x_train_mean
-        x_train[:,:,:,channel] /= x_train_std
-
-
     x_train, x_cal, y_train, y_cal = train_test_split(
-                    x_train, y_train, train_size=0.9, random_state=seed, stratify=y_train)
+                    x_train_, y_train_, train_size=0.9, random_state=seed, stratify=y_train_)
 
-    model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_model_new_'+str(seed))
+    model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_finetune10_'+str(seed))
     uncalibrated_model = KerasClassifier(model=model)
     uncalibrated_model.initialize(x_train, keras.utils.to_categorical(y_train))
     #uncalibrated_model.partial_fit(x_train, keras.utils.to_categorical(y_train))
@@ -121,7 +90,7 @@ for seed in seeds:
     summary = (proba_in_sig, proba_cifar100_sig, proba_svhn_sig, proba_noise_sig,\
             proba_in_iso, proba_cifar100_iso, proba_svhn_iso, proba_noise_iso)
 
-    file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet20_baseline_new_'+str(seed)+'.pickle'
+    file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet50_baseline_'+str(seed)+'.pickle'
 
     with open(file_to_save, 'wb') as f:
         pickle.dump(summary, f)

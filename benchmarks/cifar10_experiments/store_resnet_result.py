@@ -32,7 +32,7 @@ x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
 x_svhn = x_svhn.astype('float32')
 x_tmp = np.zeros((len(x_svhn),32,32,3), dtype=float)
 
-for ii in range(2000):
+for ii in range(len(x_svhn)):
     x_tmp[ii,:,:,:] = x_svhn[:,:,:,ii]
 
 x_svhn = x_tmp
