@@ -23,6 +23,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.datasets import cifar100, cifar10
 from tqdm import tqdm
+from tensorflow.keras import layers
 
 #%% load OOD data
 ood_set = np.load('/Users/jayantadey/kdg/benchmarks/300K_random_images.npy')
@@ -45,12 +46,52 @@ batchsize = 128 # orig paper trained all networks with batch_size=128
 epochs = 30
 data_augmentation = False
 num_classes = 10
-seed = 0
-
+seed = 300
+input_shape = (32,32,3)
+#%% load pretrained model weights
+print('loading weights')
+with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/pretrained_weight_contrast.pickle', 'rb') as f:
+    weights = pickle.load(f)
 #%%
 np.random.seed(seed)
 
+data_augmentation = keras.Sequential(
+    [
+        layers.Normalization()
+    ]
+)
 
+model = keras.Sequential()
+base_model = keras.applications.ResNet50V2(
+        include_top=False, weights=None, input_shape=input_shape, pooling="avg"
+    )
+
+inputs = keras.Input(shape=input_shape)
+model.add(inputs)
+model.add(data_augmentation)
+model.add(base_model)
+model.add(Dense(256))
+model.add(Activation('relu'))
+model.add(Dense(200))
+model.add(Activation('relu'))
+model.add(
+            Dense(
+                    num_classes,
+                    activation='softmax'
+                )
+        )
+
+model.build()
+
+#%%
+model.layers[0].set_weights(weights[1][:3])
+model.layers[0].trainable = False
+
+model.layers[1].set_weights(weights[1][3:])
+model.layers[1].trainable = False
+
+model.layers[2].set_weights(weights[2])
+model.layers[2].trainable = False
 #%%
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
@@ -60,43 +101,17 @@ y_test = y_test.ravel()
 input_shape = x_train.shape
 
 # Normalize data.
-x_train = x_train.astype('float32') / 255
-x_test = x_test.astype('float32') / 255
-ood_set = ood_set.astype('float32')/255
-
-for channel in range(3):
-    x_train_mean = np.mean(x_train[:,:,:,channel])
-    x_train_std = np.std(x_train[:,:,:,channel])
-    x_train[:,:,:,channel] -= x_train_mean
-    x_train[:,:,:,channel] /= x_train_std
-    x_test[:,:,:,channel] -= x_train_mean
-    x_test[:,:,:,channel] /= x_train_std
-
-    ood_set[:,:,:,channel] -= x_train_mean
-    ood_set[:,:,:,channel] /= x_train_std
-
-#%%
-model = resnet_v1(input_shape=input_shape[1:], depth=depth, num_classes=num_classes)
-
-#load pretrained model
-#pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar100_model_new_'+str(seed))
-pretrained_model = keras.models.load_model('resnet20_models/cifar_model_new_'+str(seed))
-for layer_id, layer in enumerate(model.layers[:-1]):
-    pretrained_weights = pretrained_model.layers[layer_id].get_weights()
-    layer.set_weights(pretrained_weights)
-    layer.trainable = False
+x_train = x_train.astype('float32')
+x_test = x_test.astype('float32')
+ood_set = ood_set.astype('float32')
 
 model.summary()
-print(model_type)
 
-test_logits = pretrained_model(x_test)
-test_err = np.mean(test_logits.numpy().argmax(1) != y_test)
-print('Pretrained error ',test_err)
 #%%
-iteration = input_shape[0]//batchsize
+iteration = int(5e4//batchsize)
 #optimizer = tf.optimizers.Adam(3e-3) 
 lr = 3e-3
-ood_batch_size = (ood_set.shape[0]//iteration)
+ood_batch_size = int(ood_set.shape[0]//iteration)
 #y_train_one_hot = tf.one_hot(y_train, depth=num_classes)
 #model.fit(x_train, y_train_one_hot,
 #                    batch_size=40,
@@ -113,8 +128,8 @@ for i in range(1,epochs+1):
         lr *= 1e-1
 
     optimizer = tf.optimizers.Adam(lr) 
-    perm = np.arange(batchsize*iteration)
-    perm_ood = np.arange(ood_batch_size*iteration)
+    perm = np.arange(batchsize*iteration).astype(int)
+    perm_ood = np.arange(ood_batch_size*iteration).astype(int)
     
     np.random.shuffle(perm)
     np.random.shuffle(perm_ood)
