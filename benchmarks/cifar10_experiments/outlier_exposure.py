@@ -46,7 +46,7 @@ batchsize = 128 # orig paper trained all networks with batch_size=128
 epochs = 30
 data_augmentation = False
 num_classes = 10
-seed = 300
+seed = 400
 input_shape = (32,32,3)
 #%% load pretrained model weights
 print('loading weights')

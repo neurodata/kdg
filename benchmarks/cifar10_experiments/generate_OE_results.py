@@ -41,19 +41,19 @@ from tqdm import tqdm
 import torch
 #%%
 num_classes = 10
-seeds = [0, 200, 300, 400]
+seeds = [0, 100, 200, 300, 400]
 #%%
 # Load the CIFAR10 and CIFAR100 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
 x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float32')/255.0
-x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/train_32x32.mat')['X']
-y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/train_32x32.mat')['y']
-test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
-x_svhn = x_svhn[:,:,:,test_ids].astype('float32')
-x_tmp = np.zeros((2000,32,32,3), dtype=float)
+x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['X']
+y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['y']
+#test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
+x_svhn = x_svhn[:,:,:,:].astype('float32')
+x_tmp = np.zeros((x_svhn.shape[0],32,32,3), dtype=float)
 
-for ii in range(2000):
+for ii in range(x_svhn.shape[0]):
     x_tmp[ii,:,:,:] = x_svhn[:,:,:,ii]
 
 x_svhn = x_tmp
@@ -62,30 +62,12 @@ del x_tmp
 input_shape = x_train.shape[1:]
 
 # Normalize data.
-x_train = x_train.astype('float32') / 255
-x_test = x_test.astype('float32') / 255
-x_cifar100 = x_cifar100.astype('float32') / 255
-x_svhn = x_svhn.astype('float32') / 255
+x_train = x_train.astype('float32') 
+x_test = x_test.astype('float32') 
+x_cifar100 = x_cifar100.astype('float32') 
+x_svhn = x_svhn.astype('float32') 
 
 
-for channel in range(3):
-    x_train_mean = np.mean(x_train[:,:,:,channel])
-    x_train_std = np.std(x_train[:,:,:,channel])
-
-    x_train[:,:,:,channel] -= x_train_mean
-    x_train[:,:,:,channel] /= x_train_std
-
-    x_test[:,:,:,channel] -= x_train_mean
-    x_test[:,:,:,channel] /= x_train_std
-
-    x_cifar100[:,:,:,channel] -= x_train_mean
-    x_cifar100[:,:,:,channel] /= x_train_std
-
-    x_svhn[:,:,:,channel] -= x_train_mean #+ 1
-    x_svhn[:,:,:,channel] /= x_train_std
-
-    x_noise[:,:,:,channel] -= x_train_mean
-    x_noise[:,:,:,channel] /= x_train_std
 #%% Load model file
 input_shape = x_train.shape
 
@@ -114,7 +96,7 @@ for seed in seeds:
     ).numpy()
 
     summary = (proba_in, proba_cifar100, proba_svhn, proba_noise)
-    file_to_save = 'resnet20_cifar10_OE_'+str(seed)+'.pickle'
+    file_to_save = 'resnet50_cifar10_OE_'+str(seed)+'.pickle'
 
     with open(file_to_save, 'wb') as f:
         pickle.dump(summary, f)

@@ -33,16 +33,19 @@ def fpr_at_95_tpr(conf_in, conf_out):
     FPR = np.sum(conf_out >=  PERC)/len(conf_out)
     return FPR, PERC
 #%%
-seeds = [0,100,200,300,400]
+seeds = [0, 100, 200, 300, 400]
 # Load the CIFAR10 and CIFAR100 data.
 (x_train_, y_train_), (x_test, y_test) = cifar10.load_data()
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
 
 x_train_, x_test, x_cifar100 = x_train_.astype('float'), x_test.astype('float'), x_cifar100.astype('float')
 x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float')
-x_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['X']
-y_svhn = loadmat('/Users/jayantadey/svhn/train_32x32.mat')['y']
 
+x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['X']
+y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['y']
+#x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
+#y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y']
+#test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
 x_svhn = x_svhn.astype('float32')
 x_tmp = np.zeros((len(x_svhn),32,32,3), dtype=float)
 
@@ -60,6 +63,9 @@ for seed in seeds:
     
     x_train, x_cal, y_train, y_cal = train_test_split(
                     x_train_, y_train_, train_size=0.9, random_state=seed, stratify=y_train_)
+    
+    _, x_cal, _, y_cal = train_test_split(
+                    x_test, y_test, train_size=0.9, random_state=seed, stratify=y_test)
 
     model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_finetune10_'+str(seed))
     uncalibrated_model = KerasClassifier(model=model)
