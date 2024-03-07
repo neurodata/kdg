@@ -141,6 +141,10 @@ for seed in seeds:
         (proba_in, proba_cifar100, proba_svhn, proba_noise, proba_in_dn, proba_cifar100_dn, proba_svhn_dn, proba_noise_dn) = pickle.load(f)
         # proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet)
 
+    with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet50_cifar10_ACET_'+str(seed)+'.pickle','rb') as f:
+        (proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet) = pickle.load(f)
+        
+
     with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet50_baseline_'+str(seed)+'.pickle', 'rb') as f:
         (proba_in_sig, proba_cifar100_sig, proba_svhn_sig, proba_noise_sig,\
             proba_in_iso, proba_cifar100_iso, proba_svhn_iso, proba_noise_iso) = pickle.load(f)
@@ -157,9 +161,9 @@ for seed in seeds:
     accuracy_dn.append(
         np.mean(np.argmax(proba_in_dn,axis=1)==y_test.ravel())
     )
-    '''accuracy_acet.append(
+    accuracy_acet.append(
         np.mean(np.argmax(proba_in_acet,axis=1)==y_test.ravel())
-    )'''
+    )
     accuracy_iso.append(
         np.mean(np.argmax(proba_in_iso,axis=1)==y_test.ravel())
     )
@@ -179,9 +183,9 @@ for seed in seeds:
     mce_kdn.append(
         get_ece(proba_in, y_test.ravel())
     )
-    '''mce_acet.append(
+    mce_acet.append(
         get_ece(proba_in_acet, y_test.ravel())
-    )'''
+    )
     mce_iso.append(
         get_ece(proba_in_iso, y_test.ravel())
     )
@@ -201,9 +205,9 @@ for seed in seeds:
     dn_in_conf = np.max(proba_in_dn, axis=1)
     dn_out_conf = np.max(proba_cifar100_dn, axis=1)
     dn_conf_cifar100 = np.hstack((dn_in_conf, dn_out_conf))
-    '''acet_in_conf = np.max(proba_in_acet, axis=1)
+    acet_in_conf = np.max(proba_in_acet, axis=1)
     acet_out_conf = np.max(proba_cifar100_acet, axis=1)
-    acet_conf_cifar100 = np.hstack((acet_in_conf, acet_out_conf))'''
+    acet_conf_cifar100 = np.hstack((acet_in_conf, acet_out_conf))
     iso_in_conf = np.max(proba_in_iso, axis=1)
     iso_out_conf = np.max(proba_cifar100_iso, axis=1)
     iso_conf_cifar100 = np.hstack((iso_in_conf, iso_out_conf))
@@ -226,9 +230,9 @@ for seed in seeds:
     auroc_dn_cifar100.append(
         roc_auc_score(true_labels, dn_conf_cifar100)
     )
-    '''auroc_acet_cifar100.append(
+    auroc_acet_cifar100.append(
         roc_auc_score(true_labels, acet_conf_cifar100)
-    )'''
+    )
     auroc_iso_cifar100.append(
         roc_auc_score(true_labels, iso_conf_cifar100)
     )
@@ -247,9 +251,9 @@ for seed in seeds:
     fpr_dn_cifar100.append(
         fpr_at_95_tpr(dn_in_conf, dn_out_conf)
     )
-    '''fpr_acet_cifar100.append(
+    fpr_acet_cifar100.append(
         fpr_at_95_tpr(acet_in_conf, acet_out_conf)
-    )'''
+    )
     fpr_iso_cifar100.append(
         fpr_at_95_tpr(iso_in_conf, iso_out_conf)
     )
@@ -268,9 +272,9 @@ for seed in seeds:
     oce_dn_cifar100.append(
         np.mean(np.abs(dn_out_conf - 0.1))
     )
-    '''oce_acet_cifar100.append(
+    oce_acet_cifar100.append(
         np.mean(np.abs(acet_out_conf - 0.1))
-    ) '''
+    ) 
     oce_iso_cifar100.append(
         np.mean(np.abs(iso_out_conf - 0.1))
     ) 
@@ -290,9 +294,9 @@ for seed in seeds:
     dn_in_conf = np.max(proba_in_dn, axis=1)
     dn_out_conf = np.max(proba_svhn_dn, axis=1)
     dn_conf_svhn = np.hstack((dn_in_conf, dn_out_conf))
-    '''acet_in_conf = np.max(proba_in_acet, axis=1)
+    acet_in_conf = np.max(proba_in_acet, axis=1)
     acet_out_conf = np.max(proba_svhn_acet, axis=1)
-    acet_conf_svhn = np.hstack((acet_in_conf, acet_out_conf))'''
+    acet_conf_svhn = np.hstack((acet_in_conf, acet_out_conf))
     iso_in_conf = np.max(proba_in_iso, axis=1)
     iso_out_conf = np.max(proba_svhn_iso, axis=1)
     iso_conf_svhn = np.hstack((iso_in_conf, iso_out_conf))
@@ -314,9 +318,9 @@ for seed in seeds:
     auroc_dn_svhn.append(
         roc_auc_score(true_labels, dn_conf_svhn)
     )
-    '''auroc_acet_svhn.append(
+    auroc_acet_svhn.append(
         roc_auc_score(true_labels, acet_conf_svhn)
-    )'''
+    )
     auroc_iso_svhn.append(
         roc_auc_score(true_labels, iso_conf_svhn)
     )
@@ -335,9 +339,9 @@ for seed in seeds:
     fpr_dn_svhn.append(
         fpr_at_95_tpr(dn_in_conf, dn_out_conf)
     )
-    '''fpr_acet_svhn.append(
+    fpr_acet_svhn.append(
         fpr_at_95_tpr(acet_in_conf, acet_out_conf)
-    )'''
+    )
     fpr_iso_svhn.append(
         fpr_at_95_tpr(iso_in_conf, iso_out_conf)
     )
@@ -356,9 +360,9 @@ for seed in seeds:
     oce_dn_svhn.append(
         np.mean(np.abs(dn_out_conf - 0.1))
     )
-    '''oce_acet_svhn.append(
+    oce_acet_svhn.append(
         np.mean(np.abs(acet_out_conf - 0.1))
-    )'''  
+    )
     oce_iso_svhn.append(
         np.mean(np.abs(iso_out_conf - 0.1))
     ) 
@@ -378,9 +382,9 @@ for seed in seeds:
     dn_in_conf = np.max(proba_in_dn, axis=1)
     dn_out_conf = np.max(proba_noise_dn, axis=1)
     dn_conf_noise = np.hstack((dn_in_conf, dn_out_conf))
-    '''acet_in_conf = np.max(proba_in_acet, axis=1)
+    acet_in_conf = np.max(proba_in_acet, axis=1)
     acet_out_conf = np.max(proba_noise_acet, axis=1)
-    acet_conf_noise = np.hstack((acet_in_conf, acet_out_conf))'''
+    acet_conf_noise = np.hstack((acet_in_conf, acet_out_conf))
     iso_in_conf = np.max(proba_in_iso, axis=1)
     iso_out_conf = np.max(proba_noise_iso, axis=1)
     iso_conf_noise = np.hstack((iso_in_conf, iso_out_conf))
@@ -402,9 +406,9 @@ for seed in seeds:
     auroc_dn_noise.append(
         roc_auc_score(true_labels, dn_conf_noise)
     )
-    '''auroc_acet_noise.append(
+    auroc_acet_noise.append(
         roc_auc_score(true_labels, acet_conf_noise)
-    )'''
+    )
     auroc_iso_noise.append(
         roc_auc_score(true_labels, iso_conf_noise)
     )
@@ -423,9 +427,9 @@ for seed in seeds:
     fpr_dn_noise.append(
         fpr_at_95_tpr(dn_in_conf, dn_out_conf)
     )
-    '''fpr_acet_noise.append(
+    fpr_acet_noise.append(
         fpr_at_95_tpr(acet_in_conf, acet_out_conf)
-    )'''
+    )
     fpr_iso_noise.append(
         fpr_at_95_tpr(iso_in_conf, iso_out_conf)
     )
@@ -444,9 +448,9 @@ for seed in seeds:
     oce_dn_noise.append(
         np.mean(np.abs(dn_out_conf - 0.1))
     )
-    '''oce_acet_noise.append(
+    oce_acet_noise.append(
         np.mean(np.abs(acet_out_conf - 0.1))
-    )'''
+    )
     oce_iso_noise.append(
         np.mean(np.abs(iso_out_conf - 0.1))
     )
