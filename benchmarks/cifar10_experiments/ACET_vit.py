@@ -65,7 +65,7 @@ def gen_adv(x):
 
 def build_model():
         inputs = Input(shape=input_shape)
-        #x = tf.keras.layers.Lambda(lambda image: tf.image.resize(image, (image_size, image_size)))(inputs) #Resize image to  size 224x224
+        x = tf.keras.layers.Lambda(lambda image: tf.image.resize(image, (image_size, image_size)))(inputs) #Resize image to  size 224x224
         base_model = vit.vit_b16(image_size=image_size, activation="sigmoid", pretrained=True,
                                 include_top=False, pretrained_top=False)
         
