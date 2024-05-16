@@ -138,10 +138,10 @@ x_train, x_cal, y_train, y_cal = train_test_split(
 
 #x_train = tf.convert_to_tensor(x_train)
 #%%
-#model = build_model()
+model = build_model()
 
-nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
-model = keras.models.load_model(nn_file)
+#nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
+#model = keras.models.load_model(nn_file)
 
 model.summary()
 
