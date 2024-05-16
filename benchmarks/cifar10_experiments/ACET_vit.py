@@ -70,7 +70,7 @@ def build_model():
                                 include_top=False, pretrained_top=False)
         
         #base_model.trainable = False #Set false for transfer learning
-        x = base_model(inputs)
+        x = base_model(x)
         x = Flatten()(x)
         x = BatchNormalization()(x)
         x = Dense(32)(x)
