@@ -82,7 +82,7 @@ def build_model():
         return model_final
 
 #%%
-batchsize = 32  # orig paper trained all networks with batch_size=128
+batchsize = 16  # orig paper trained all networks with batch_size=128
 epochs = 10
 num_classes = 10
 seed = 0
