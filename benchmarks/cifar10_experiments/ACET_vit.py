@@ -116,7 +116,7 @@ def lr_schedule(epoch):
 
 #%%
 image_size = 256 #size after resizing image
-input_shape = (image_size, image_size, 3) #Cifar10 image size
+input_shape = (32, 32, 3) #Cifar10 image size
 num_classes = 10
 
 # Load the CIFAR10 data.
