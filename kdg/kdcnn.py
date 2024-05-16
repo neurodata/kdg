@@ -304,9 +304,9 @@ class kdcnn(KernelDensityGraph):
             max_acc = 0
             for _ in range(2):
                 if k==None:
-                    k_ = np.arange(1,6,1)
+                    k_ = np.arange(10,11,.1)
                 else:
-                    k_ = np.arange(k,k+1,.1)
+                    k_ = np.arange(k+.01,k+.1,.01)
                 for tmp_k in k_:
                     used = []
                     for ii in range(self.total_samples):
@@ -331,6 +331,8 @@ class kdcnn(KernelDensityGraph):
                         min_ece = ece
                         #max_acc = accuracy
                         k = tmp_k
+                    else:
+                        break
                     
                     
                         #print('taken')

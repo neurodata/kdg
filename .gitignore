@@ -134,14 +134,17 @@ dmypy.json
 #experiments
 .DS_Store
 
-#pickle
-#*.pickle
+#pickle and joblib
+*.pickle
+*.joblib 
+*.keras
 
 #large files
 benchmarks/mnist_test
 benchmarks/cifar_model
 benchmarks/cifar10_experiments/resnet20_models
 benchmarks/cifar10_experiments/kdn_models 
+benchmarks/cifar10_experiments/results
 
 # ignore temporary files
 temp*.pickle
