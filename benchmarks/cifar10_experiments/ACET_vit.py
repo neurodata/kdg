@@ -138,10 +138,11 @@ x_train, x_cal, y_train, y_cal = train_test_split(
 
 #x_train = tf.convert_to_tensor(x_train)
 #%%
-model = build_model()
+#model = build_model()
 
-#nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
-#model = keras.models.load_model(nn_file)
+nn_file = '~/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
+model = keras.models.load_model(nn_file)
+model.layers[2].trainable = False
 
 model.summary()
 
@@ -172,5 +173,6 @@ for i in range(1,epochs+1):
     train_err = np.mean(logits.numpy().argmax(1) != y_train_.numpy().argmax(1))
     print("Epoch {:03d}: loss_main={:.3f} loss_acet={:.3f} err={:.2%}".format(i, loss_main, loss_acet, train_err))
 
-model.save('ACET_vit_'+str(seed)+'.keras')
+#model.save('ACET_vit_'+str(seed)+'.keras')
+model.save('ACET_vit_'+str(seed))
 # %%

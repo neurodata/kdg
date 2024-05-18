@@ -35,6 +35,24 @@ from vit_keras import vit, utils
 ood_set = np.load('/Users/jayantadey/kdg/benchmarks/300K_random_images.npy')
 
 #%%
+def build_model():
+        inputs = Input(shape=input_shape)
+        x = tf.keras.layers.Lambda(lambda image: tf.image.resize(image, (image_size, image_size)))(inputs) #Resize image to  size 224x224
+        base_model = vit.vit_b16(image_size=image_size, activation="sigmoid", pretrained=True,
+                                include_top=False, pretrained_top=False)
+        
+        #base_model.trainable = False #Set false for transfer learning
+        x = base_model(x)
+        x = Flatten()(x)
+        x = BatchNormalization()(x)
+        x = Dense(32)(x)
+        x = Activation('relu')(x)
+        x = BatchNormalization()(x)
+        outputs = Dense(num_classes)(x)
+
+        model_final = Model(inputs=inputs, outputs=outputs)
+        return model_final
+
 def fpr_at_95_tpr(conf_in, conf_out):
     TPR = 95
     PERC = np.percentile(conf_in, 100-TPR)
@@ -51,7 +69,7 @@ def cross_ent(logits, y):
 
 def gen_adv(x, eps, T):
     x = tf.Variable(x)
-    with tf.keras.backend.gradients() as tape:
+    with tf.GradientTape(persistent=True) as tape:
         logits = model(x)/T
         label = logits.numpy().argmax(1)
         label = tf.one_hot(label, depth=num_classes)
@@ -81,7 +99,13 @@ num_classes = 10
 np.random.seed(seed)
 
 nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
-model = keras.models.load_model(nn_file)
+model_to_copy = keras.models.load_model(nn_file)
+model = build_model()
+
+for layer_id, layer in enumerate(model.layers):
+        pretrained_weights = model_to_copy.layers[layer_id].get_weights()
+        layer.set_weights(pretrained_weights)
+
 #%%
 # Load the CIFAR10 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
@@ -91,7 +115,7 @@ x_test = x_test.astype('float32') /255.0
 ood_set = ood_set.astype('float32')/255.0
 
 x_train, x_cal, y_train, y_cal = train_test_split(
-                x_train, y_train, train_size=0.9, random_state=seed, shuffle=True)
+                x_train, y_train, train_size=0.95, random_state=seed, shuffle=True)
 
 y_train = y_train.ravel()
 y_test = y_test.ravel()
@@ -103,7 +127,7 @@ model.summary()
 
 perm = np.arange(50000)
 np.random.shuffle(perm)
-idx = perm[:1000]
+idx = perm[:2500]
 #%%
 fpr = 1
 eps_to_try = np.linspace(0,.04,21)
@@ -111,12 +135,30 @@ chosen_eps = eps_to_try[0]
 T_ = [1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0]
 chosen_T = T_[0]
 
+
 for T in T_:
     for eps in eps_to_try:
         print('Doing ', eps)
-        conf_in = np.max(tf.nn.softmax(model(gen_adv(x_cal,eps,T))/T), axis=1)
+
+        conf_in = []
+        conf_out = []
+        for ii in tqdm(range(100)):
+            conf_in.append(
+                 np.max(tf.nn.softmax(model(gen_adv(x_cal[ii*25:(ii+1)*25],eps,T))/T), axis=1)
+                )
+        
         #print(conf_in)
-        conf_out = np.max(tf.nn.softmax(model(ood_set[idx])/T), axis=1)
+        for ii in tqdm(range(100)):
+            conf_out.append(
+                 np.max(tf.nn.softmax(model(ood_set[idx[ii*25:(ii+1)*25]])/T), axis=1)
+            )
+
+        conf_in = np.concatenate(
+             conf_in
+        )
+        conf_out = np.concatenate(
+             conf_out
+        )
         f = fpr_at_95_tpr(conf_in, conf_out)
         print(f)
         if fpr > f:
