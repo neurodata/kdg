@@ -51,7 +51,7 @@ input_shape = (32,32,3)
 #%%
 np.random.seed(seed)
 
-nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
+nn_file = '/cis/home/jdey4/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
 model = keras.models.load_model(nn_file)
 model.layers[2].trainable = False
 
