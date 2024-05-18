@@ -89,31 +89,6 @@ seed = 0
 
 #%%
 np.random.seed(seed)
-
-def lr_schedule(epoch):
-    """Learning Rate Schedule
-
-    Learning rate is scheduled to be reduced after 80, 120, 160, 180 epochs.
-    Called automatically every epoch as part of callbacks during training.
-
-    # Arguments
-        epoch (int): The number of epochs
-
-    # Returns
-        lr (float32): learning rate
-    """
-    lr = .001
-    if epoch > 8:
-        lr *= 0.5e-3
-    elif epoch > 6:
-        lr *= 1e-3
-    elif epoch > 4:
-        lr *= 1e-2
-    elif epoch > 2:
-        lr *= 1e-1
-    print('Learning rate: ', lr)
-    return lr
-
 #%%
 image_size = 256 #size after resizing image
 input_shape = (32, 32, 3) #Cifar10 image size
