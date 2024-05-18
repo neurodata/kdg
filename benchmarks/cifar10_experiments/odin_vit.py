@@ -165,6 +165,8 @@ for T in T_:
             fpr=f
             chosen_eps = eps
             chosen_T = T
+        else:
+             break
 
 print('Chosen eps ', chosen_eps, 'Chosen T ', chosen_T)
 

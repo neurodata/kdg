@@ -27,7 +27,7 @@ from tensorflow.keras import layers
 from vit_keras import vit, utils
 
 #%% load OOD data
-ood_set = np.load('/cis/home/jdey4/300K_random_images.npy')
+ood_set = np.load('/cis/home/jdey4/kdg/benchmarks/300K_random_images.npy')
 
 #%%
 def cross_ent(logits, y):
@@ -43,7 +43,7 @@ def max_conf(logits):
 
 
 #%%
-batchsize = 128 # orig paper trained all networks with batch_size=128
+batchsize = 16 # orig paper trained all networks with batch_size=128
 epochs = 30
 num_classes = 10
 seed = 0
@@ -73,10 +73,10 @@ ood_set = ood_set.astype('float32')/255.0
 model.summary()
 
 #%%
-iteration = int(5e4//batchsize)
+iteration = 200#int(5e4//batchsize)
 #optimizer = tf.optimizers.Adam(3e-3) 
 lr = 3e-3
-ood_batch_size = int(ood_set.shape[0]//iteration)
+ood_batch_size = 32#int(ood_set.shape[0]//iteration)
 #y_train_one_hot = tf.one_hot(y_train, depth=num_classes)
 #model.fit(x_train, y_train_one_hot,
 #                    batch_size=40,
@@ -117,8 +117,8 @@ for i in range(1,epochs+1):
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
     train_err = np.mean(logits.numpy().argmax(1) != y_train_.numpy().argmax(1))
-    test_logits = model(x_test)
-    test_err = np.mean(test_logits.numpy().argmax(1) != y_test)
+    test_logits = model(x_test[:16])
+    test_err = np.mean(test_logits.numpy().argmax(1) != y_test[:16])
 
     print("Epoch {:03d}: loss_main={:.3f} loss_ood={:.3f} train err={:.2%} test err={:.2%}".format(i, loss_main, loss_ood, train_err, test_err))
 
