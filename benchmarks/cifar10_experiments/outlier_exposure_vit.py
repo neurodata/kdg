@@ -48,7 +48,7 @@ epochs = 30
 num_classes = 10
 seed = 0
 input_shape = (32,32,3)
-
+image_size = 256 #size after resizing image
 #%%
 np.random.seed(seed)
 
