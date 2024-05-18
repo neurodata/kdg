@@ -24,6 +24,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.datasets import cifar100, cifar10
 from tqdm import tqdm
 from tensorflow.keras import layers
+from vit_keras import vit, utils
 
 #%% load OOD data
 ood_set = np.load('/cis/home/jdey4/300K_random_images.npy')
