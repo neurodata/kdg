@@ -15,7 +15,7 @@ res_folder_kdf_baseline_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openm
 res_folder_kdn_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdn_res_ood'
 res_folder_kdf_ood = '/Users/jayantadey/kdg/benchmarks/openml_res/openml_kdf_res_ood'
 files = os.listdir(res_folder_kdf)
-files.remove('.DS_Store')
+#files.remove('.DS_Store')
 
 #%%
 def smooth_curve(data, w=5):
@@ -363,7 +363,7 @@ ax[0][0].set_xlim([100, 10000])
 ax[0][1].set_xlim([100, 10000])
 
 
-ax[0][0].set_title(r'$(P_{iso}, P_{sig}) = (0.04, 0.84)$', fontsize=30)
+#ax[0][0].set_title(r'$(P_{iso}, P_{sig}) = (0.04, 0.84)$', fontsize=30)
 
 ax[0][0].set_xscale("log")
 ax[0][0].set_ylim([-0.1, .1])
@@ -375,7 +375,7 @@ ax[0][0].set_ylabel('Improvement over parent', fontsize=35)
 #ax[0][0].text(100, -.08, 'RF wins')
 
 ###ax[0][1].set_title('ID Calibration', fontsize=40)
-ax[0][1].set_title(r'$(P_{iso}, P_{sig})= (0.70, 0.20)$', fontsize=30)
+#ax[0][1].set_title(r'$(P_{iso}, P_{sig})= (0.70, 0.20)$', fontsize=30)
 
 ax[0][1].set_xscale("log")
 ax[0][1].set_ylim([-.5, .8])
@@ -384,7 +384,7 @@ ax[0][1].set_xticks([])
 ax[0][1].set_ylabel('', fontsize=35)
 #ax[0][1].text(100, .3, 'KGF wins')
 #ax[0][1].text(100, -.05, 'RF wins')
-ax[1][0].set_title(r'$(P_{iso}, P_{sig}) = (0.00, 0.01)$', fontsize=30)
+#ax[1][0].set_title(r'$(P_{iso}, P_{sig}) = (0.00, 0.01)$', fontsize=30)
 
 ax[1][0].set_xscale("log")
 ax[1][0].set_ylim([-0.06, .06])
@@ -393,7 +393,7 @@ ax[1][0].set_ylabel('Improvement over parent', fontsize=35)
 #ax[1][0].text(100, .05, 'KGN wins')
 #ax[1][0].text(100, -.08, 'DN wins')
 
-ax[1][1].set_title(r'$(P_{iso}, P_{sig}) = (0.38, 0.34)$', fontsize=30)
+#ax[1][1].set_title(r'$(P_{iso}, P_{sig}) = (0.38, 0.34)$', fontsize=30)
 
 ax[1][1].set_xscale("log")
 ax[1][1].set_ylim([-.2, 1])
@@ -405,7 +405,7 @@ ax[1][1].set_ylabel('', fontsize=35)
 ax[0][2].set_ylim([-0.25, .25])
 ax[0][2].set_yticks([-.2,0,.2])
 ax[0][2].set_xticks([])
-ax[0][2].set_title(r'$(P_{iso}, P_{sig}) = (0.00, 0.00)$', fontsize=30)
+#ax[0][2].set_title(r'$(P_{iso}, P_{sig}) = (0.00, 0.00)$', fontsize=30)
 #ax[2][0].set_ylabel('Difference', fontsize=35)
 #ax[0][2].text(2, .05, 'KGF wins')
 #ax[0][2].text(2, -.08, 'RF wins')
@@ -416,7 +416,7 @@ ax[0][2].set_xlim([1, 5])
 
 ###ax[0][2].set_title('OOD Calibration', fontsize=40)
 
-ax[1][2].set_title(r'$(P_{iso}, P_{sig})  = (0.00, 0.00)$', fontsize=30)
+#ax[1][2].set_title(r'$(P_{iso}, P_{sig})  = (0.00, 0.00)$', fontsize=30)
 ax[1][2].set_ylim([-0.2, .85])
 ax[1][2].set_xlim([1, 5])
 ax[1][2].set_yticks([-.2,0,.8])
