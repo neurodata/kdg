@@ -18,7 +18,7 @@ from scipy import signal
 from scikeras.wrappers import KerasClassifier
 from sklearn.calibration import CalibratedClassifierCV as calcv
 from sklearn.model_selection import train_test_split
-
+from vit_keras import vit, utils
 # %%
 class nnwrapper(KerasClassifier):
 
@@ -32,21 +32,26 @@ def fpr_at_95_tpr(conf_in, conf_out):
     #FP = np.sum(conf_out >=  PERC)
     FPR = np.sum(conf_out >=  PERC)/len(conf_out)
     return FPR, PERC
+
+#%%
+num_classes = 10
+input_shape = (32,32,3)
+image_size = 256 #size after resizing image
 #%%
 seeds = [0, 1, 2, 3, 2022]
 # Load the CIFAR10 and CIFAR100 data.
 (x_train_, y_train_), (x_test, y_test) = cifar10.load_data()
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
 
-x_train_, x_test, x_cifar100 = x_train_.astype('float'), x_test.astype('float'), x_cifar100.astype('float')
-x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float')
+x_train_, x_test, x_cifar100 = x_train_.astype('float')/255.0, x_test.astype('float')/255.0, x_cifar100.astype('float')/255.0
+x_noise = np.random.random_integers(0,high=1,size=(1000,32,32,3)).astype('float')
 
 x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['X']
 y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['y']
 #x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
 #y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y']
 #test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
-x_svhn = x_svhn.astype('float32')
+x_svhn = x_svhn.astype('float32')/255.0
 x_tmp = np.zeros((len(x_svhn),32,32,3), dtype=float)
 
 for ii in range(len(x_svhn)):
@@ -61,13 +66,9 @@ input_shape = x_train_.shape[1:]
 for seed in seeds:
     print('Doing seed ',seed)
     
-    x_train, x_cal, y_train, y_cal = train_test_split(
-                    x_train_, y_train_, train_size=0.9, random_state=seed, stratify=y_train_)
+    x_train, x_cal, y_train, y_cal = train_test_split(x_train_, y_train_, random_state=seed, shuffle=True)
     
-    _, x_cal, _, y_cal = train_test_split(
-                    x_test, y_test, train_size=0.9, random_state=seed, stratify=y_test)
-
-    model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar_finetune10_'+str(seed))
+    model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras')
     uncalibrated_model = KerasClassifier(model=model)
     uncalibrated_model.initialize(x_train, keras.utils.to_categorical(y_train))
     #uncalibrated_model.partial_fit(x_train, keras.utils.to_categorical(y_train))
@@ -96,7 +97,8 @@ for seed in seeds:
     summary = (proba_in_sig, proba_cifar100_sig, proba_svhn_sig, proba_noise_sig,\
             proba_in_iso, proba_cifar100_iso, proba_svhn_iso, proba_noise_iso)
 
-    file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/resnet50_baseline_'+str(seed)+'.pickle'
+    print(summary)
+    file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/vit_baseline_'+str(seed)+'.pickle'
 
     with open(file_to_save, 'wb') as f:
         pickle.dump(summary, f)
