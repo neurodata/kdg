@@ -44,7 +44,7 @@ seeds = [0, 1, 2, 3, 2022]
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
 
 x_train_, x_test, x_cifar100 = x_train_.astype('float')/255.0, x_test.astype('float')/255.0, x_cifar100.astype('float')/255.0
-x_noise = np.random.random_integers(0,high=1,size=(1000,32,32,3)).astype('float')
+x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float')/255.0
 
 x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['X']
 y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['y']

@@ -46,7 +46,7 @@ def max_conf(logits):
 batchsize = 16 # orig paper trained all networks with batch_size=128
 epochs = 30
 num_classes = 10
-seed = 3
+seed = 2022
 input_shape = (32,32,3)
 image_size = 256 #size after resizing image
 #%%
