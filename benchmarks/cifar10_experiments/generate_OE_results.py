@@ -39,8 +39,11 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.datasets import cifar10
 from tqdm import tqdm
 import torch
+from vit_keras import vit, utils
 #%%
 num_classes = 10
+input_shape = (32,32,3)
+image_size = 256 #size after resizing image
 seeds = [0, 1, 2, 3, 2022]
 #%%
 # Load the CIFAR10 and CIFAR100 data.
