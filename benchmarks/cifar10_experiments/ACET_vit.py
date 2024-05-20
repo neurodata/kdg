@@ -85,7 +85,7 @@ def build_model():
 batchsize = 16  # orig paper trained all networks with batch_size=128
 epochs = 10
 num_classes = 10
-seed = 2
+seed = 3
 
 #%%
 np.random.seed(seed)

@@ -56,7 +56,7 @@ x_cifar100 = x_cifar100.astype('float32') /255.0
 x_svhn = x_svhn.astype('float32')/255.0 
 
 #%% Load model file
-seeds = [0, 1, 2, 3, 2022]
+seeds = [2, 3, 2022]
 
 for seed in seeds: 
     print('doing seed ',seed)

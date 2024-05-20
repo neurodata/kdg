@@ -156,7 +156,7 @@ def load_adv(x, eps, T):
     )
 
 #%% Load model file
-seeds = [0,1,2,3,2022]
+seeds = [2,3,2022]
 
 for ii, seed in enumerate(seeds): 
     print('doing seed ',seed)
