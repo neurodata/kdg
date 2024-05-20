@@ -19,7 +19,7 @@ from sklearn.metrics import roc_auc_score
 #%%
 def fpr_at_95_tpr(conf_in, conf_out):
     TPR = 95
-    PERC = np.percentile(conf_in, 100-TPR)
+    PERC = np.percentile(conf_in, 100-TPR)+.001
     #FP = np.sum(conf_out >=  PERC)
     FPR = np.sum(conf_out >=  PERC)/len(conf_out)
     return FPR, PERC
