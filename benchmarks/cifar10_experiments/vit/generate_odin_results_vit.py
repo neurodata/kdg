@@ -1,4 +1,19 @@
-#%%
+# %%
+import pickle
+import numpy as np
+from tensorflow import keras
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
+from keras.models import Model
+from kdg import kdf, kdn
+from tensorflow.keras.datasets import cifar10, cifar100
+import timeit
+from scipy.io import loadmat
+import random
+import joblib
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import signal
 import tensorflow as tf
 import pickle
 import matplotlib
@@ -31,9 +46,6 @@ from tensorflow.keras.datasets import cifar10, cifar100
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from vit_keras import vit, utils
-#%% load OOD data
-ood_set = np.load('/Users/jayantadey/kdg/benchmarks/300K_random_images.npy')
-
 #%%
 def build_model():
     inputs = Input(shape=input_shape)
@@ -53,12 +65,19 @@ def build_model():
     model_final = Model(inputs=inputs, outputs=outputs)
     return model_final
 
+
+def predict_proba(model, x, T):
+    logits = model.predict(x)/T
+    proba = tf.nn.softmax(logits,axis=1).numpy()
+
+    return proba
+
 def fpr_at_95_tpr(conf_in, conf_out):
     TPR = 95
     PERC = np.percentile(conf_in, 100-TPR)
     #FP = np.sum(conf_out >=  PERC)
     FPR = np.sum(conf_out >=  PERC)/len(conf_out)
-    return FPR
+    return FPR, PERC
 
 def cross_ent(logits, y):
     logits = tf.nn.softmax(logits, axis=1)
@@ -69,7 +88,7 @@ def cross_ent(logits, y):
 
 def gen_adv(x, eps, T):
     x = tf.Variable(x)
-    with tf.GradientTape(persistent=True) as tape:
+    with tf.GradientTape() as tape:
         logits = model(x)/T
         label = logits.numpy().argmax(1)
         label = tf.one_hot(label, depth=num_classes)
@@ -88,87 +107,85 @@ def gen_adv(x, eps, T):
 
     return x_tilde
 
-
 #%%
-seed = 0
 input_shape = (32, 32, 3) #Cifar10 image size
 image_size = 256 #size after resizing image
 num_classes = 10
+T = 1.0 #cifar100 params
+eps = 0.006
 
 #%%
-np.random.seed(seed)
+# Load the CIFAR10 and CIFAR100 data.
+(_, _), (x_test, y_test) = cifar10.load_data()
+(_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
+x_noise_ = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float32')/255.0
+x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['X']
+y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['y']
+#test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
+x_svhn = x_svhn.astype('float32')
+x_tmp = np.zeros((x_svhn.shape[3],32,32,3), dtype=float)
 
-nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
-model_to_copy = keras.models.load_model(nn_file)
-model = build_model()
+for ii in range(x_svhn.shape[3]):
+    x_tmp[ii,:,:,:] = x_svhn[:,:,:,ii]
 
-for layer_id, layer in enumerate(model.layers):
-        pretrained_weights = model_to_copy.layers[layer_id].get_weights()
-        layer.set_weights(pretrained_weights)
+x_svhn = x_tmp
+del x_tmp
 
-#%%
-# Load the CIFAR10 data.
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+x_test_ = x_test.astype('float32')/255.0
+x_cifar100_ = x_cifar100.astype('float32')/255.0 
+x_svhn_ = x_svhn.astype('float32')/255.0
 
-x_train = x_train.astype('float32')/255.0 
-x_test = x_test.astype('float32') /255.0
-ood_set = ood_set.astype('float32')/255.0
-
-x_train, x_cal, y_train, y_cal = train_test_split(
-                x_train, y_train, train_size=0.95, random_state=seed, shuffle=True)
-
-y_train = y_train.ravel()
-y_test = y_test.ravel()
-# Input image dimensions.
-input_shape = x_train.shape
-
-#%%
-model.summary()
-
-perm = np.arange(50000)
-np.random.shuffle(perm)
-idx = perm[:2500]
-#%%
-fpr = 1
-eps_to_try = np.linspace(0,.04,21)
-chosen_eps = eps_to_try[0]
-T_ = [1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0]
-chosen_T = T_[0]
-
-
-for T in T_:
-    for eps in eps_to_try:
-        print('Doing ', eps)
-
-        conf_in = []
-        conf_out = []
-        for ii in tqdm(range(100)):
-            conf_in.append(
-                 np.max(tf.nn.softmax(model(gen_adv(x_cal[ii*25:(ii+1)*25],eps,T))/T), axis=1)
-                )
-        
-        #print(conf_in)
-        for ii in tqdm(range(100)):
-            conf_out.append(
-                 np.max(tf.nn.softmax(model(ood_set[idx[ii*25:(ii+1)*25]])/T), axis=1)
-            )
-
-        conf_in = np.concatenate(
-             conf_in
+def load_adv(x, eps, T):
+    total_len = x.shape[0]
+    x_ = []
+    batchsize=50
+    total_batch=total_len//batchsize
+    print(total_batch)
+    for ii in tqdm(range(total_batch)):
+        x_.append(
+            gen_adv(x[ii*batchsize:(ii+1)*batchsize], eps, T)
         )
-        conf_out = np.concatenate(
-             conf_out
+    
+    if (ii+1)*batchsize<total_len-1:
+        x_.append(
+            gen_adv(x[(ii+1)*batchsize:], eps, T)
         )
-        f = fpr_at_95_tpr(conf_in, conf_out)
-        print(f)
-        if fpr > f:
-            fpr=f
-            chosen_eps = eps
-            chosen_T = T
-        else:
-             break
+    
+    return np.concatenate(
+        x_, axis=0
+    )
 
-print('Chosen eps ', chosen_eps, 'Chosen T ', chosen_T)
+#%% Load model file
+seeds = [0,1,2,3,2022]
 
+for ii, seed in enumerate(seeds): 
+    print('doing seed ',seed)
+    np.random.seed(seed)
+
+    nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
+    model_to_copy = keras.models.load_model(nn_file)
+    model = build_model()
+
+    for layer_id, layer in enumerate(model.layers):
+            pretrained_weights = model_to_copy.layers[layer_id].get_weights()
+            layer.set_weights(pretrained_weights)
+
+
+    x_svhn = load_adv(x_svhn_, eps, T)
+    x_test = load_adv(x_test_, eps, T)
+    x_cifar100 = load_adv(x_cifar100_, eps, T)
+    x_noise = load_adv(x_noise_, eps, T)
+    
+    
+    proba_in = predict_proba(model, x_test, T) 
+    proba_cifar100 = predict_proba(model, x_cifar100, T)
+    proba_svhn = predict_proba(model, x_svhn, T)
+    proba_noise = predict_proba(model, x_noise, T)
+
+    summary = (proba_in, proba_cifar100, proba_svhn, proba_noise)
+    file_to_save = 'ODIN_vit_'+str(seed)+'.pickle'
+
+    with open(file_to_save, 'wb') as f:
+        pickle.dump(summary, f)
 
 # %%

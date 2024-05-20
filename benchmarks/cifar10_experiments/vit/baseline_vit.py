@@ -47,14 +47,14 @@ x_train_, x_test, x_cifar100 = x_train_.astype('float')/255.0, x_test.astype('fl
 x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float')/255.0
 
 x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['X']
-y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['y']
+#y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['y']
 #x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
 #y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y']
 #test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
-x_svhn = x_svhn.astype('float32')/255.0
-x_tmp = np.zeros((len(x_svhn),32,32,3), dtype=float)
+x_svhn = x_svhn.astype('float32')
+x_tmp = np.zeros((x_svhn.shape[3],32,32,3), dtype=float)
 
-for ii in range(len(x_svhn)):
+for ii in range(x_svhn.shape[3]):
     x_tmp[ii,:,:,:] = x_svhn[:,:,:,ii]
 
 x_svhn = x_tmp

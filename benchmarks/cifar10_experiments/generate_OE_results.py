@@ -41,31 +41,35 @@ from tqdm import tqdm
 import torch
 #%%
 num_classes = 10
-seeds = [0, 100, 200, 300, 400]
+seeds = [0, 1, 2, 3, 2022]
 #%%
 # Load the CIFAR10 and CIFAR100 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 (_, _), (x_cifar100, y_cifar100) = cifar100.load_data()
 x_noise = np.random.random_integers(0,high=255,size=(1000,32,32,3)).astype('float32')/255.0
-x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['X']
-y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['y']
-#test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
-x_svhn = x_svhn[:,:,:,:].astype('float32')
-x_tmp = np.zeros((x_svhn.shape[0],32,32,3), dtype=float)
 
-for ii in range(x_svhn.shape[0]):
+#x_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['X']
+#y_svhn = loadmat('/Users/jayantadey/DF-CNN/data_five/SVHN/test_32x32.mat')['y']
+x_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['X']
+#y_svhn = loadmat('/cis/home/jdey4/train_32x32.mat')['y']
+#test_ids =  random.sample(range(0, x_svhn.shape[3]), 2000)
+x_svhn = x_svhn.astype('float32')
+x_tmp = np.zeros((x_svhn.shape[3],32,32,3), dtype=float)
+
+for ii in range(x_svhn.shape[3]):
     x_tmp[ii,:,:,:] = x_svhn[:,:,:,ii]
 
 x_svhn = x_tmp
 del x_tmp
+
 # Input image dimensions.
 input_shape = x_train.shape[1:]
 
 # Normalize data.
-x_train = x_train.astype('float32') 
-x_test = x_test.astype('float32') 
-x_cifar100 = x_cifar100.astype('float32') 
-x_svhn = x_svhn.astype('float32') 
+x_train = x_train.astype('float32')/255.0 
+x_test = x_test.astype('float32')/255.0 
+x_cifar100 = x_cifar100.astype('float32')/255.0 
+x_svhn = x_svhn.astype('float32')/255.0 
 
 
 #%% Load model file
@@ -76,27 +80,15 @@ for seed in seeds:
 
     #load pretrained model
     #pretrained_model = keras.models.load_model('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/resnet20_models/cifar100_model_new_'+str(seed))
-    model = keras.models.load_model('resnet20_models/cifar10_OE_'+str(seed))
+    model = keras.models.load_model('OE_vit_'+str(seed))
 
-    proba_in = tf.nn.softmax(
-        model.predict(x_test),
-        axis=1
-    ).numpy()
-    proba_cifar100 = tf.nn.softmax(
-        model.predict(x_cifar100),
-        axis=1
-    ).numpy()
-    proba_svhn = tf.nn.softmax(
-        model.predict(x_svhn),
-        axis=1
-    ).numpy()
-    proba_noise = tf.nn.softmax(
-        model.predict(x_noise),
-        axis=1
-    ).numpy()
+    proba_in = model.predict(x_test)
+    proba_cifar100 = model.predict(x_cifar100),
+    proba_svhn = model.predict(x_svhn)
+    proba_noise = model.predict(x_noise),
 
     summary = (proba_in, proba_cifar100, proba_svhn, proba_noise)
-    file_to_save = 'resnet50_cifar10_OE_'+str(seed)+'.pickle'
+    file_to_save = 'OE_vit_'+str(seed)+'.pickle'
 
     with open(file_to_save, 'wb') as f:
         pickle.dump(summary, f)
