@@ -56,16 +56,16 @@ x_cifar100 = x_cifar100.astype('float32') /255.0
 x_svhn = x_svhn.astype('float32')/255.0 
 
 #%% Load model file
-seeds = [0, 1, 2, 3, 2022]
+seeds = [0, 1, 2, 3]
 
 for seed in seeds: 
     print('doing seed ',seed)
-    #acet = keras.models.load_model('resnet20_models/cifar10_ACET_'+str(seed))
-    filename =  '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/vit_kdn/kdn_cifar10_vit_'+str(seed)+'.joblib'
-    model_kdn = joblib.load(filename)
+    acet = keras.models.load_model('ACET_vit_'+str(seed))
+    #filename =  '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/vit_kdn/kdn_cifar10_vit_'+str(seed)+'.joblib'
+    #model_kdn = joblib.load(filename)
     #acet = keras.models.load_model('resnet20_models/cifar100_ACET_'+str(seed))
 
-    model_kdn.global_bias = -4e8
+    '''model_kdn.global_bias = -4e8
 
     proba_in = model_kdn.predict_proba(x_test, distance='Geodesic', n_jobs=50)
 
@@ -77,18 +77,19 @@ for seed in seeds:
     proba_in_dn = model_kdn.network.predict(x_test)
     proba_cifar100_dn = model_kdn.network.predict(x_cifar100)
     proba_svhn_dn = model_kdn.network.predict(x_svhn)
-    proba_noise_dn = model_kdn.network.predict(x_noise)
+    proba_noise_dn = model_kdn.network.predict(x_noise)'''
 
 
-    '''proba_in_acet = acet.predict(x_test)
+    proba_in_acet = acet.predict(x_test)
     proba_cifar100_acet = acet.predict(x_cifar100)
     proba_svhn_acet = acet.predict(x_svhn)
     proba_noise_acet = acet.predict(x_noise)
 
     #summary = (proba_in, proba_in_dn, proba_in_acet)
-    summary = (proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet)'''
-    summary = (proba_in, proba_cifar100, proba_svhn, proba_noise, proba_in_dn, proba_cifar100_dn, proba_svhn_dn, proba_noise_dn)#, proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet)
-    file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_kdn_'+str(seed)+'.pickle'
+    summary = (proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet)
+    #summary = (proba_in, proba_cifar100, proba_svhn, proba_noise, proba_in_dn, proba_cifar100_dn, proba_svhn_dn, proba_noise_dn)#, proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet)
+    #file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_kdn_'+str(seed)+'.pickle'
+    file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_acet_'+str(seed)+'.pickle'
 
     with open(file_to_save, 'wb') as f:
         pickle.dump(summary, f)
