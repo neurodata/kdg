@@ -27,8 +27,8 @@ from tensorflow.keras import layers
 from vit_keras import vit, utils
 
 #%% load OOD data
-ood_set = np.load('/cis/home/jdey4/300K_random_images.npy')
-
+#ood_set = np.load('/cis/home/jdey4/300K_random_images.npy')
+ood_set = np.load('/Users/jayantadey/kdg/benchmarks/300K_random_images.npy')
 #%%
 def cross_ent(logits, y):
     logits = tf.nn.softmax(logits, axis=1)
@@ -52,7 +52,8 @@ image_size = 256 #size after resizing image
 #%%
 np.random.seed(seed)
 
-nn_file = '/cis/home/jdey4/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
+#nn_file = '/cis/home/jdey4/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
+nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
 model = keras.models.load_model(nn_file)
 model.layers[2].trainable = False
 
@@ -76,7 +77,7 @@ model.summary()
 iteration = 200#int(5e4//batchsize)
 #optimizer = tf.optimizers.Adam(3e-3) 
 lr = 3e-3
-ood_batch_size = 32#int(ood_set.shape[0]//iteration)
+ood_batch_size = 16#int(ood_set.shape[0]//iteration)
 #y_train_one_hot = tf.one_hot(y_train, depth=num_classes)
 #model.fit(x_train, y_train_one_hot,
 #                    batch_size=40,
