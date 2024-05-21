@@ -308,7 +308,7 @@ for seed in seeds:
     odin_out_conf = np.max(proba_svhn_odin, axis=1)
     odin_conf_svhn = np.hstack((odin_in_conf, odin_out_conf))
     oe_in_conf = np.max(proba_in_oe, axis=1)
-    oe_out_conf = np.max(proba_svhn_oe, axis=1)[:proba_svhn_sig.shape[0]]
+    oe_out_conf = np.max(proba_svhn_oe, axis=1)
     oe_conf_svhn = np.hstack((oe_in_conf, oe_out_conf))
     
     true_labels = np.hstack((np.ones(len(proba_in), ), np.zeros(len(proba_svhn), )))

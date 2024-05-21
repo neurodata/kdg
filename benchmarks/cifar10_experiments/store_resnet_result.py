@@ -89,7 +89,7 @@ for seed in seeds:
     summary = (proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet)
     #summary = (proba_in, proba_cifar100, proba_svhn, proba_noise, proba_in_dn, proba_cifar100_dn, proba_svhn_dn, proba_noise_dn)#, proba_in_acet, proba_cifar100_acet, proba_svhn_acet, proba_noise_acet)
     #file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_kdn_'+str(seed)+'.pickle'
-    file_to_save = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_acet_'+str(seed)+'.pickle'
+    file_to_save = 'vit_acet_'+str(seed)+'.pickle'
 
     with open(file_to_save, 'wb') as f:
         pickle.dump(summary, f)
