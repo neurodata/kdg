@@ -27,8 +27,8 @@ from tensorflow.keras import layers
 from vit_keras import vit, utils
 
 #%% load OOD data
-#ood_set = np.load('/cis/home/jdey4/300K_random_images.npy')
-ood_set = np.load('/Users/jayantadey/kdg/benchmarks/300K_random_images.npy')
+ood_set = np.load('/cis/home/jdey4/300K_random_images.npy')
+#ood_set = np.load('/Users/jayantadey/kdg/benchmarks/300K_random_images.npy')
 #%%
 def cross_ent(logits, y):
     logits = tf.nn.softmax(logits, axis=1)
