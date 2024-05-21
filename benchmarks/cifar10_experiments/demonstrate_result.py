@@ -52,7 +52,7 @@ x_svhn = x_svhn.astype('float32') / 255.0
 
 
 # %%
-seeds = [0,1,2,3,2022]
+seeds = [0]
 accuracy_kdn = []
 accuracy_dn = []
 accuracy_acet = []

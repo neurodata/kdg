@@ -44,7 +44,7 @@ def max_conf(logits):
 
 #%%
 batchsize = 16 # orig paper trained all networks with batch_size=128
-epochs = 10
+epochs = 2
 num_classes = 10
 seed = 0
 input_shape = (32,32,3)
@@ -76,7 +76,7 @@ model.summary()
 #%%
 iteration = 200#int(5e4//batchsize)
 #optimizer = tf.optimizers.Adam(3e-3) 
-lr = 3e-3
+lr = 3e-4
 ood_batch_size = 16#int(ood_set.shape[0]//iteration)
 #y_train_one_hot = tf.one_hot(y_train, depth=num_classes)
 #model.fit(x_train, y_train_one_hot,
