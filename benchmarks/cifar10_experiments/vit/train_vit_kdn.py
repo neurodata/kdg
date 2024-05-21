@@ -55,5 +55,5 @@ for seed in seeds:
     )
     model_kdn.fit(x_train, y_train, X_val=x_cal, y_val=y_cal, batch=10)
     model_kdn.global_bias = -2e6
-    dump(model_kdn, 'resnet_kdn_cifar10_vit_'+str(seed)+'.joblib')
+    dump(model_kdn, 'kdn_cifar10_vit_'+str(seed)+'.joblib')
 # %%

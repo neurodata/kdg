@@ -56,7 +56,7 @@ x_cifar100 = x_cifar100.astype('float32') /255.0
 x_svhn = x_svhn.astype('float32')/255.0 
 
 #%% Load model file
-seeds = [2, 3, 2022]
+seeds = [0, 1, 2, 3, 2022]
 
 for seed in seeds: 
     print('doing seed ',seed)
@@ -65,11 +65,11 @@ for seed in seeds:
     model_kdn = joblib.load(filename)
     #acet = keras.models.load_model('resnet20_models/cifar100_ACET_'+str(seed))
 
-    #model_kdn.global_bias = -2e6
+    model_kdn.global_bias = -4e8
 
     proba_in = model_kdn.predict_proba(x_test, distance='Geodesic', n_jobs=50)
 
-    #model_kdn.global_bias = -2e6
+    model_kdn.global_bias = -1e7
     proba_cifar100 = model_kdn.predict_proba(x_cifar100, distance='Geodesic')
     proba_svhn = model_kdn.predict_proba(x_svhn, distance='Geodesic', n_jobs=20)
     proba_noise = model_kdn.predict_proba(x_noise, distance='Geodesic', n_jobs=20)
