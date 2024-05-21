@@ -52,8 +52,8 @@ image_size = 256 #size after resizing image
 #%%
 np.random.seed(seed)
 
-#nn_file = '/cis/home/jdey4/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
-nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
+nn_file = '/cis/home/jdey4/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
+#nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_'+str(seed)+'.keras'
 model = keras.models.load_model(nn_file)
 model.layers[2].trainable = False
 
