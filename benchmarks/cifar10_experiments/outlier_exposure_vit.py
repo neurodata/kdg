@@ -76,7 +76,7 @@ model.summary()
 #%%
 iteration = 200#int(5e4//batchsize)
 #optimizer = tf.optimizers.Adam(3e-3) 
-lr = 3e-4
+lr = 1e-3
 ood_batch_size = 16#int(ood_set.shape[0]//iteration)
 #y_train_one_hot = tf.one_hot(y_train, depth=num_classes)
 #model.fit(x_train, y_train_one_hot,
