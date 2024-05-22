@@ -53,6 +53,14 @@ x_svhn = x_svhn.astype('float32') / 255.0
 
 # %%
 seeds = [0]
+kdn_mmc = []
+dn_mmc = []
+iso_mmc = []
+sig_mmc = []
+acet_mmc = []
+odin_mmc = []
+oe_mmc = []
+
 accuracy_kdn = []
 accuracy_dn = []
 accuracy_acet = []
@@ -154,7 +162,38 @@ for seed in seeds:
 
     with open('/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit/results/OE_vit_'+str(seed)+'.pickle', 'rb') as f:
         (proba_in_oe, proba_cifar100_oe, proba_svhn_oe, proba_noise_oe) = pickle.load(f)
-              
+
+
+    idx_kdn = np.where(np.argmax(proba_in,axis=1)!=y_test.ravel())[0]
+    idx_dn = np.where(np.argmax(proba_in_dn,axis=1)!=y_test.ravel())[0]
+    idx_iso = np.where(np.argmax(proba_in_iso,axis=1)!=y_test.ravel())[0]
+    idx_sig = np.where(np.argmax(proba_in_sig,axis=1)!=y_test.ravel())[0]
+    idx_acet = np.where(np.argmax(proba_in_acet,axis=1)!=y_test.ravel())[0]
+    idx_odin = np.where(np.argmax(proba_in_odin,axis=1)!=y_test.ravel())[0]
+    idx_oe = np.where(np.argmax(proba_in_oe,axis=1)!=y_test.ravel())[0]  
+
+    kdn_mmc.append(
+        np.mean(np.max(proba_in[idx_kdn],axis=1))
+    )
+    dn_mmc.append(
+        np.mean(np.max(proba_in_dn[idx_dn],axis=1))
+    )
+    iso_mmc.append(
+        np.mean(np.max(proba_in_iso[idx_iso],axis=1))
+    )
+    sig_mmc.append(
+        np.mean(np.max(proba_in_sig[idx_sig],axis=1))
+    )
+    acet_mmc.append(
+        np.mean(np.max(proba_in_acet[idx_acet],axis=1))
+    )
+    odin_mmc.append(
+        np.mean(np.max(proba_in_odin[idx_odin],axis=1))
+    )
+    oe_mmc.append(
+        np.mean(np.max(proba_in_oe[idx_oe],axis=1))
+    )
+    ############################################################################       
     accuracy_kdn.append(
         np.mean(np.argmax(proba_in,axis=1)==y_test.ravel())
     )
@@ -288,7 +327,7 @@ for seed in seeds:
         np.mean(np.abs(oe_out_conf - 0.1))
     )
 
-#%%
+
     kdn_in_conf = np.max(proba_in, axis=1)
     kdn_out_conf = np.max(proba_svhn, axis=1)
     kdn_conf_svhn= np.hstack((kdn_in_conf, kdn_out_conf))
@@ -377,7 +416,7 @@ for seed in seeds:
         np.mean(np.abs(oe_out_conf - 0.1))
     )
 
-#%%
+
     kdn_in_conf = np.max(proba_in, axis=1)
     kdn_out_conf = np.max(proba_noise, axis=1)
     kdn_conf_noise = np.hstack((kdn_in_conf, kdn_out_conf))
@@ -555,4 +594,13 @@ print('Isotonic OCE noise', np.mean(oce_iso_noise), '(+-',np.std(oce_iso_noise),
 print('Sigmoid OCE noise', np.mean(oce_sig_noise), '(+-',np.std(oce_sig_noise),')')
 print('ODIN OCE noise', np.mean(oce_odin_noise), '(+-',np.std(oce_odin_noise),')')
 print('OE OCE noise', np.mean(oce_oe_noise), '(+-',np.std(oce_oe_noise),')\n')
+
+
+print('DN MMC', np.mean(dn_mmc), '(+-',np.std(dn_mmc),')')
+print('KDN MMC', np.mean(kdn_mmc), '(+-',np.std(kdn_mmc),')')
+print('ACET MMC', np.mean(acet_mmc), '(+-',np.std(acet_mmc),')')
+print('Isotonic MMC', np.mean(iso_mmc), '(+-',np.std(iso_mmc),')')
+print('Sigmoid MMC', np.mean(sig_mmc), '(+-',np.std(sig_mmc),')')
+print('ODIN MMC', np.mean(odin_mmc), '(+-',np.std(odin_mmc),')')
+print('OE MMC', np.mean(oe_mmc), '(+-',np.std(oe_mmc),')\n')
 # %%
