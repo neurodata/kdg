@@ -44,7 +44,7 @@ from vit_keras import vit, utils
 num_classes = 10
 input_shape = (32,32,3)
 image_size = 256 #size after resizing image
-seeds = [0, 1, 2, 3, 2022]
+seeds = [1, 2, 3, 2022]
 #%%
 # Load the CIFAR10 and CIFAR100 data.
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
