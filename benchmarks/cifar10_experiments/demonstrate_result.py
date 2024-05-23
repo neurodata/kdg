@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import signal
 from sklearn.metrics import roc_auc_score
+from vit_keras import vit, utils
 #%%
 def fpr_at_95_tpr(conf_in, conf_out):
     TPR = 95
@@ -52,6 +53,9 @@ x_svhn = x_svhn.astype('float32') / 255.0
 
 
 # %%
+num_classes = 10
+input_shape = (32,32,3)
+image_size = 256 #size after resizing image
 seeds = [0,1,2,3,2022]
 kdn_mmc = []
 dn_mmc = []
@@ -603,4 +607,17 @@ print('Isotonic MMC', np.mean(iso_mmc), '(+-',np.std(iso_mmc),')')
 print('Sigmoid MMC', np.mean(sig_mmc), '(+-',np.std(sig_mmc),')')
 print('ODIN MMC', np.mean(odin_mmc), '(+-',np.std(odin_mmc),')')
 print('OE MMC', np.mean(oe_mmc), '(+-',np.std(oe_mmc),')\n')
+# %%
+polytopes = []
+for seed in seeds: 
+    print('doing seed ',seed)
+    #acet = keras.models.load_model('ACET_vit_'+str(seed))
+    filename =  '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/results/vit_kdn/kdn_cifar10_vit_'+str(seed)+'.joblib'
+    model_kdn = joblib.load(filename)
+
+    polytopes.append(
+        len(model_kdn.polytope_means)
+    )
+# %%
+print('Average polytope detected ', np.mean(polytopes), '(+-',np.std(polytopes),')\n')
 # %%
