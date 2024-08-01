@@ -18,7 +18,7 @@ import gc
 import matplotlib.pyplot as plt
 import numpy as np
 # %%
-seeds = [1]#2022
+seeds = [0,2,3]#2022
 
 # %%
 (trainset, train_label), (crossdataset, cross_label) = cifar100.load_data()
