@@ -9,7 +9,7 @@ from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, BatchNormaliz
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 
-from keras.layers.core import Lambda
+from tensorflow.keras.layers.core import Lambda
 from vit_keras import vit, utils
 
 from sklearn.model_selection import train_test_split
