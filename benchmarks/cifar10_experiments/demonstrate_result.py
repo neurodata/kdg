@@ -5,7 +5,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
 import pickle
 from keras.models import Model
-from kdg import kdf, kdn, get_ece
+from kdg import kdf, kdn, get_ece, get_ace
 import pickle
 from tensorflow.keras.datasets import cifar10, cifar100
 import timeit
@@ -76,10 +76,20 @@ mce_acet = []
 mce_odin = []
 mce_oe = []
 
+ace_kdn = []
+ace_dn = []
+ace_acet = []
+ace_odin = []
+ace_oe = []
+
+
 accuracy_iso = []
 accuracy_sig = []
 mce_iso = []
 mce_sig = []
+
+ace_iso = []
+ace_sig = []
 
 auroc_kdn_cifar100 = []
 auroc_dn_cifar100 = []
@@ -221,26 +231,50 @@ for seed in seeds:
     )
 
     mce_dn.append(
-        get_ece(proba_in_dn, y_test.ravel())
+        get_ece(proba_in_dn, y_test.ravel(),n_bins=30)
     )
     mce_kdn.append(
-        get_ece(proba_in, y_test.ravel())
+        get_ece(proba_in, y_test.ravel(),n_bins=30)
     )
     mce_acet.append(
-        get_ece(proba_in_acet, y_test.ravel())
+        get_ece(proba_in_acet, y_test.ravel(),n_bins=30)
     )
     mce_iso.append(
-        get_ece(proba_in_iso, y_test.ravel())
+        get_ece(proba_in_iso, y_test.ravel(),n_bins=30)
     )
     mce_sig.append(
-        get_ece(proba_in_sig, y_test.ravel())
+        get_ece(proba_in_sig, y_test.ravel(),n_bins=30)
     )
     mce_odin.append(
-        get_ece(proba_in_odin, y_test.ravel())
+        get_ece(proba_in_odin, y_test.ravel(),n_bins=30)
     )
     mce_oe.append(
-        get_ece(proba_in_oe, y_test.ravel())
+        get_ece(proba_in_oe, y_test.ravel(),n_bins=30)
     )
+
+
+    ace_dn.append(
+        get_ace(proba_in_dn, y_test.ravel(),R=30)
+    )
+    ace_kdn.append(
+        get_ace(proba_in, y_test.ravel(),R=30)
+    )
+    ace_acet.append(
+        get_ace(proba_in_acet, y_test.ravel(),R=30)
+    )
+    ace_iso.append(
+        get_ace(proba_in_iso, y_test.ravel(),R=30)
+    )
+    ace_sig.append(
+        get_ace(proba_in_sig, y_test.ravel(),R=30)
+    )
+    ace_odin.append(
+        get_ace(proba_in_odin, y_test.ravel(),R=30)
+    )
+    ace_oe.append(
+        get_ace(proba_in_oe, y_test.ravel(),R=30)
+    )
+
 
     kdn_in_conf = np.max(proba_in, axis=1)
     kdn_out_conf = np.max(proba_cifar100, axis=1)
@@ -524,6 +558,15 @@ print('Isotonic MCE ', np.mean(mce_iso), '(+-',np.std(mce_iso),')')
 print('Sigmoid MCE ', np.mean(mce_sig), '(+-',np.std(mce_sig),')')
 print('ODIN MCE ', np.mean(mce_odin), '(+-',np.std(mce_odin),')')
 print('OE MCE ', np.mean(mce_oe), '(+-',np.std(mce_oe),')\n')
+
+print('DN ACE ', np.mean(ace_dn), '(+-',np.std(ace_dn),')')
+print('KDN ACE ', np.mean(ace_kdn), '(+-',np.std(mce_kdn),')')
+print('ACET ACE ', np.mean(ace_acet), '(+-',np.std(ace_acet),')')
+print('Isotonic ACE ', np.mean(ace_iso), '(+-',np.std(ace_iso),')')
+print('Sigmoid ACE ', np.mean(ace_sig), '(+-',np.std(ace_sig),')')
+print('ODIN ACE ', np.mean(ace_odin), '(+-',np.std(ace_odin),')')
+print('OE ACE ', np.mean(ace_oe), '(+-',np.std(ace_oe),')\n')
+
 
 print('DN AUROC cifar100', np.mean(auroc_dn_cifar100), '(+-',np.std(auroc_dn_cifar100),')')
 print('KDN AUROC cifar100', np.mean(auroc_kdn_cifar100), '(+-',np.std(auroc_kdn_cifar100),')')
