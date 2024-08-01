@@ -81,8 +81,8 @@ for seed in seeds:
     earlystopping = EarlyStopping(monitor="val_loss", patience=3, verbose=1)
 
     #Switch ViT layer to trainable for fine tuning
-    '''for layer in model.layers:
-        layer.trainable = True'''
+    for layer in model.layers:
+        layer.trainable = True
         
     #Requires compile again to activate trainable=True
     model.compile(optimizer=SGD(learning_rate=0.001, momentum=0.9),
@@ -92,7 +92,7 @@ for seed in seeds:
     print("\n")
 
     best_accuracy = 0.0  # Initialize best accuracy
-    best_model_path = '/best_model/best_model.h5'  # Path to save the best model
+    # best_model_path = '/best_model/best_model.h5'  # Path to save the best model
 
 
 
@@ -103,9 +103,9 @@ for seed in seeds:
         # Evaluate model on validation data
         validation_accuracy = model.evaluate(X_valid, y_valid, verbose=0)[1]
 
-        if validation_accuracy > best_accuracy:
-            best_accuracy = validation_accuracy
-            model.save(best_model_path)  # Save the best model checkpoint
+        # if validation_accuracy > best_accuracy:
+        #     best_accuracy = validation_accuracy
+        #     model.save(best_model_path)  # Save the best model checkpoint
 
         print(f"Epoch {epoch + 1} - Validation Accuracy: {validation_accuracy:.4f}, Best Accuracy: {best_accuracy:.4f}")
 
