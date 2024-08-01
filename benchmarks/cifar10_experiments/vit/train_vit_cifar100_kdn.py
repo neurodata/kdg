@@ -1,5 +1,6 @@
 # %%
 import numpy as np
+import tensorflow
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization
@@ -31,9 +32,9 @@ import numpy as np
 #%%
 input_shape = (32, 32, 3) #Cifar10 image size
 image_size = 256 #size after resizing image
-num_classes = 10
+num_classes = 100
 
-seeds = [0,1,2]
+seeds = [1]
 # Load the CIFAR10 data.
 (train_data, train_label), (test_data, test_label) = cifar10.load_data()
 train_data = (train_data/255.).astype("float16")
@@ -45,8 +46,8 @@ for seed in seeds:
     print("Doing seed ", seed)
     x_train, x_cal, y_train, y_cal = train_test_split(
                 train_data, train_label, random_state=seed, shuffle=True)
-    nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit_model_cifar100_'+str(seed)+'.keras'
-    network = keras.models.load_model(nn_file)
+    nn_file = '/Users/jayantadey/kdg/benchmarks/cifar10_experiments/vit/vit_model_cifar100_'+str(seed)+'.keras'
+    network = tensorflow.keras.models.load_model(nn_file)
     #network = keras.models.load_model('resnet20_models/cifar10_pretrained',custom_objects={'Custom':'contrastLoss'},compile=False)
 
     model_kdn = kdcnn(
