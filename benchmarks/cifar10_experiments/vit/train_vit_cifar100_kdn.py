@@ -47,7 +47,7 @@ for seed in seeds:
     x_train, x_cal, y_train, y_cal = train_test_split(
                 train_data, train_label, random_state=seed, shuffle=True)
     nn_file = 'vit_model_cifar100_'+str(seed)+'.keras'
-    network = tensorflow.keras.models.load_model(nn_file)
+    network = tensorflow.keras.models.load_model(nn_file, safe_mode=False)
     #network = keras.models.load_model('resnet20_models/cifar10_pretrained',custom_objects={'Custom':'contrastLoss'},compile=False)
 
     model_kdn = kdcnn(
