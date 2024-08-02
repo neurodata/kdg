@@ -8,7 +8,7 @@ from tensorflow.keras.models import Sequential, Model, load_model
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, BatchNormalization, Flatten, Dropout, Activation, Input, Conv2D, MaxPooling2D
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
-
+import pickle
 #from tensorflow.keras.layers.core import Lambda
 from vit_keras import vit, utils
 
@@ -18,14 +18,14 @@ import gc
 import matplotlib.pyplot as plt
 import numpy as np
 # %%
-seeds = [0,2,3]#2022
+seeds = [3]#2022
 
 # %%
 (trainset, train_label), (crossdataset, cross_label) = cifar100.load_data()
 train_label = to_categorical(train_label)
 cross_label = to_categorical(cross_label)
-trainset = (trainset/255.).astype("float32")
-crossdataset = (crossdataset/255.).astype("float32")
+trainset = (trainset/255.).astype("float16")
+crossdataset = (crossdataset/255.).astype("float16")
 # %%
 for seed in seeds:
     print('Doing seed ', seed)
@@ -97,18 +97,21 @@ for seed in seeds:
 
 
     for epoch in range(10):
-        model.fit(train_generator, steps_per_epoch=200, epochs=1, validation_data=(X_valid, y_valid))
+        model.fit(train_generator, steps_per_epoch=200, epochs=1)
         gc.collect()  #garbage collector to free up memory
 
         # Evaluate model on validation data
-        validation_accuracy = model.evaluate(X_valid, y_valid, verbose=0)[1]
+        #validation_accuracy = model.evaluate(X_valid, y_valid, verbose=0)[1]
 
         # if validation_accuracy > best_accuracy:
         #     best_accuracy = validation_accuracy
         #     model.save(best_model_path)  # Save the best model checkpoint
 
-        print(f"Epoch {epoch + 1} - Validation Accuracy: {validation_accuracy:.4f}, Best Accuracy: {best_accuracy:.4f}")
+        #print(f"Epoch {epoch + 1} - Validation Accuracy: {validation_accuracy:.4f}, Best Accuracy: {best_accuracy:.4f}")
 
-print("Training complete.")
-model.save('vit_model_cifar100_'+str(seed)+'.keras')
+    print("Training complete.")
+
+    # with open('vit_model_cifar100_'+str(seed)+'.pickle', 'wb') as f:
+    #     pickle.dump(model, f)
+    model.save('vit_model_cifar100_'+str(seed)+'.keras')
 # %%

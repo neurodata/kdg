@@ -12,7 +12,7 @@ import pickle
 import os
 import gc
 from joblib.externals.loky import get_reusable_executor
-from .utils import get_ece
+from .utils import get_ace
 
 class kdcnn(KernelDensityGraph):
    def __init__(
@@ -304,9 +304,9 @@ class kdcnn(KernelDensityGraph):
             max_acc = 0
             for _ in range(2):
                 if k==None:
-                    k_ = np.arange(10,11,.1)
+                    k_ = np.arange(3,11,1)
                 else:
-                    k_ = np.arange(k+.01,k+.1,.01)
+                    k_ = np.arange(k-.6,k+.5,.1)
                 for tmp_k in k_:
                     used = []
                     for ii in range(self.total_samples):
@@ -325,14 +325,14 @@ class kdcnn(KernelDensityGraph):
                     prob = _get_likelihoods(min_dis_id)
                     
                     accuracy = np.mean(np.argmax(prob,axis=1)==y_val.ravel())
-                    ece = get_ece(prob, y_val.ravel(), n_bins=20)
+                    ece = get_ace(prob, y_val.ravel())
                     print(k, ece, accuracy)
                     if ece < min_ece:
                         min_ece = ece
                         #max_acc = accuracy
                         k = tmp_k
-                    else:
-                        break
+                    # else:
+                    #     break
                     
                     
                         #print('taken')
