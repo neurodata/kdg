@@ -1,13 +1,13 @@
 #%%
 import tensorflow as tf
 #from tensorflow.keras.datasets import cifar100
-from keras.utils import to_categorical
-from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.utils import to_categorical
+from keras.src.legacy.preprocessing.image import ImageDataGenerator
 
-from keras.models import Sequential, Model, load_model
-from keras.layers import Dense, GlobalAveragePooling2D, BatchNormalization, Flatten, Dropout, Activation, Input, Conv2D, MaxPooling2D
-from keras.optimizers import SGD
-from keras.callbacks import ReduceLROnPlateau, EarlyStopping
+from tensorflow.keras.models import Sequential, Model, load_model
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, BatchNormalization, Flatten, Dropout, Activation, Input, Conv2D, MaxPooling2D
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 import pickle
 #from tensorflow.keras.layers.core import Lambda
 from vit_keras import vit, utils
