@@ -29,6 +29,7 @@ trainset = np.zeros((len(x),32,32,3), dtype=float)
 for ii in range(len(x)):
     trainset[ii,:,:,:] = x[:,:,:,ii]
 
+print(trainset.shape, train_label.shape)
 train_label = to_categorical(train_label)
 #cross_label = to_categorical(cross_label)
 trainset = (trainset/255.).astype("float16")
