@@ -22,7 +22,7 @@ from scipy.io import loadmat
 seeds = [0,1,2,3]#2022
 
 # %%
-data = loadmat('/work/wyw112/train_32x32.mat')
+data = loadmat('/work/wyw112/SVHN/train_32x32.mat')
 trainset, train_label = data['X'], data['y']
 
 (trainset, train_label), (crossdataset, cross_label) = cifar100.load_data()
