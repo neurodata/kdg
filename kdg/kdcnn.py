@@ -304,7 +304,7 @@ class kdcnn(KernelDensityGraph):
             max_acc = 0
             for _ in range(2):
                 if k==None:
-                    k_ = np.arange(3,11,1)
+                    k_ = np.arange(10,20,1)
                 else:
                     k_ = np.arange(k-.6,k+.5,.1)
                 for tmp_k in k_:
