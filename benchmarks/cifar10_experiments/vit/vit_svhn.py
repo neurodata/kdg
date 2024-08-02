@@ -25,8 +25,8 @@ seeds = [0,1,2,3]#2022
 data = loadmat('/work/wyw112/SVHN/train_32x32.mat')
 x, train_label = data['X'], data['y']
 
-trainset = np.zeros((len(x),32,32,3), dtype=float)
-for ii in range(len(x)):
+trainset = np.zeros((train_label.shape[0],32,32,3), dtype=float)
+for ii in range(train_label.shape[0]):
     trainset[ii,:,:,:] = x[:,:,:,ii]
 
 print(trainset.shape, train_label.shape)
