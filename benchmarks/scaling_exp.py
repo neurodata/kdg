@@ -20,10 +20,11 @@ from numpy.random import seed
 from tqdm import tqdm
 import pandas as pd
 import timeit
+import tensorflow as tf
 #%%
 compile_kwargs = {
     "loss": "binary_crossentropy",
-    "optimizer": keras.optimizers.Adam(3e-4),
+    "optimizer": tf.keras.optimizers.legacy.Adam(3e-4),
 }
 callback = keras.callbacks.EarlyStopping(
     monitor="loss", patience=10, verbose=True)
