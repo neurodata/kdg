@@ -71,7 +71,7 @@ repetition = []
 for node in tqdm(nodes):
     for rep in range(reps):
         X_train, X_test, y_train, y_test = train_test_split(
-                X, y, train_size=50000, random_state=0+rep, stratify=y)
+                X, y, train_size=10000, random_state=0+rep, stratify=y)
 
         #X, y, test_size=test_sample, train_size=train_sample, random_state=random_state+rep, stratify=y)
         uncalibrated_nn = getNN(input_size=X.shape[1], num_classes=np.max(
